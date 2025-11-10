@@ -1,0 +1,280 @@
+/* ============================================
+   CUSTOM DATATABLE STYLING - GLOBAL
+   ============================================ */
+
+/* DataTable Container - Prevent Overflow */
+.dataTables_wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+/* Table Container */
+.dataTables_scroll {
+    width: 100% !important;
+    overflow: auto;
+}
+
+.dataTables_scrollBody {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+}
+
+/* Ensure table doesn't exceed container */
+table.dataTable {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0 !important;
+}
+
+/* Navy blue header styling */
+table.dataTable thead th,
+.dataTable thead th {
+    background-color: #001f3f !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-color: #003366 !important;
+    white-space: nowrap !important;
+}
+
+/* Fixed header styling */
+.fixedHeader-floating thead th,
+.fixedHeader-locked thead th {
+    background-color: #001f3f !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-color: #003366 !important;
+    white-space: nowrap !important;
+}
+
+/* Striped rows - alternating blue and white */
+table.dataTable tbody tr:nth-child(odd),
+.dataTable tbody tr:nth-child(odd) {
+    background-color: #e3f2fd !important;
+}
+
+table.dataTable tbody tr:nth-child(even),
+.dataTable tbody tr:nth-child(even) {
+    background-color: white !important;
+}
+
+/* Fixed columns styling with striped colors */
+table.dataTable tbody th,
+table.dataTable tbody td {
+    background-color: inherit;
+}
+
+/* Fixed columns - odd rows */
+table.dataTable tbody tr:nth-child(odd) td.dtfc-fixed-left,
+table.dataTable tbody tr:nth-child(odd) th.dtfc-fixed-left,
+.dtfc-fixed-left table.dataTable tbody tr:nth-child(odd) td,
+.dtfc-fixed-left table.dataTable tbody tr:nth-child(odd) th {
+    background-color: #e3f2fd !important;
+}
+
+/* Fixed columns - even rows */
+table.dataTable tbody tr:nth-child(even) td.dtfc-fixed-left,
+table.dataTable tbody tr:nth-child(even) th.dtfc-fixed-left,
+.dtfc-fixed-left table.dataTable tbody tr:nth-child(even) td,
+.dtfc-fixed-left table.dataTable tbody tr:nth-child(even) th {
+    background-color: white !important;
+}
+
+/* Hover effect */
+table.dataTable tbody tr:hover,
+.dataTable tbody tr:hover {
+    background-color: #bbdefb !important;
+}
+
+/* DataTables wrapper styling */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    color: #333;
+}
+
+/* DataTables pagination styling */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.5em 1em;
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #001f3f !important;
+    color: white !important;
+    border: 1px solid #001f3f !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #003366 !important;
+    color: white !important;
+    border: 1px solid #003366 !important;
+}
+
+/* DataTables length menu styling */
+.dataTables_wrapper .dataTables_length select {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* DataTables processing indicator */
+.dataTables_wrapper .dataTables_processing {
+    background-color: rgba(0, 31, 63, 0.9) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+/* Ensure table borders are consistent */
+table.dataTable,
+.dataTable {
+    border-collapse: collapse !important;
+}
+
+table.dataTable tbody td,
+.dataTable tbody td {
+    border-color: #ddd !important;
+}
+
+/* Fixed columns right border */
+table.dataTable tbody tr td.dtfc-fixed-left:last-child,
+table.dataTable tbody tr th.dtfc-fixed-left:last-child {
+    border-right: 2px solid #003366 !important;
+}
+
+/* Responsive table wrapper */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for AdminLTE content wrapper */
+.content-wrapper .dataTables_wrapper {
+    overflow: visible;
+}
+
+/* Ensure proper spacing */
+.dataTables_wrapper .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* Fix scrolling issues and header alignment */
+.dataTables_scrollHead {
+    overflow: hidden !important;
+    overflow-x: auto !important;
+}
+
+.dataTables_scrollHeadInner {
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.dataTables_scrollHeadInner table {
+    /* width: 100% !important; */
+    margin: 0 !important;
+}
+
+/* Ensure body scroll container matches header */
+.dataTables_scrollBody {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    box-sizing: border-box !important;
+}
+
+.dataTables_scrollBody table {
+    /* width: 100% !important; */
+    margin: 0 !important;
+}
+
+/* Force proper column width calculation */
+table.dataTable thead th,
+table.dataTable tbody td {
+    box-sizing: border-box !important;
+}
+
+/* Prevent table from collapsing */
+table.dataTable {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+/* Fixed Header Container */
+.fixedHeader-floating {
+    position: fixed !important;
+    background-color: white;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.fixedHeader-floating table {
+    background-color: white !important;
+}
+
+.fixedHeader-floating thead th {
+    background-color: #001f3f !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-color: #003366 !important;
+    white-space: nowrap !important;
+}
+
+/* Ensure fixed header matches table width */
+.fixedHeader-floating {
+    width: auto !important;
+}
+
+/* Fixed Columns Container - Updated for v3.3.3 */
+.DTFC_LeftWrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.DTFC_LeftHeadWrapper table thead th {
+    background-color: #001f3f !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-color: #003366 !important;
+    white-space: nowrap !important;
+}
+
+.DTFC_LeftBodyWrapper table tbody tr:nth-child(odd) td {
+    background-color: #e3f2fd !important;
+}
+
+.DTFC_LeftBodyWrapper table tbody tr:nth-child(even) td {
+    background-color: white !important;
+}
+
+.DTFC_Blocker {
+    background-color: white !important;
+}
+
+/* Prevent table from breaking layout - Allow horizontal scroll in card */
+.card {
+    overflow: visible;
+}
+
+.card-body {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+/* ============================================
+   MONITORING PAGE - ACTION COLUMN STYLING
+   ============================================ */
+
+/* Action buttons spacing */
+#monitoringTable .btn {
+    margin: 2px !important;
+}
+
+/* Ensure buttons don't wrap */
+#monitoringTable tbody td:last-child {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
