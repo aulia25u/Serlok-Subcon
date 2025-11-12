@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RBAC\CustomerController;
+use App\Http\Controllers\RBAC\TenantOwnerController;
 use App\Http\Controllers\RBAC\DepartmentController;
 use App\Http\Controllers\RBAC\HistoryController;
 use App\Http\Controllers\RBAC\MasterMenuController;
 use App\Http\Controllers\RBAC\PlantController;
 use App\Http\Controllers\RBAC\PositionController;
+use App\Http\Controllers\RBAC\RoleController;
 use App\Http\Controllers\RBAC\SectionController;
 use App\Http\Controllers\RBAC\UserDataController;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +76,8 @@ Route::prefix('rbac')->middleware(['auth', 'verified', 'permission.check'])->gro
     Route::put('/section/{id}', [SectionController::class, 'update'])->name('rbac.section.update');
     Route::delete('/section/{id}', [SectionController::class, 'destroy'])->name('rbac.section.destroy');
     Route::get('rbac/sections/all', [SectionController::class, 'getAllSections'])->name('rbac.sections.all');
+    Route::get('rbac/departments/by-customer/{customer_id}', [DepartmentController::class, 'getByCustomer'])->name('rbac.departments.by-customer');
+    Route::get('rbac/sections/by-customer/{customer_id}', [SectionController::class, 'getByCustomer'])->name('rbac.sections.by-customer');
     Route::get('rbac/sections/by-department/{dept_id}', [SectionController::class, 'getByDepartment'])->name('rbac.sections.by-department');
 
     // Position
@@ -82,6 +87,21 @@ Route::prefix('rbac')->middleware(['auth', 'verified', 'permission.check'])->gro
     Route::put('/position/{id}', [PositionController::class, 'update'])->name('rbac.position.update');
     Route::delete('/position/{id}', [PositionController::class, 'destroy'])->name('rbac.position.destroy');
     Route::get('rbac/positions/by-section/{section_id}', [PositionController::class, 'getBySection'])->name('rbac.positions.by-section');
+    Route::get('rbac/roles/by-customer/{customer_id}', [RoleController::class, 'getByCustomer'])->name('rbac.roles.by-customer');
+
+    // Tenant List (formerly customer)
+    Route::get('/customer', [CustomerController::class, 'index'])->name('rbac.customer');
+    Route::post('/customer', [CustomerController::class, 'store'])->name('rbac.customer.store');
+    Route::get('/customer/{id}/edit', [CustomerController::class, 'edit'])->name('rbac.customer.edit');
+    Route::put('/customer/{id}', [CustomerController::class, 'update'])->name('rbac.customer.update');
+    Route::delete('/customer/{id}', [CustomerController::class, 'destroy'])->name('rbac.customer.destroy');
+
+    // Tenant Owners
+    Route::get('/tenant-owner', [TenantOwnerController::class, 'index'])->name('rbac.tenant-owner');
+    Route::post('/tenant-owner', [TenantOwnerController::class, 'store'])->name('rbac.tenant-owner.store');
+    Route::get('/tenant-owner/{id}/edit', [TenantOwnerController::class, 'edit'])->name('rbac.tenant-owner.edit');
+    Route::put('/tenant-owner/{id}', [TenantOwnerController::class, 'update'])->name('rbac.tenant-owner.update');
+    Route::delete('/tenant-owner/{id}', [TenantOwnerController::class, 'destroy'])->name('rbac.tenant-owner.destroy');
 
     // Plant
     Route::get('/plant', [PlantController::class, 'index'])->name('rbac.plant');

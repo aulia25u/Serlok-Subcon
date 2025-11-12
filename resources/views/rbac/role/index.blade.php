@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Role Management')
-@section('page-title', 'Role Management')
 
 @section('css')
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css"/>
@@ -10,6 +9,9 @@
 @stop
 
 @section('content')
+@php
+    $isInternal = is_null($currentCustomerId ?? null);
+@endphp
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -23,14 +25,15 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="table table-bordered table-striped" id="roleTable">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Role Name</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
+                        <table class="table table-bordered table-striped" id="roleTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Role Name</th>
+                                    <th>Tenant</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
                         <tbody>
                             </tbody>
                     </table>
@@ -56,6 +59,19 @@
                         <label for="role_name">Role Name</label>
                         <input type="text" class="form-control" id="role_name" name="role_name" required>
                     </div>
+                    @if($isInternal)
+                        <div class="form-group">
+                            <label for="customer_id">Customer</label>
+                            <select class="form-control" id="customer_id" name="customer_id">
+                                <option value="">Internal (Global)</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <input type="hidden" id="customer_id" name="customer_id" value="{{ $currentCustomerId }}">
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -94,6 +110,7 @@
                 columns: [
                     {data: 'id', name: 'id'},
                     {data: 'role_name', name: 'role_name'},
+                    {data: 'customer', name: 'customer'},
                     {data: 'action', name: 'action', orderable: false, searchable: false}
                 ],
                 pageLength: 10,
@@ -115,6 +132,7 @@
                             $('#roleForm').find('input[name="_method"]').remove();
                             $('#roleForm').append('<input type="hidden" name="_method" value="PUT">');
                             $('#role_name').val(response.role_name);
+                            $('#customer_id').val(response.customer_id ?? '');
                         }
                     });
                 } else {
@@ -122,6 +140,11 @@
                     $('#roleForm').trigger('reset');
                     $('#roleForm').find('input[name="_method"]').remove();
                     $('#roleForm').attr('action', "{{ route('rbac.role.store') }}");
+                    @if($isInternal)
+                        $('#customer_id').val('');
+                    @else
+                        $('#customer_id').val('{{ $currentCustomerId ?? '' }}');
+                    @endif
                 }
             });
 

@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'User Data')
-@section('page-title', 'User Data')
 
 @section('css')
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css"/>
@@ -10,12 +9,15 @@
 @stop
 
 @section('content')
+@php
+    $isInternal = is_null($currentCustomerId ?? null);
+@endphp
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">User Data Management</h3>
+                    <h1 class="card-title">User Data Management</h1>
                     <div class="card-tools">
                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
                             <i class="fas fa-plus"></i> Add New
@@ -47,17 +49,18 @@
 
                     <table class="table table-bordered table-striped" id="userDataTable">
                         <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Username</th>
-                                <th>Full Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Department</th>
-                                <th>Section</th>
-                                <th>Position</th>
-                                <th>Actions</th>
-                            </tr>
+                        <tr>
+                            <th>No</th>
+                            <th>Tenant</th>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Department</th>
+                            <th>Section</th>
+                            <th>Position</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
                             </tbody>
@@ -101,15 +104,26 @@
                                 <input type="text" class="form-control" id="full_name" name="full_name" required>
                             </div>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="role_id">Role</label>
-                                <select class="form-control" id="role_id" name="role_id" required>
-                                    <option value="">Select Role</option>
-                                    @foreach($roles as $role)
-                                        <option value="{{ $role->id }}">{{ $role->role_name }}</option>
-                                    @endforeach
-                                </select>
+                                <label for="customer_id">Tenant</label>
+                                @if($isInternal)
+                                    <select class="form-control" id="customer_id" name="customer_id" required>
+                                        <option value="">Internal (Global)</option>
+                                        @foreach($customers as $customer)
+                                            <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                        @endforeach
+                                    </select>
+                                @else
+                                    <select class="form-control" id="customer_id" name="customer_id" disabled>
+                                        <option value="{{ $currentCustomerId ?? '' }}">
+                                            {{ optional($customers->first())->customer_name ?? 'My Customer' }}
+                                        </option>
+                                    </select>
+                                    <input type="hidden" name="customer_id" value="{{ $currentCustomerId }}">
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -119,9 +133,6 @@
                                 <label for="dept_id">Department</label>
                                 <select class="form-control" id="dept_id" name="dept_id" required>
                                     <option value="">Select Department</option>
-                                    @foreach($departments as $dept)
-                                        <option value="{{ $dept->id }}">{{ $dept->dept_name }}</option>
-                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -143,7 +154,14 @@
                                 </select>
                             </div>
                         </div>
-
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="role_id">Role</label>
+                                <select class="form-control" id="role_id" name="role_id" required>
+                                    <option value="">Select Role</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
@@ -204,6 +222,7 @@
                 },
                 columns: [
                     {data: 'no', name: 'no'},
+                    {data: 'customer_name', name: 'customer_name'},
                     {data: 'username', name: 'username'},
                     {data: 'full_name', name: 'full_name'},
                     {data: 'email', name: 'email'},
@@ -216,6 +235,9 @@
                 pageLength: 10,
                 responsive: true
             });
+
+            const isInternalUser = @json($isInternal);
+            const currentCustomerId = @json($currentCustomerId);
 
             $('#filterBtn').click(function() {
                 table.draw();
@@ -278,6 +300,57 @@
                 });
             }
 
+            function loadDepartments(customerId, selectedDeptId, selectedSectionId, selectedPositionId) {
+                const deptSelect = $('#dept_id');
+                const sectionSelect = $('#section_id');
+                const positionSelect = $('#position_id');
+                const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
+
+                if (customerId === undefined) {
+                    deptSelect.empty().append('<option value="">Select Department</option>');
+                    sectionSelect.empty().append('<option value="">Select Section</option>');
+                    positionSelect.empty().append('<option value="">Select Position</option>');
+                    return $.Deferred().resolve();
+                }
+
+                return $.ajax({
+                    url: '{{ route("rbac.departments.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
+                    type: 'GET',
+                    success: function(data) {
+                        deptSelect.empty().append('<option value="">Select Department</option>');
+                        $.each(data, function(key, value) {
+                            deptSelect.append('<option value="' + value.id + '">' + value.dept_name + '</option>');
+                        });
+
+                        if (selectedDeptId) {
+                            deptSelect.val(selectedDeptId);
+                            loadSections(selectedDeptId, selectedSectionId, selectedPositionId);
+                        } else {
+                            sectionSelect.empty().append('<option value="">Select Section</option>');
+                            positionSelect.empty().append('<option value="">Select Position</option>');
+                        }
+                    }
+                });
+            }
+
+            function loadRoles(customerId, selectedRoleId) {
+                const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
+
+                return $.ajax({
+                    url: '{{ route("rbac.roles.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
+                    type: 'GET',
+                    success: function(data) {
+                        $('#role_id').empty().append('<option value="">Select Role</option>');
+                        $.each(data, function(key, value) {
+                            $('#role_id').append('<option value="' + value.id + '">' + value.role_name + '</option>');
+                        });
+                        if (selectedRoleId) {
+                            $('#role_id').val(selectedRoleId);
+                        }
+                    }
+                });
+            }
+
             function populateSections(sections, selectedSectionId) {
                 $('#section_id').empty().append('<option value="">Select Section</option>');
                 sections.forEach(function(section) {
@@ -298,6 +371,13 @@
                 }
             }
 
+            $('#customer_id').on('change', function() {
+                const customerId = $(this).val();
+                loadDepartments(customerId).then(function() {
+                    loadRoles(customerId);
+                });
+            });
+
             $('#dept_id').on('change', function() {
                 var deptId = $(this).val();
                 loadSections(deptId);
@@ -306,6 +386,11 @@
             $('#section_id').on('change', function() {
                 var sectionId = $(this).val();
                 loadPositions(sectionId);
+            });
+
+            const initialCustomerId = $('#customer_id').val();
+            loadDepartments(initialCustomerId).then(function() {
+                loadRoles(initialCustomerId);
             });
             
             $('#addModal').on('show.bs.modal', function(event) {
@@ -333,22 +418,20 @@
                             $('#role_id').val(response.user.user_detail ? response.user.user_detail.role_id || '' : '');
 
                             // Handle department/section/position population
+                            var customerId = response.customer_id ?? '';
                             if (response.user.user_detail && response.user.user_detail.position && response.user.user_detail.position.section) {
                                 var deptId = response.user.user_detail.position.section.dept_id;
                                 var sectionId = response.user.user_detail.position.section_id;
                                 var positionId = response.user.user_detail.position_id;
 
-                                $('#dept_id').val(deptId);
-                                if (response.sections) {
-                                    populateSections(response.sections, sectionId);
-                                } else {
-                                    loadSections(deptId, sectionId, positionId);
-                                }
-                                if (response.positions) {
-                                    populatePositions(response.positions, positionId);
-                                }
+                                $('#customer_id').val(customerId);
+                                loadDepartments(customerId, deptId, sectionId, positionId).then(function() {
+                                    loadRoles(customerId, response.user.user_detail.role_id);
+                                });
                             } else {
                                 // Clear organizational fields if no data
+                                $('#customer_id').val(customerId);
+                                loadDepartments(customerId);
                                 $('#dept_id').val('');
                                 $('#section_id').empty().append('<option value="">Select Section</option>');
                                 $('#position_id').empty().append('<option value="">Select Position</option>');
@@ -356,6 +439,7 @@
                                 if (response.message) {
                                     toastr.warning(response.message);
                                 }
+                                loadRoles(customerId);
                             }
 
                             // Make password field optional when editing
@@ -377,6 +461,15 @@
                     // Reset dropdowns
                     $('#section_id').empty().append('<option value="">Select Section</option>');
                     $('#position_id').empty().append('<option value="">Select Position</option>');
+
+                    if (isInternalUser) {
+                        $('#customer_id').val('');
+                    } else {
+                        $('#customer_id').val(currentCustomerId || '');
+                    }
+                    loadDepartments($('#customer_id').val()).then(function() {
+                        loadRoles($('#customer_id').val());
+                    });
 
                     // Show password field when adding new user
                     $('#password').closest('.form-group').show();

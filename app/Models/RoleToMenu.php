@@ -14,6 +14,7 @@ class RoleToMenu extends Model
     protected $fillable = [
         'role_id',
         'menu_id',
+        'customer_id',
         'is_create',
         'is_read',
         'is_update',
@@ -36,5 +37,9 @@ class RoleToMenu extends Model
     {
         return $this->belongsTo(Menu::class);
     }
-}
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+}

@@ -5,12 +5,13 @@ namespace App\Http\Controllers\RBAC;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserDetail;
+use App\Models\Customer;
 use App\Models\Position;
 use App\Models\Role;
-use App\Models\Plant;
 use App\Models\Section;
 use App\Models\Dept;
 use App\Services\ActivityLogService;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
@@ -27,11 +28,14 @@ class UserDataController extends Controller
      */
     public function index(Request $request)
     {
+        $customerId = TenantService::currentCustomerId();
+
         if ($request->ajax()) {
             // Eager load the new, complex relationship chain
             $query = User::with([
                 'userDetail.position.section.dept', // The full chain
                 'userDetail.role',
+                'userDetail.customer',
             ])
             ->when($request->start_date, function ($q) use ($request) {
                 return $q->whereDate('created_at', '>=', $request->start_date);
@@ -39,6 +43,12 @@ class UserDataController extends Controller
             ->when($request->end_date, function ($q) use ($request) {
                 return $q->whereDate('created_at', '<=', $request->end_date);
             });
+
+            if ($customerId) {
+                $query->whereHas('userDetail', function ($q) use ($customerId) {
+                    return $q->where('customer_id', $customerId);
+                });
+            }
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -64,6 +74,9 @@ class UserDataController extends Controller
                     // Access the position name through the nested relationship
                     return $row->userDetail->position->position_name ?? '-';
                 })
+                ->addColumn('customer_name', function ($row) {
+                    return $row->userDetail->customer->customer_name ?? 'Internal';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<button class="btn btn-sm btn-primary edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
@@ -78,12 +91,24 @@ class UserDataController extends Controller
         }
         
         // Pass all necessary data for the dropdowns to the view
-        $departments = Dept::all();
-        $sections = Section::all();
-        $positions = Position::all();
-        $roles = Role::all();
+        $departments = TenantService::scopeQueryByCustomer(
+            Dept::orderBy('dept_name')
+        )->get();
+        $sections = TenantService::scopeQueryByCustomer(
+            Section::with('dept')->orderBy('section_name')
+        )->get();
+        $positions = TenantService::scopeQueryByCustomer(
+            Position::with('section')->orderBy('position_name')
+        )->get();
+        $roles = TenantService::scopeQueryByCustomer(
+            Role::orderBy('role_name')
+        )->get();
+        $customers = TenantService::isInternal()
+            ? Customer::orderBy('customer_name')->get()
+            : Customer::where('id', $customerId)->get();
 
-        return view('rbac.user-data.index', compact('departments', 'sections', 'positions', 'roles'));
+        return view('rbac.user-data.index', compact('departments', 'sections', 'positions', 'roles', 'customers'))
+            ->with('currentCustomerId', $customerId);
     }
 
     /**
@@ -110,9 +135,13 @@ class UserDataController extends Controller
         DB::beginTransaction();
 
         try {
+            $section = Section::findOrFail($request->section_id);
+            TenantService::assertAccess($section->customer_id);
+
             $user = User::create([
                 'username' => $request->username,
                 'email' => $request->email,
+                'name' => $request->full_name,
                 'password' => Hash::make($request->password),
             ]);
     
@@ -120,10 +149,16 @@ class UserDataController extends Controller
                 'user_id' => $user->id,
                 'position_id' => $request->position_id, // Store position_id on UserDetail
                 'role_id' => $request->role_id,
+                'customer_id' => $section->customer_id,
                 // 'plant_id' => $request->plant_id, // Removed plant_id
                 'employee_name' => $request->full_name,
                 'employee_id' => $request->username, // Use username as employee_id
                 'gender' => $request->gender,
+                'address' => '-',
+                'phone' => '-',
+                'join_date' => now(),
+                'status_active' => 1,
+                'employee_photo' => 'default.png',
             ]);
 
             DB::commit();
@@ -136,6 +171,7 @@ class UserDataController extends Controller
                 'gender' => $request->gender,
                 'position_id' => $request->position_id,
                 'role_id' => $request->role_id,
+                'customer_id' => $section->customer_id,
             ]);
 
             return response()->json(['success' => 'User created successfully.']);
@@ -161,6 +197,7 @@ class UserDataController extends Controller
             'user' => $user,
             'sections' => collect(), // Default empty
             'positions' => collect(), // Default empty
+            'customer_id' => optional($user->userDetail)->customer_id,
         ];
 
         // Check if user has position and section relationships
@@ -203,12 +240,16 @@ class UserDataController extends Controller
 
         try {
             $user = User::findOrFail($id);
+            TenantService::assertAccess(optional($user->userDetail)->customer_id);
+            $section = Section::findOrFail($request->section_id);
+            TenantService::assertAccess($section->customer_id);
             $oldValues = $user->toArray();
             $oldValues['user_detail'] = $user->userDetail->toArray();
 
             $user->update([
                 'username' => $request->username,
                 'email' => $request->email,
+                'name' => $request->full_name,
             ]);
 
             if ($request->password) {
@@ -218,9 +259,12 @@ class UserDataController extends Controller
             $user->userDetail->update([
                 'position_id' => $request->position_id,
                 'role_id' => $request->role_id,
+                'customer_id' => $section->customer_id,
                 // 'plant_id' => $request->plant_id, // Removed plant_id
                 'employee_name' => $request->full_name,
                 'gender' => $request->gender,
+                'address' => $request->address ?? '-',
+                'phone' => $request->phone ?? '-',
             ]);
 
             DB::commit();
@@ -250,6 +294,7 @@ class UserDataController extends Controller
 
         try {
             $user = User::findOrFail($id);
+            TenantService::assertAccess(optional($user->userDetail)->customer_id);
             $oldValues = $user->toArray();
             $oldValues['user_detail'] = $user->userDetail->toArray();
 

@@ -4,22 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 use App\Models\Customer;
 
-class Dept extends Model
+class TenantOwner extends Model
 {
     use HasFactory;
 
-    protected $table = 'depts';
+    protected $table = 'tenant_owners';
 
     protected $fillable = [
-        'dept_name',
+        'user_id',
         'customer_id',
+        'is_active',
     ];
 
-    public function sections()
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    public function user()
     {
-        return $this->hasMany(Section::class);
+        return $this->belongsTo(User::class);
     }
 
     public function customer()

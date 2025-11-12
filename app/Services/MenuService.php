@@ -43,6 +43,7 @@ class MenuService
             [
                 'type' => 'sidebar-menu-search',
                 'text' => 'search',
+                'class' => 'sidebar-menu-search',
             ],
         ];
 
@@ -51,10 +52,6 @@ class MenuService
         // Separate RBAC menus for dropdown
         foreach ($menus as $menu) {
             $menuName = $menu->menu_name;
-            if (in_array($menuName, ['Customers', 'Calendar Pitching'])) {
-                continue;
-            }
-
             $label = self::getMenuLabel($menuName);
 
             // Check if it's an RBAC menu (e.g., contains 'Management')
@@ -74,12 +71,31 @@ class MenuService
             }
         }
 
-        // Add Internal Management dropdown if any RBAC children
-        if (!empty($rbacChildren)) {
+        $tenantLabels = ['Tenant List', 'Tenant Owner', 'Customer'];
+        $tenantChildren = [];
+        $internalChildren = [];
+
+        foreach ($rbacChildren as $child) {
+            if (in_array($child['text'], $tenantLabels)) {
+                $tenantChildren[] = $child;
+            } else {
+                $internalChildren[] = $child;
+            }
+        }
+
+        if (!empty($internalChildren)) {
             $menuItems[] = [
                 'text' => 'Internal Management',
                 'icon' => 'fas fa-sitemap',
-                'submenu' => $rbacChildren,
+                'submenu' => $internalChildren,
+            ];
+        }
+
+        if (!empty($tenantChildren)) {
+            $menuItems[] = [
+                'text' => 'Tenant Management',
+                'icon' => 'fas fa-door-open',
+                'submenu' => $tenantChildren,
             ];
         }
 
@@ -103,6 +119,7 @@ class MenuService
             [
                 'type' => 'sidebar-menu-search',
                 'text' => 'search',
+                'class' => 'sidebar-menu-search',
             ],
             [
                 'text' => 'Dashboard',
@@ -128,6 +145,9 @@ class MenuService
             'Section Management' => 'rbac/section',
             'Position Management' => 'rbac/position',
             'Plant Management' => 'rbac/plant',
+            'Customer Management' => 'rbac/customer',
+            'Tenant List Management' => 'rbac/customer',
+            'Tenant Owner Management' => 'rbac/tenant-owner',
             'Menu Management' => 'rbac/master-menu',
         ];
 
@@ -144,6 +164,9 @@ class MenuService
             'Department Management' => 'fas fa-fw fa-building',
             'Section Management' => 'fas fa-fw fa-door-closed',
             'Position Management' => 'fas fa-fw fa-user-tag',
+            'Customer Management' => 'fas fa-fw fa-user-friends',
+            'Tenant Owner Management' => 'fas fa-fw fa-id-card',
+            'Tenant List Management' => 'fas fa-fw fa-building',
             'Plant Management' => 'fas fa-fw fa-industry',
             'Menu Management' => 'fas fa-fw fa-bars',
         ];

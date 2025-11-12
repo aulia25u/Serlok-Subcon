@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\RBAC;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Role;
 use App\Services\ActivityLogService;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
@@ -20,11 +23,17 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
+        $customerId = TenantService::currentCustomerId();
+
         if ($request->ajax()) {
-            $query = Role::query();
+            $query = Role::with('customer');
+            $query = TenantService::scopeQueryByCustomer($query);
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('customer', function ($row) {
+                    return $row->customer->customer_name ?? 'Internal';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<button class="btn btn-sm btn-primary edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
@@ -38,7 +47,14 @@ class RoleController extends Controller
                 ->make(true);
         }
 
-        return view('rbac.role.index');
+        $customers = TenantService::isInternal()
+            ? Customer::orderBy('customer_name')->get()
+            : collect();
+
+        return view('rbac.role.index', [
+            'customers' => $customers,
+            'currentCustomerId' => $customerId,
+        ]);
     }
 
     /**
@@ -49,8 +65,22 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        $customerId = TenantService::resolveCustomerId($request->customer_id);
+
         $request->validate([
-            'role_name' => 'required|string|max:255|unique:roles,role_name',
+            'role_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('roles')->where(function ($query) use ($customerId) {
+                    if (is_null($customerId)) {
+                        $query->whereNull('customer_id');
+                    } else {
+                        $query->where('customer_id', $customerId);
+                    }
+                }),
+            ],
+            'customer_id' => 'nullable|exists:customers,id',
         ]);
 
         DB::beginTransaction();
@@ -58,6 +88,7 @@ class RoleController extends Controller
         try {
             $role = Role::create([
                 'role_name' => $request->role_name,
+                'customer_id' => $customerId,
             ]);
 
             DB::commit();
@@ -65,6 +96,7 @@ class RoleController extends Controller
             // Log activity
             ActivityLogService::logCreate('roles', $role->id, [
                 'role_name' => $request->role_name,
+                'customer_id' => $role->customer_id,
             ]);
 
             return response()->json(['success' => 'Role created successfully.']);
@@ -96,18 +128,34 @@ class RoleController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $role = Role::findOrFail($id);
+        TenantService::assertAccess($role->customer_id);
+        $customerId = TenantService::resolveCustomerId($request->customer_id);
+
         $request->validate([
-            'role_name' => 'required|string|max:255|unique:roles,role_name,' . $id,
+            'role_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('roles')->where(function ($query) use ($customerId) {
+                    if (is_null($customerId)) {
+                        $query->whereNull('customer_id');
+                    } else {
+                        $query->where('customer_id', $customerId);
+                    }
+                })->ignore($id),
+            ],
+            'customer_id' => 'nullable|exists:customers,id',
         ]);
 
         DB::beginTransaction();
 
         try {
-            $role = Role::findOrFail($id);
             $oldValues = $role->toArray();
 
             $role->update([
                 'role_name' => $request->role_name,
+                'customer_id' => $customerId,
             ]);
 
             DB::commit();
@@ -136,6 +184,7 @@ class RoleController extends Controller
 
         try {
             $role = Role::findOrFail($id);
+            TenantService::assertAccess($role->customer_id);
             $oldValues = $role->toArray();
 
             $role->delete();
@@ -151,5 +200,22 @@ class RoleController extends Controller
             Log::error('Role deletion failed: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to delete role.'], 500);
         }
+    }
+
+    public function getByCustomer($customer_id)
+    {
+        $resolvedCustomerId = $customer_id === 'null' ? null : (int) $customer_id;
+        TenantService::assertAccess($resolvedCustomerId);
+
+        $query = Role::orderBy('role_name');
+        if (is_null($resolvedCustomerId)) {
+            $query->whereNull('customer_id');
+        } else {
+            $query->where('customer_id', $resolvedCustomerId);
+        }
+
+        $roles = $query->get(['id', 'role_name']);
+
+        return response()->json($roles);
     }
 }

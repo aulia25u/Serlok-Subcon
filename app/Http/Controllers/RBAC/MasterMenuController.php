@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\RoleToMenu;
 use App\Models\Role;
 use App\Models\Menu;
+use App\Models\Customer;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -17,10 +19,14 @@ class MasterMenuController extends Controller
      */
     public function show()
     {
-        $roles = Role::all();
+        $currentCustomerId = TenantService::currentCustomerId();
+        $isInternal = TenantService::isInternal();
+        $customers = $isInternal
+            ? Customer::orderBy('customer_name')->get()
+            : Customer::where('id', $currentCustomerId)->get();
         $menus = Menu::all();
-        
-        return view('rbac.master-menu.index', compact('roles', 'menus'));
+
+        return view('rbac.master-menu.index', compact('menus', 'customers', 'currentCustomerId', 'isInternal'));
     }
 
     /**
@@ -29,13 +35,17 @@ class MasterMenuController extends Controller
      */
     public function data(Request $request)
     {
-        $query = RoleToMenu::with(['role', 'menu'])
+        $query = RoleToMenu::with(['role', 'menu', 'customer'])
             ->when($request->start_date, function ($q) use ($request) {
                 return $q->whereDate('created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
                 return $q->whereDate('created_at', '<=', $request->end_date);
             });
+
+        if (!TenantService::isInternal()) {
+            $query->where('customer_id', TenantService::currentCustomerId());
+        }
 
         return DataTables::of($query)
             ->addIndexColumn()
@@ -52,6 +62,15 @@ class MasterMenuController extends Controller
                 if ($row->is_update) $permissions[] = '<span class="badge badge-warning">Update</span>';
                 if ($row->is_delete) $permissions[] = '<span class="badge badge-danger">Delete</span>';
                 return implode(' ', $permissions);
+            })
+            ->addColumn('customer_name', function ($row) {
+                return $row->role->customer->customer_name ?? 'Internal';
+            })
+            ->addColumn('created_at', function ($row) {
+                return $row->created_at->format('Y-m-d H:i:s');
+            })
+            ->addColumn('updated_at', function ($row) {
+                return $row->updated_at->format('Y-m-d H:i:s');
             })
             ->addColumn('action', function ($row) {
                 $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
@@ -72,6 +91,7 @@ class MasterMenuController extends Controller
         $request->validate([
             'role_id' => 'required|exists:roles,id',
             'menu_id' => 'required|exists:menus,id',
+            'customer_id' => 'nullable|exists:customers,id',
         ]);
 
         $existing = RoleToMenu::where('role_id', $request->role_id)
@@ -85,6 +105,7 @@ class MasterMenuController extends Controller
         RoleToMenu::create([
             'role_id' => $request->role_id,
             'menu_id' => $request->menu_id,
+            'customer_id' => TenantService::resolveCustomerId($request->customer_id),
             'is_create' => $request->has('is_create'),
             'is_read' => $request->has('is_read'),
             'is_update' => $request->has('is_update'),
@@ -121,6 +142,7 @@ class MasterMenuController extends Controller
         $roleToMenu->update([
             'role_id' => $request->role_id,
             'menu_id' => $request->menu_id,
+            'customer_id' => TenantService::resolveCustomerId($request->customer_id),
             'is_create' => $request->has('is_create'),
             'is_read' => $request->has('is_read'),
             'is_update' => $request->has('is_update'),

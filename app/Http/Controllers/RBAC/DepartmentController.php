@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\RBAC;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Dept;
 use App\Services\ActivityLogService;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -12,8 +14,12 @@ class DepartmentController extends Controller
 {
     public function index(Request $request)
     {
+        $customerId = TenantService::currentCustomerId();
+
         if ($request->ajax()) {
-            $query = Dept::query()
+            $query = Dept::with('customer');
+            $query = TenantService::scopeQueryByCustomer($query);
+            $query = $query
                 ->when($request->start_date, function ($q) use ($request) {
                     return $q->whereDate('created_at', '>=', $request->start_date);
                 })
@@ -30,6 +36,9 @@ class DepartmentController extends Controller
                     static $no = 0;
                     return ++$no;
                 })
+                ->addColumn('customer', function ($row) {
+                    return $row->customer->customer_name ?? 'Internal';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
@@ -43,20 +52,32 @@ class DepartmentController extends Controller
                 ->make(true);
         }
 
-        return view('rbac.department.index');
+        $customers = TenantService::isInternal()
+            ? Customer::orderBy('customer_name')->get()
+            : collect();
+
+        return view('rbac.department.index', [
+            'customers' => $customers,
+            'currentCustomerId' => $customerId,
+        ]);
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'dept_name' => 'required|string|max:255|unique:depts,dept_name',
+            'customer_id' => 'nullable|exists:customers,id',
         ]);
 
-        $dept = Dept::create($request->all());
+        $dept = Dept::create([
+            'dept_name' => $request->dept_name,
+            'customer_id' => TenantService::resolveCustomerId($request->customer_id),
+        ]);
 
         // Log activity
         ActivityLogService::logCreate('depts', $dept->id, [
             'dept_name' => $request->dept_name,
+            'customer_id' => $dept->customer_id,
         ]);
 
         return response()->json(['success' => 'Department created successfully']);
@@ -65,6 +86,7 @@ class DepartmentController extends Controller
     public function edit($id)
     {
         $department = Dept::findOrFail($id);
+        TenantService::assertAccess($department->customer_id);
         return response()->json($department);
     }
 
@@ -72,12 +94,17 @@ class DepartmentController extends Controller
     {
         $request->validate([
             'dept_name' => 'required|string|max:255|unique:depts,dept_name,' . $id,
+            'customer_id' => 'nullable|exists:customers,id',
         ]);
 
         $department = Dept::findOrFail($id);
+        TenantService::assertAccess($department->customer_id);
         $oldValues = $department->toArray();
 
-        $department->update($request->all());
+        $department->update([
+            'dept_name' => $request->dept_name,
+            'customer_id' => TenantService::resolveCustomerId($request->customer_id),
+        ]);
 
         // Log activity
         $newValues = $department->toArray();
@@ -89,6 +116,7 @@ class DepartmentController extends Controller
     public function destroy($id)
     {
         $department = Dept::findOrFail($id);
+        TenantService::assertAccess($department->customer_id);
         $oldValues = $department->toArray();
 
         $department->delete();
@@ -101,7 +129,28 @@ class DepartmentController extends Controller
 
     public function getAllDepartments()
     {
-        $departments = Dept::select('id', 'dept_name')->get();
+        $departments = TenantService::scopeQueryByCustomer(
+            Dept::select('id', 'dept_name')
+        )->get();
+
+        return response()->json($departments);
+    }
+
+    public function getByCustomer($customer_id)
+    {
+        $resolvedCustomerId = $customer_id === 'null' ? null : (int) $customer_id;
+        TenantService::assertAccess($resolvedCustomerId);
+
+        $departments = Dept::where(function ($query) use ($resolvedCustomerId) {
+            if (is_null($resolvedCustomerId)) {
+                $query->whereNull('customer_id');
+            } else {
+                $query->where('customer_id', $resolvedCustomerId);
+            }
+        })
+            ->select('id', 'dept_name')
+            ->orderBy('dept_name')
+            ->get();
 
         return response()->json($departments);
     }

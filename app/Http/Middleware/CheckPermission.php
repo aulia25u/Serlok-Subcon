@@ -98,6 +98,8 @@ class CheckPermission
             'position' => 'Position Management',
             'plant' => 'Plant Management',
             'master-menu' => 'Menu Management',
+            'customer' => 'Tenant List Management',
+            'tenant-owner' => 'Tenant Owner Management',
         ];
 
         foreach ($baseRouteToMenu as $baseKey => $menuName) {

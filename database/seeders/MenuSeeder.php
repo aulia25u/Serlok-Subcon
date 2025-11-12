@@ -14,26 +14,24 @@ class MenuSeeder extends Seeder
     public function run(): void
     {
         $menus = [
-            ['menu_name' => 'Dashboard'],
-            ['menu_name' => 'User Management'],
-            ['menu_name' => 'Department Management'],
-            ['menu_name' => 'Section Management'],
-            ['menu_name' => 'Position Management'],
-            ['menu_name' => 'Role Management'],
-            ['menu_name' => 'Plant Management'],
-            ['menu_name' => 'Menu Management'],
-            ['menu_name' => 'History Management'],
-            ['menu_name' => 'Customers'],
-            ['menu_name' => 'Calendar Pitching'],
-            ['menu_name' => 'MoM Customer'],
-            ['menu_name' => 'Reports'],
-            ['menu_name' => 'Settings'],
-            ['menu_name' => 'POS Monitoring'],
-            ['menu_name' => 'Invoice Monitoring'],
+            'Dashboard',
+            'User Management',
+            'Department Management',
+            'Section Management',
+            'Position Management',
+            'Role Management',
+            'Plant Management',
+            'Tenant List Management',
+            'Tenant Owner Management',
+            'Menu Management',
+            'History Management',
         ];
 
-        foreach ($menus as $menu) {
-            Menu::create($menu);
+        foreach ($menus as $menuName) {
+            Menu::updateOrCreate(
+                ['menu_name' => $menuName],
+                ['menu_name' => $menuName]
+            );
         }
     }
 }

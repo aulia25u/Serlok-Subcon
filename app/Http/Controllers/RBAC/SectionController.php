@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\RBAC;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Section;
 use App\Models\Dept;
 use App\Services\ActivityLogService;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -13,8 +15,12 @@ class SectionController extends Controller
 {
     public function index(Request $request)
     {
+        $customerId = TenantService::currentCustomerId();
+
         if ($request->ajax()) {
-            $query = Section::with('dept')
+            $query = Section::with('dept.customer');
+            $query = TenantService::scopeQueryByCustomer($query);
+            $query = $query
                 ->when($request->start_date, function ($q) use ($request) {
                     return $q->whereDate('created_at', '>=', $request->start_date);
                 })
@@ -34,6 +40,9 @@ class SectionController extends Controller
                 ->addColumn('dept_name', function ($row) {
                     return $row->dept->dept_name ?? '-';
                 })
+                ->addColumn('customer', function ($row) {
+                    return $row->customer->customer_name ?? 'Internal';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
@@ -47,8 +56,19 @@ class SectionController extends Controller
                 ->make(true);
         }
 
-        $departments = Dept::all();
-        return view('rbac.section.index', compact('departments'));
+        $departments = TenantService::scopeQueryByCustomer(
+            Dept::orderBy('dept_name')
+        )->get();
+
+        $customers = TenantService::isInternal()
+            ? Customer::orderBy('customer_name')->get()
+            : Customer::where('id', $customerId)->get();
+
+        return view('rbac.section.index', [
+            'departments' => $departments,
+            'currentCustomerId' => $customerId,
+            'customers' => $customers,
+        ]);
     }
 
     public function store(Request $request)
@@ -58,7 +78,14 @@ class SectionController extends Controller
             'dept_id' => 'required|exists:depts,id',
         ]);
 
-        $section = Section::create($request->all());
+        $dept = Dept::findOrFail($request->dept_id);
+        TenantService::assertAccess($dept->customer_id);
+
+        $section = Section::create([
+            'section_name' => $request->section_name,
+            'dept_id' => $dept->id,
+            'customer_id' => $dept->customer_id,
+        ]);
 
         // Log activity
         ActivityLogService::logCreate('sections', $section->id, [
@@ -72,6 +99,7 @@ class SectionController extends Controller
     public function edit($id)
     {
         $section = Section::with('dept')->findOrFail($id);
+        TenantService::assertAccess($section->customer_id);
         return response()->json($section);
     }
 
@@ -83,9 +111,17 @@ class SectionController extends Controller
         ]);
 
         $section = Section::findOrFail($id);
+        TenantService::assertAccess($section->customer_id);
         $oldValues = $section->toArray();
 
-        $section->update($request->all());
+        $dept = Dept::findOrFail($request->dept_id);
+        TenantService::assertAccess($dept->customer_id);
+
+        $section->update([
+            'section_name' => $request->section_name,
+            'dept_id' => $dept->id,
+            'customer_id' => $dept->customer_id,
+        ]);
 
         // Log activity
         $newValues = $section->toArray();
@@ -97,6 +133,7 @@ class SectionController extends Controller
     public function destroy($id)
     {
         $section = Section::findOrFail($id);
+        TenantService::assertAccess($section->customer_id);
         $oldValues = $section->toArray();
 
         $section->delete();
@@ -109,14 +146,32 @@ class SectionController extends Controller
 
     public function getAllSections()
     {
-        $sections = Section::select('id', 'section_name')->get();
+        $sections = TenantService::scopeQueryByCustomer(
+            Section::select('id', 'section_name')
+        )->get();
 
         return response()->json($sections);
     }
 
     public function getByDepartment($dept_id)
     {
-        $sections = Section::where('dept_id', $dept_id)->get();
+        $dept = Dept::findOrFail($dept_id);
+        TenantService::assertAccess($dept->customer_id);
+        $sections = Section::where('dept_id', $dept_id)
+            ->where('customer_id', $dept->customer_id)
+            ->get();
+        return response()->json($sections);
+    }
+
+    public function getByCustomer($customer_id)
+    {
+        TenantService::assertAccess($customer_id);
+
+        $sections = Section::where('customer_id', $customer_id)
+            ->select('id', 'section_name')
+            ->orderBy('section_name')
+            ->get();
+
         return response()->json($sections);
     }
 }

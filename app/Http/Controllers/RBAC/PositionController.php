@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\RBAC;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\Position;
 use App\Models\Section;
 use App\Services\ActivityLogService;
+use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -13,8 +15,12 @@ class PositionController extends Controller
 {
     public function index(Request $request)
     {
+        $customerId = TenantService::currentCustomerId();
+
         if ($request->ajax()) {
-            $query = Position::with('section.dept')
+            $query = Position::with('section.dept.customer');
+            $query = TenantService::scopeQueryByCustomer($query);
+            $query = $query
                 ->when($request->start_date, function ($q) use ($request) {
                     return $q->whereDate('created_at', '>=', $request->start_date);
                 })
@@ -37,6 +43,9 @@ class PositionController extends Controller
                 ->addColumn('dept_name', function ($row) {
                     return $row->section->dept->dept_name ?? '-';
                 })
+                ->addColumn('customer', function ($row) {
+                    return $row->customer->customer_name ?? 'Internal';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
@@ -50,8 +59,19 @@ class PositionController extends Controller
                 ->make(true);
         }
 
-        $sections = Section::with('dept')->get();
-        return view('rbac.position.index', compact('sections'));
+        $sections = TenantService::scopeQueryByCustomer(
+            Section::with('dept')->orderBy('section_name')
+        )->get();
+
+        $customers = TenantService::isInternal()
+            ? Customer::orderBy('customer_name')->get()
+            : Customer::where('id', $customerId)->get();
+
+        return view('rbac.position.index', [
+            'sections' => $sections,
+            'currentCustomerId' => $customerId,
+            'customers' => $customers,
+        ]);
     }
 
     public function store(Request $request)
@@ -61,7 +81,14 @@ class PositionController extends Controller
             'section_id' => 'required|exists:sections,id',
         ]);
 
-        $position = Position::create($request->all());
+        $section = Section::findOrFail($request->section_id);
+        TenantService::assertAccess($section->customer_id);
+
+        $position = Position::create([
+            'position_name' => $request->position_name,
+            'section_id' => $section->id,
+            'customer_id' => $section->customer_id,
+        ]);
 
         // Log activity
         ActivityLogService::logCreate('positions', $position->id, [
@@ -75,6 +102,7 @@ class PositionController extends Controller
     public function edit($id)
     {
         $position = Position::with('section.dept')->findOrFail($id);
+        TenantService::assertAccess($position->customer_id);
         return response()->json($position);
     }
 
@@ -86,9 +114,17 @@ class PositionController extends Controller
         ]);
 
         $position = Position::findOrFail($id);
+        TenantService::assertAccess($position->customer_id);
         $oldValues = $position->toArray();
 
-        $position->update($request->all());
+        $section = Section::findOrFail($request->section_id);
+        TenantService::assertAccess($section->customer_id);
+
+        $position->update([
+            'position_name' => $request->position_name,
+            'section_id' => $section->id,
+            'customer_id' => $section->customer_id,
+        ]);
 
         // Log activity
         $newValues = $position->toArray();
@@ -100,6 +136,7 @@ class PositionController extends Controller
     public function destroy($id)
     {
         $position = Position::findOrFail($id);
+        TenantService::assertAccess($position->customer_id);
         $oldValues = $position->toArray();
 
         $position->delete();
@@ -112,7 +149,11 @@ class PositionController extends Controller
 
     public function getBySection($section_id)
     {
-        $positions = Position::where('section_id', $section_id)->get();
+        $section = Section::findOrFail($section_id);
+        TenantService::assertAccess($section->customer_id);
+        $positions = Position::where('section_id', $section_id)
+            ->where('customer_id', $section->customer_id)
+            ->get();
         return response()->json($positions);
     }
 }

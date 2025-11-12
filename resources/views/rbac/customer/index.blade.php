@@ -1,8 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Plant')
+@section('title', 'Customer Management')
 
-{{-- Add the CSS links for DataTables and Bootstrap --}}
 @section('css')
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -11,17 +10,14 @@
 @endsection
 
 @section('content')
-@php
-    $isInternal = is_null($currentCustomerId ?? null);
-@endphp
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Plant Management</h3>
+                    <h3 class="card-title">Customer Management</h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#customerModal">
                             <i class="fas fa-plus"></i> Add New
                         </button>
                     </div>
@@ -49,68 +45,69 @@
                         </div>
                     </div>
 
-                        <table class="table table-bordered table-striped" id="plantTable">
-                            <thead>
+                    <table class="table table-bordered table-striped" id="customerTable">
+                        <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Plant Name</th>
-                                <th>Tenant</th>
-                                <th>Plant Code</th>
-                                <th>Location</th>
-                                <th>Description</th>
+                                <th>Name</th>
+                                <th>Code</th>
+                                <th>Contact Person</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
                                 <th>Created At</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                        </table>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+<div class="modal fade" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="customerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addModalLabel">Add New Plant</h5>
+                <h5 class="modal-title" id="customerModalLabel">Add New Customer</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="plantForm">
+            <form id="customerForm">
                 @csrf
                 <input type="hidden" name="_method" id="formMethod" value="POST">
-                <input type="hidden" name="id" id="plantId">
+                <input type="hidden" name="id" id="customerId">
+                <input type="hidden" name="is_active" id="is_active_value" value="1">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="plant_name">Plant Name</label>
-                        <input type="text" class="form-control" id="plant_name" name="plant_name" required>
-                    </div>
-                    @if($isInternal)
-                        <div class="form-group">
-                            <label for="customer_id">Customer</label>
-                            <select class="form-control" id="customer_id" name="customer_id">
-                                <option value="">Internal (Global)</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @else
-                        <input type="hidden" id="customer_id" name="customer_id" value="{{ $currentCustomerId }}">
-                    @endif
-                    <div class="form-group">
-                        <label for="plant_code">Plant Code</label>
-                        <input type="text" class="form-control" id="plant_code" name="plant_code" required>
+                        <label for="customer_name">Customer Name</label>
+                        <input type="text" class="form-control" id="customer_name" name="customer_name" required>
                     </div>
                     <div class="form-group">
-                        <label for="location">Location</label>
-                        <input type="text" class="form-control" id="location" name="location" required>
+                        <label for="customer_code">Customer Code</label>
+                        <input type="text" class="form-control" id="customer_code" name="customer_code" required>
                     </div>
                     <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <label for="contact_person">Contact Person</label>
+                        <input type="text" class="form-control" id="contact_person" name="contact_person">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="text" class="form-control" id="phone" name="phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active_toggle" checked>
+                        <label class="form-check-label" for="is_active_toggle">Active</label>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -124,7 +121,6 @@
 @endsection
 
 @push('scripts')
-{{-- Ensure these are loaded after jQuery and before your custom script --}}
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -139,24 +135,24 @@ $(document).ready(function() {
         }
     });
 
-    // Initialize DataTable
-    var table = $('#plantTable').DataTable({
+    var table = $('#customerTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('rbac.plant') }}", // Corrected route name
+            url: "{{ route('rbac.customer') }}",
             data: function(d) {
                 d.start_date = $('#start_date').val();
                 d.end_date = $('#end_date').val();
             }
         },
-            columns: [
-                {data: 'id', name: 'id'},
-                {data: 'plant_name', name: 'plant_name'},
-                {data: 'customer', name: 'customer'},
-                {data: 'plant_code', name: 'plant_code'},
-                {data: 'location', name: 'location'},
-                {data: 'description', name: 'description'},
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'customer_name', name: 'customer_name'},
+            {data: 'customer_code', name: 'customer_code'},
+            {data: 'contact_person', name: 'contact_person'},
+            {data: 'email', name: 'email'},
+            {data: 'phone', name: 'phone'},
+            {data: 'is_active_label', name: 'is_active', orderable: false, searchable: false},
             {data: 'created_at', name: 'created_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false}
         ],
@@ -164,7 +160,6 @@ $(document).ready(function() {
         responsive: true
     });
 
-    // Filter functionality
     $('#filterBtn').click(function() {
         table.draw();
     });
@@ -174,85 +169,91 @@ $(document).ready(function() {
         table.draw();
     });
 
-    // Handle "Add New" button click
-    $(document).on('click', 'button[data-target="#addModal"]', function() {
-        $('#plantForm').trigger('reset');
+    $('#customerModal').on('hidden.bs.modal', function() {
+        $('#customerForm')[0].reset();
+        $('#customerId').val('');
         $('#formMethod').val('POST');
-        $('#addModalLabel').text('Add New Plant');
-        $('#plantId').val('');
-        @if($isInternal)
-            $('#customer_id').val('');
-        @else
-            $('#customer_id').val('{{ $currentCustomerId ?? '' }}');
-        @endif
+        $('#is_active_toggle').prop('checked', true);
+        $('#is_active_value').val(1);
     });
 
-    // Handle form submission for add/edit
-    $('#plantForm').on('submit', function(e) {
+    $('#is_active_toggle').on('change', function() {
+        $('#is_active_value').val($(this).is(':checked') ? 1 : 0);
+    });
+
+    $('#customerForm').on('submit', function(e) {
         e.preventDefault();
-        let id = $('#plantId').val();
-        let url = id ? `/rbac/plant/${id}` : "{{ route('rbac.plant.store') }}";
-        let type = id ? 'PUT' : 'POST';
+        let id = $('#customerId').val();
+        let url = id ? `/rbac/customer/${id}` : "{{ route('rbac.customer.store') }}";
+        let method = id ? 'PUT' : 'POST';
+        $('#is_active_value').val($('#is_active_toggle').is(':checked') ? 1 : 0);
 
         $.ajax({
             url: url,
-            type: type,
+            type: method,
             data: $(this).serialize(),
             success: function(response) {
-                $('#addModal').modal('hide');
+                $('#customerModal').modal('hide');
+                $('body').removeClass('modal-open');
                 $('.modal-backdrop').remove();
                 table.draw();
                 toastr.success(response.success);
             },
             error: function(xhr) {
-                let errors = xhr.responseJSON.errors;
-                $.each(errors, function(key, value) {
-                    toastr.error(value[0]);
-                });
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    $.each(xhr.responseJSON.errors, function(key, value) {
+                        toastr.error(value[0]);
+                    });
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    toastr.error(xhr.responseJSON.error);
+                } else {
+                    toastr.error('Failed to save customer.');
+                }
             }
         });
     });
 
-    // Handle "Edit" button click
     $(document).on('click', '.edit-btn', function() {
         let id = $(this).data('id');
-        let editUrl = `/rbac/plant/${id}/edit`; // Corrected URL
-
         $.ajax({
-            url: editUrl,
+            url: "{{ route('rbac.customer.edit', ':id') }}".replace(':id', id),
             type: 'GET',
             success: function(response) {
-                $('#addModalLabel').text('Edit Plant');
-                $('#plantId').val(response.id);
-                $('#plant_name').val(response.plant_name);
-                $('#plant_code').val(response.plant_code);
-                $('#location').val(response.location);
-                $('#description').val(response.description);
-                $('#customer_id').val(response.customer_id ?? '');
+                $('#customerModalLabel').text('Edit Customer');
+                $('#customerId').val(response.id);
+                $('#customer_name').val(response.customer_name);
+                $('#customer_code').val(response.customer_code);
+                $('#contact_person').val(response.contact_person);
+                $('#email').val(response.email);
+                $('#phone').val(response.phone);
+                $('#address').val(response.address);
                 $('#formMethod').val('PUT');
-                $('#addModal').modal('show');
+                $('#is_active_toggle').prop('checked', response.is_active);
+                $('#is_active_value').val(response.is_active ? 1 : 0);
+                $('#customerModal').modal('show');
             },
-            error: function(xhr) {
-                toastr.error('Failed to load plant data.');
+            error: function() {
+                toastr.error('Failed to load customer data.');
             }
         });
     });
 
-    // Handle "Delete" button click
     $(document).on('click', '.delete-btn', function() {
         let id = $(this).data('id');
-        let deleteUrl = `/rbac/plant/${id}`;
-
-        if (confirm('Are you sure you want to delete this plant?')) {
+        if (confirm('Are you sure you want to delete this customer?')) {
             $.ajax({
-                url: deleteUrl,
+                url: "{{ route('rbac.customer.destroy', ':id') }}".replace(':id', id),
                 type: 'DELETE',
                 success: function(response) {
                     table.draw();
                     toastr.success(response.success);
                 },
                 error: function(xhr) {
-                    toastr.error(xhr.responseJSON.error || 'Something went wrong.');
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        toastr.error(xhr.responseJSON.error);
+                    } else {
+                        toastr.error('Failed to delete customer.');
+                    }
                 }
             });
         }

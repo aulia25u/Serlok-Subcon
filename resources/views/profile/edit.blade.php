@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Profile')
-@section('page-title', 'My Profile')
 
 @section('css')
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css"/>

@@ -11,9 +11,16 @@
 }
 
 .sidebar .sidebar-menu-search {
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s ease;
 }
 
-body.sidebar-collapse .sidebar-menu-search {
+body.sidebar-collapse .sidebar-menu-search,
+body.sidebar-mini .sidebar-menu-search,
+body.sidebar-closed .sidebar-menu-search {
     display: none !important;
+}
+
+.sidebar:hover .sidebar-menu-search {
+    display: block !important;
+    opacity: 1;
 }

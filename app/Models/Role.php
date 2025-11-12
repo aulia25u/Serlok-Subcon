@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Customer;
 
 class Role extends Model
 {
@@ -13,6 +14,7 @@ class Role extends Model
 
     protected $fillable = [
         'role_name',
+        'customer_id',
     ];
 
     public function userDetails()
@@ -24,5 +26,9 @@ class Role extends Model
     {
         return $this->hasMany(RoleToMenu::class);
     }
-}
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+}

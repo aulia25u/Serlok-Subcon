@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Section')
-@section('page-title', 'Section')
 
 {{-- Add the CSS links for DataTables and Bootstrap --}}
 @section('css')
@@ -12,6 +11,9 @@
 @endsection
 
 @section('content')
+@php
+    $isInternal = is_null($currentCustomerId ?? null);
+@endphp
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -49,13 +51,14 @@
 
                     <table class="table table-bordered table-striped" id="sectionTable">
                         <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Section Name</th>
-                                <th>Department</th>
-                                <th>Created At</th>
-                                <th>Actions</th>
-                            </tr>
+                        <tr>
+                            <th>No</th>
+                            <th>Section Name</th>
+                            <th>Department</th>
+                            <th>Tenant</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                     </table>
                 </div>
@@ -83,10 +86,26 @@
                         <input type="text" class="form-control" id="section_name" name="section_name" required>
                     </div>
                     <div class="form-group">
+                        <label for="customer_id">Tenant</label>
+                        @if($isInternal)
+                            <select class="form-control" id="customer_id" name="customer_id">
+                                <option value="">Select Customer</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <select class="form-control" id="customer_id" name="customer_id" disabled>
+                                <option value="{{ $currentCustomerId ?? '' }}">{{ optional($customers->first())->customer_name ?? 'My Customer' }}</option>
+                            </select>
+                            <input type="hidden" name="customer_id" value="{{ $currentCustomerId }}">
+                        @endif
+                    </div>
+                    <div class="form-group">
                         <label for="dept_id">Department</label>
                         <select class="form-control" id="dept_id" name="dept_id" required>
                             <option value="">Select Department</option>
-                            </select>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="description">Description</label>
@@ -134,6 +153,7 @@ $(document).ready(function() {
             {data: 'no', name: 'no', orderable: false, searchable: false},
             {data: 'section_name', name: 'section_name'},
             {data: 'dept_name', name: 'dept_name'},
+            {data: 'customer', name: 'customer'},
             {data: 'created_at', name: 'created_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false}
         ],
@@ -141,22 +161,35 @@ $(document).ready(function() {
         responsive: true
     });
 
-    // Populate departments dropdown
-    function populateDepartments() {
+    function loadDepartments(customerId, selectedId = null) {
+        if (!customerId) {
+            $('#dept_id').html('<option value="">Select Department</option>');
+            return;
+        }
+
+        const url = "{{ route('rbac.departments.by-customer', ['customer_id' => ':customer']) }}".replace(':customer', customerId);
+
         $.ajax({
-            url: "{{ route('rbac.departments.all') }}", // This route needs to be defined
-            method: 'GET',
+            url: url,
+            type: 'GET',
             success: function(response) {
                 let options = '<option value="">Select Department</option>';
                 response.forEach(function(dept) {
-                    options += `<option value="${dept.id}">${dept.dept_name}</option>`;
+                    const selected = selectedId && selectedId == dept.id ? 'selected' : '';
+                    options += `<option value="${dept.id}" ${selected}>${dept.dept_name}</option>`;
                 });
                 $('#dept_id').html(options);
             }
         });
     }
 
-    populateDepartments();
+    $('#customer_id').on('change', function() {
+        loadDepartments($(this).val());
+    });
+
+    if ($('#customer_id').val()) {
+        loadDepartments($('#customer_id').val());
+    }
 
     // Filter functionality
     $('#filterBtn').click(function() {
@@ -194,6 +227,7 @@ $(document).ready(function() {
                 $('#sectionId').val('');
                 $('#formMethod').val('POST');
                 $('#dept_id').val('');
+                loadDepartments($('#customer_id').val());
             },
             error: function(xhr) {
                 var errors = xhr.responseJSON.errors;
@@ -212,15 +246,16 @@ $(document).ready(function() {
         $.ajax({
             url: editUrl,
             type: 'GET',
-            success: function(response) {
-                $('#addModalLabel').text('Edit Section');
-                $('#sectionId').val(response.id);
-                $('#section_name').val(response.section_name);
-                $('#dept_id').val(response.dept_id);
-                $('#description').val(response.description);
-                $('#formMethod').val('PUT');
-                $('#addModal').modal('show');
-            },
+        success: function(response) {
+            $('#addModalLabel').text('Edit Section');
+            $('#sectionId').val(response.id);
+            $('#section_name').val(response.section_name);
+            $('#customer_id').val(response.customer_id);
+            loadDepartments(response.customer_id, response.dept_id);
+            $('#description').val(response.description);
+            $('#formMethod').val('PUT');
+            $('#addModal').modal('show');
+        },
             error: function(xhr) {
                 toastr.error('Failed to load section data for editing.');
             }

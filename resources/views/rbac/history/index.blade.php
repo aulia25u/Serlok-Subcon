@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Activity History')
-@section('page-title', 'Activity History')
 
 @section('content')
 <div class="container-fluid">

@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Position')
-@section('page-title', 'Position')
 
 @section('css')
     {{-- Include the necessary CSS files --}}
@@ -12,6 +11,9 @@
 @endsection
 
 @section('content')
+@php
+    $isInternal = is_null($currentCustomerId ?? null);
+@endphp
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -49,13 +51,14 @@
 
                     <table class="table table-bordered table-striped" id="positionTable">
                         <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Position Name</th>
-                                <th>Section</th>
-                                <th>Created At</th>
-                                <th>Actions</th>
-                            </tr>
+                        <tr>
+                            <th>No</th>
+                            <th>Position Name</th>
+                            <th>Section</th>
+                            <th>Tenant</th>
+                            <th>Created At</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                     </table>
                 </div>
@@ -83,10 +86,26 @@
                         <input type="text" class="form-control" id="position_name" name="position_name" required>
                     </div>
                     <div class="form-group">
+                        <label for="position_customer_id">Tenant</label>
+                        @if($isInternal)
+                            <select class="form-control" id="position_customer_id" name="customer_id">
+                                <option value="">Select Customer</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <select class="form-control" id="position_customer_id" name="customer_id" disabled>
+                                <option value="{{ $currentCustomerId ?? '' }}">{{ optional($customers->first())->customer_name ?? 'My Customer' }}</option>
+                            </select>
+                            <input type="hidden" name="customer_id" value="{{ $currentCustomerId }}">
+                        @endif
+                    </div>
+                    <div class="form-group">
                         <label for="section_id">Section</label>
                         <select class="form-control" id="section_id" name="section_id" required>
                             <option value="">Select Section</option>
-                            </select>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="description">Description</label>
@@ -134,6 +153,7 @@ $(document).ready(function() {
             {data: 'no', name: 'no', orderable: false, searchable: false},
             {data: 'position_name', name: 'position_name'},
             {data: 'section_name', name: 'section_name'},
+            {data: 'customer', name: 'customer'},
             {data: 'created_at', name: 'created_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false}
         ],
@@ -141,22 +161,35 @@ $(document).ready(function() {
         responsive: true
     });
 
-    // Populate sections dropdown
-    function populateSections() {
+    function loadSections(customerId, selectedId = null) {
+        if (!customerId) {
+            $('#section_id').html('<option value="">Select Section</option>');
+            return;
+        }
+
+        const url = "{{ route('rbac.sections.by-customer', ['customer_id' => ':customer']) }}".replace(':customer', customerId);
+
         $.ajax({
-            url: "{{ route('rbac.sections.all') }}", // You will need to create this route
-            method: 'GET',
+            url: url,
+            type: 'GET',
             success: function(response) {
                 let options = '<option value="">Select Section</option>';
                 response.forEach(function(section) {
-                    options += `<option value="${section.id}">${section.section_name}</option>`;
+                    const selected = selectedId && selectedId == section.id ? 'selected' : '';
+                    options += `<option value="${section.id}" ${selected}>${section.section_name}</option>`;
                 });
                 $('#section_id').html(options);
             }
         });
     }
 
-    populateSections();
+    $('#position_customer_id').on('change', function() {
+        loadSections($(this).val());
+    });
+
+    if ($('#position_customer_id').val()) {
+        loadSections($('#position_customer_id').val());
+    }
 
     // Filter functionality
     $('#filterBtn').click(function() {
@@ -193,7 +226,7 @@ $(document).ready(function() {
                 $('#positionForm')[0].reset();
                 $('#positionId').val('');
                 $('#formMethod').val('POST');
-                $('#section_id').val('');
+                loadSections($('#position_customer_id').val());
             },
             error: function(xhr) {
                 var errors = xhr.responseJSON.errors;
@@ -216,7 +249,8 @@ $(document).ready(function() {
                 $('#addModalLabel').text('Edit Position');
                 $('#positionId').val(response.id);
                 $('#position_name').val(response.position_name);
-                $('#section_id').val(response.section_id);
+                $('#position_customer_id').val(response.customer_id);
+                loadSections(response.customer_id, response.section_id);
                 $('#description').val(response.description);
                 $('#formMethod').val('PUT');
                 $('#addModal').modal('show');

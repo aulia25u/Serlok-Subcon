@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', 'Department Management')
-@section('page-title', 'Department Management')
 
 {{-- You need to include the necessary CSS for DataTables --}}
 @section('css')
@@ -11,6 +10,9 @@
 @stop
 
 @section('content')
+@php
+    $isInternal = is_null($currentCustomerId ?? null);
+@endphp
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -51,6 +53,7 @@
                             <tr>
                                 <th>No</th>
                                 <th>Department Name</th>
+                                <th>Tenant</th>
                                 <th>Created At</th>
                                 <th>Action</th>
                             </tr>
@@ -78,6 +81,19 @@
                         <label for="dept_name">Department Name:</label>
                         <input type="text" class="form-control" id="dept_name" name="dept_name" required>
                     </div>
+                    @if($isInternal)
+                        <div class="form-group">
+                            <label for="customer_id">Customer</label>
+                            <select class="form-control" id="customer_id" name="customer_id">
+                                <option value="">Internal (Global)</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <input type="hidden" id="customer_id" name="customer_id" value="{{ $currentCustomerId }}">
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -106,6 +122,19 @@
                         <label for="edit_dept_name">Department Name:</label>
                         <input type="text" class="form-control" id="edit_dept_name" name="dept_name" required>
                     </div>
+                    @if($isInternal)
+                        <div class="form-group">
+                            <label for="edit_customer_id">Customer</label>
+                            <select class="form-control" id="edit_customer_id" name="customer_id">
+                                <option value="">Internal (Global)</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <input type="hidden" id="edit_customer_id" name="customer_id" value="{{ $currentCustomerId }}">
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -147,6 +176,7 @@
             columns: [
                 {data: 'no', name: 'no', orderable: false, searchable: false},
                 {data: 'dept_name', name: 'dept_name'},
+                {data: 'customer', name: 'customer'},
                 {data: 'created_at', name: 'created_at'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
@@ -202,6 +232,7 @@
                 success: function(response) {
                     $('#edit_id').val(response.id);
                     $('#edit_dept_name').val(response.dept_name);
+                    $('#edit_customer_id').val(response.customer_id ?? '');
                     $('#editModal').modal('show');
                 }
             });

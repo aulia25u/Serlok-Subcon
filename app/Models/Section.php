@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Customer;
 
 class Section extends Model
 {
@@ -14,6 +15,7 @@ class Section extends Model
     protected $fillable = [
         'section_name',
         'dept_id',
+        'customer_id',
     ];
 
     public function dept()
@@ -25,5 +27,9 @@ class Section extends Model
     {
         return $this->hasMany(Position::class);
     }
-}
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+}

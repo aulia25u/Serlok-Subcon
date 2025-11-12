@@ -15,6 +15,7 @@ class UserDetail extends Model
         'user_id',
         'position_id',
         'role_id',
+        'customer_id',
         // 'plant_id', // Removed plant_id
         'employee_id',
         'employee_name',
@@ -46,6 +47,8 @@ class UserDetail extends Model
         return $this->belongsTo(Role::class);
     }
 
-
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }
-

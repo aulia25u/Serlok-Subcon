@@ -1,8 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Plant')
+@section('title', 'Tenant Users')
 
-{{-- Add the CSS links for DataTables and Bootstrap --}}
 @section('css')
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.3/css/jquery.dataTables.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -11,18 +10,15 @@
 @endsection
 
 @section('content')
-@php
-    $isInternal = is_null($currentCustomerId ?? null);
-@endphp
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Plant Management</h3>
+                    <h3 class="card-title">Tenant Users (Owners)</h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
-                            <i class="fas fa-plus"></i> Add New
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#ownerModal">
+                            <i class="fas fa-plus"></i> Assign Owner
                         </button>
                     </div>
                 </div>
@@ -49,69 +45,62 @@
                         </div>
                     </div>
 
-                        <table class="table table-bordered table-striped" id="plantTable">
-                            <thead>
+                    <table class="table table-bordered table-striped" id="ownerTable">
+                        <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Plant Name</th>
+                                <th>Owner</th>
+                                <th>Email</th>
                                 <th>Tenant</th>
-                                <th>Plant Code</th>
-                                <th>Location</th>
-                                <th>Description</th>
-                                <th>Created At</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                        </table>
+                                <th>Status</th>
+                                <th>Assigned At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+<div class="modal fade" id="ownerModal" tabindex="-1" role="dialog" aria-labelledby="ownerModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="addModalLabel">Add New Plant</h5>
+                <h5 class="modal-title" id="ownerModalLabel">Assign Tenant Owner</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <form id="plantForm">
+            <form id="ownerForm">
                 @csrf
                 <input type="hidden" name="_method" id="formMethod" value="POST">
-                <input type="hidden" name="id" id="plantId">
+                <input type="hidden" name="id" id="ownerId">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="plant_name">Plant Name</label>
-                        <input type="text" class="form-control" id="plant_name" name="plant_name" required>
-                    </div>
-                    @if($isInternal)
-                        <div class="form-group">
-                            <label for="customer_id">Customer</label>
-                            <select class="form-control" id="customer_id" name="customer_id">
-                                <option value="">Internal (Global)</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @else
-                        <input type="hidden" id="customer_id" name="customer_id" value="{{ $currentCustomerId }}">
-                    @endif
-                    <div class="form-group">
-                        <label for="plant_code">Plant Code</label>
-                        <input type="text" class="form-control" id="plant_code" name="plant_code" required>
+                        <label for="owner_user_id">Owner User</label>
+                        <select class="form-control" id="owner_user_id" name="user_id" required>
+                            <option value="">Select User</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->username }} ({{ $user->email ?? 'no email' }})</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="location">Location</label>
-                        <input type="text" class="form-control" id="location" name="location" required>
+                        <label for="owner_customer_id">Tenant</label>
+                        <select class="form-control" id="owner_customer_id" name="customer_id" required>
+                            <option value="">Select Tenant</option>
+                            @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="owner_active" checked>
+                        <label class="form-check-label" for="owner_active">Active</label>
                     </div>
+                    <input type="hidden" name="is_active" id="owner_active_value" value="1">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -124,7 +113,6 @@
 @endsection
 
 @push('scripts')
-{{-- Ensure these are loaded after jQuery and before your custom script --}}
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
@@ -139,24 +127,22 @@ $(document).ready(function() {
         }
     });
 
-    // Initialize DataTable
-    var table = $('#plantTable').DataTable({
+    var table = $('#ownerTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: "{{ route('rbac.plant') }}", // Corrected route name
+            url: "{{ route('rbac.tenant-owner') }}",
             data: function(d) {
                 d.start_date = $('#start_date').val();
                 d.end_date = $('#end_date').val();
             }
         },
-            columns: [
-                {data: 'id', name: 'id'},
-                {data: 'plant_name', name: 'plant_name'},
-                {data: 'customer', name: 'customer'},
-                {data: 'plant_code', name: 'plant_code'},
-                {data: 'location', name: 'location'},
-                {data: 'description', name: 'description'},
+        columns: [
+            {data: 'id', name: 'id'},
+            {data: 'owner_name', name: 'owner_name'},
+            {data: 'owner_email', name: 'owner_email'},
+            {data: 'tenant', name: 'tenant'},
+            {data: 'status', name: 'status', orderable: false, searchable: false},
             {data: 'created_at', name: 'created_at'},
             {data: 'action', name: 'action', orderable: false, searchable: false}
         ],
@@ -164,7 +150,6 @@ $(document).ready(function() {
         responsive: true
     });
 
-    // Filter functionality
     $('#filterBtn').click(function() {
         table.draw();
     });
@@ -174,85 +159,87 @@ $(document).ready(function() {
         table.draw();
     });
 
-    // Handle "Add New" button click
-    $(document).on('click', 'button[data-target="#addModal"]', function() {
-        $('#plantForm').trigger('reset');
+    $('#ownerModal').on('hidden.bs.modal', function() {
+        $('#ownerForm')[0].reset();
+        $('#ownerId').val('');
         $('#formMethod').val('POST');
-        $('#addModalLabel').text('Add New Plant');
-        $('#plantId').val('');
-        @if($isInternal)
-            $('#customer_id').val('');
-        @else
-            $('#customer_id').val('{{ $currentCustomerId ?? '' }}');
-        @endif
+        $('#owner_active').prop('checked', true);
+        $('#owner_active_value').val(1);
     });
 
-    // Handle form submission for add/edit
-    $('#plantForm').on('submit', function(e) {
+    $('#owner_active').on('change', function() {
+        $('#owner_active_value').val($(this).is(':checked') ? 1 : 0);
+    });
+
+    $('#ownerForm').on('submit', function(e) {
         e.preventDefault();
-        let id = $('#plantId').val();
-        let url = id ? `/rbac/plant/${id}` : "{{ route('rbac.plant.store') }}";
-        let type = id ? 'PUT' : 'POST';
+        let id = $('#ownerId').val();
+        let url = id ? `/rbac/tenant-owner/${id}` : "{{ route('rbac.tenant-owner.store') }}";
+        let method = id ? 'PUT' : 'POST';
+        $('#owner_active_value').val($('#owner_active').is(':checked') ? 1 : 0);
 
         $.ajax({
             url: url,
-            type: type,
+            type: method,
             data: $(this).serialize(),
             success: function(response) {
-                $('#addModal').modal('hide');
+                $('#ownerModal').modal('hide');
+                $('body').removeClass('modal-open');
                 $('.modal-backdrop').remove();
                 table.draw();
                 toastr.success(response.success);
             },
             error: function(xhr) {
-                let errors = xhr.responseJSON.errors;
-                $.each(errors, function(key, value) {
-                    toastr.error(value[0]);
-                });
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    $.each(xhr.responseJSON.errors, function(key, value) {
+                        toastr.error(value[0]);
+                    });
+                } else if (xhr.responseJSON && xhr.responseJSON.error) {
+                    toastr.error(xhr.responseJSON.error);
+                } else {
+                    toastr.error('Failed to save tenant owner.');
+                }
             }
         });
     });
 
-    // Handle "Edit" button click
     $(document).on('click', '.edit-btn', function() {
         let id = $(this).data('id');
-        let editUrl = `/rbac/plant/${id}/edit`; // Corrected URL
-
         $.ajax({
-            url: editUrl,
+            url: "{{ route('rbac.tenant-owner.edit', ':id') }}".replace(':id', id),
             type: 'GET',
             success: function(response) {
-                $('#addModalLabel').text('Edit Plant');
-                $('#plantId').val(response.id);
-                $('#plant_name').val(response.plant_name);
-                $('#plant_code').val(response.plant_code);
-                $('#location').val(response.location);
-                $('#description').val(response.description);
-                $('#customer_id').val(response.customer_id ?? '');
+                $('#ownerModalLabel').text('Edit Tenant Owner');
+                $('#ownerId').val(response.id);
+                $('#owner_user_id').val(response.user_id);
+                $('#owner_customer_id').val(response.customer_id);
+                $('#owner_active').prop('checked', response.is_active);
+                $('#owner_active_value').val(response.is_active ? 1 : 0);
                 $('#formMethod').val('PUT');
-                $('#addModal').modal('show');
+                $('#ownerModal').modal('show');
             },
-            error: function(xhr) {
-                toastr.error('Failed to load plant data.');
+            error: function() {
+                toastr.error('Failed to load tenant owner data.');
             }
         });
     });
 
-    // Handle "Delete" button click
     $(document).on('click', '.delete-btn', function() {
         let id = $(this).data('id');
-        let deleteUrl = `/rbac/plant/${id}`;
-
-        if (confirm('Are you sure you want to delete this plant?')) {
+        if (confirm('Are you sure you want to remove this tenant owner?')) {
             $.ajax({
-                url: deleteUrl,
+                url: "{{ route('rbac.tenant-owner.destroy', ':id') }}".replace(':id', id),
                 type: 'DELETE',
                 success: function(response) {
                     table.draw();
                     toastr.success(response.success);
                 },
                 error: function(xhr) {
-                    toastr.error(xhr.responseJSON.error || 'Something went wrong.');
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        toastr.error(xhr.responseJSON.error);
+                    } else {
+                        toastr.error('Failed to delete tenant owner.');
+                    }
                 }
             });
         }

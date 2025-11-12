@@ -10,7 +10,6 @@
 
 @section('title', 'Serlok Subcon')
 @section('content_header')
-    <h1>@yield('page-title', 'Dashboard')</h1>
 @stop
 
 @section('content')

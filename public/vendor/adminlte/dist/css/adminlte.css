@@ -198,6 +198,10 @@ figure {
   margin: 0 0 1rem;
 }
 
+.sidebar-mini .sidebar-menu-search {
+  display: none !important;
+}
+
 img {
   vertical-align: middle;
   border-style: none;

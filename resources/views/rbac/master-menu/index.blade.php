@@ -2,11 +2,10 @@
 
 @section('title', 'Master Menu')
 
-@section('page-title', 'Master Menu')
-
 @section('css')
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css"/>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
 @stop
 
 @section('content')
@@ -50,9 +49,11 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Role</th>
+                                    <th>Tenant</th>
                                     <th>Menu</th>
                                     <th>Permissions</th>
                                     <th>Created At</th>
+                                    <th>Updated At</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -72,16 +73,34 @@
                         <span>&times;</span>
                     </button>
                 </div>
+                @php
+                    $restrictedMenus = ['Tenant List Management', 'Tenant Owner Management'];
+                @endphp
                 <form id="addForm">
                     @csrf
                     <div class="modal-body">
                         <div class="form-group">
+                            <label for="customer_id">Tenant:</label>
+                            @if($isInternal)
+                                <select class="form-control" id="customer_id" name="customer_id">
+                                    <option value="">Internal (Global)</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <select class="form-control" id="customer_id" name="customer_id" disabled>
+                                    <option value="{{ $currentCustomerId ?? '' }}">
+                                        {{ optional($customers->first())->customer_name ?? 'My Customer' }}
+                                    </option>
+                                </select>
+                                <input type="hidden" name="customer_id" value="{{ $currentCustomerId }}">
+                            @endif
+                        </div>
+                        <div class="form-group">
                             <label for="role_id">Role:</label>
                             <select class="form-control" id="role_id" name="role_id" required>
                                 <option value="">Select Role</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->id }}">{{ $role->role_name }}</option>
-                                @endforeach
                             </select>
                         </div>
                         <div class="form-group">
@@ -89,6 +108,9 @@
                             <select class="form-control" id="menu_id" name="menu_id" required>
                                 <option value="">Select Menu</option>
                                 @foreach($menus as $menu)
+                                    @if(!$isInternal && in_array($menu->menu_name, $restrictedMenus))
+                                        @continue
+                                    @endif
                                     <option value="{{ $menu->id }}">{{ $menu->menu_name }}</option>
                                 @endforeach
                             </select>
@@ -137,12 +159,27 @@
                     <input type="hidden" id="edit_id" name="id">
                     <div class="modal-body">
                         <div class="form-group">
+                            <label for="edit_customer_id">Customer:</label>
+                            @if($isInternal)
+                                <select class="form-control" id="edit_customer_id" name="customer_id">
+                                    <option value="">Internal (Global)</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <select class="form-control" id="edit_customer_id" name="customer_id" disabled>
+                                    <option value="{{ $currentCustomerId ?? '' }}">
+                                        {{ optional($customers->first())->customer_name ?? 'My Customer' }}
+                                    </option>
+                                </select>
+                                <input type="hidden" name="customer_id" value="{{ $currentCustomerId }}">
+                            @endif
+                        </div>
+                        <div class="form-group">
                             <label for="edit_role_id">Role:</label>
                             <select class="form-control" id="edit_role_id" name="role_id" required>
                                 <option value="">Select Role</option>
-                                @foreach($roles as $role)
-                                    <option value="{{ $role->id }}">{{ $role->role_name }}</option>
-                                @endforeach
                             </select>
                         </div>
                         <div class="form-group">
@@ -150,6 +187,9 @@
                             <select class="form-control" id="edit_menu_id" name="menu_id" required>
                                 <option value="">Select Menu</option>
                                 @foreach($menus as $menu)
+                                    @if(!$isInternal && in_array($menu->menu_name, $restrictedMenus))
+                                        @continue
+                                    @endif
                                     <option value="{{ $menu->id }}">{{ $menu->menu_name }}</option>
                                 @endforeach
                             </select>
@@ -192,7 +232,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     <script>
         $(document).ready(function() {
             $.ajaxSetup({
@@ -214,9 +255,11 @@
                 columns: [
                     {data: 'id', name: 'id'},
                     {data: 'role_name', name: 'role_name'},
+                    {data: 'customer_name', name: 'customer_name'},
                     {data: 'menu_name', name: 'menu_name'},
                     {data: 'permissions', name: 'permissions', orderable: false},
                     {data: 'created_at', name: 'created_at'},
+                    {data: 'updated_at', name: 'updated_at'},
                     {data: 'action', name: 'action', orderable: false, searchable: false}
                 ],
                 responsive: true,
@@ -243,6 +286,37 @@
                     }
                 }
             });
+
+            function loadRoles(selectId, customerId, selectedRoleId) {
+                const resolved = (customerId === '' || customerId === null) ? 'null' : customerId;
+
+                return $.ajax({
+                    url: '{{ route("rbac.roles.by-customer", [ "customer_id" => ":customer" ]) }}'.replace(':customer', resolved),
+                    type: 'GET',
+                    success: function(data) {
+                        const $select = $(selectId);
+                        $select.empty().append('<option value="">Select Role</option>');
+                        data.forEach(function(role) {
+                            $select.append('<option value="' + role.id + '">' + role.role_name + '</option>');
+                        });
+
+                        if (selectedRoleId) {
+                            $select.val(selectedRoleId);
+                        }
+                    }
+                });
+            }
+
+            $('#customer_id').on('change', function() {
+                loadRoles('#role_id', $(this).val());
+            });
+
+            $('#edit_customer_id').on('change', function() {
+                loadRoles('#edit_role_id', $(this).val());
+            });
+
+            loadRoles('#role_id', $('#customer_id').val());
+            loadRoles('#edit_role_id', $('#edit_customer_id').val());
 
             // Filter functionality
             $('#filterBtn').click(function() {
@@ -285,12 +359,14 @@
                     type: 'GET',
                     success: function(response) {
                         $('#edit_id').val(response.id);
-                        $('#edit_role_id').val(response.role_id);
                         $('#edit_menu_id').val(response.menu_id);
                         $('#edit_is_create').prop('checked', response.is_create);
                         $('#edit_is_read').prop('checked', response.is_read);
                         $('#edit_is_update').prop('checked', response.is_update);
                         $('#edit_is_delete').prop('checked', response.is_delete);
+                        const customerId = response.customer_id ?? $('#edit_customer_id').val();
+                        $('#edit_customer_id').val(customerId);
+                        loadRoles('#edit_role_id', customerId, response.role_id);
                         $('#editModal').modal('show');
                     }
                 });
