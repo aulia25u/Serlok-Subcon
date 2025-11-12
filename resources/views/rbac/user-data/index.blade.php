@@ -226,42 +226,86 @@
                 table.draw();
             });
 
-            $('#dept_id').on('change', function() {
-                var deptId = $(this).val();
-                if (deptId) {
-                    $.ajax({
-                        url: '{{ route("rbac.sections.by-department", ":id") }}'.replace(':id', deptId),
-                        type: 'GET',
-                        success: function(data) {
-                            $('#section_id').empty().append('<option value="">Select Section</option>');
-                            $.each(data, function(key, value) {
-                                $('#section_id').append('<option value="' + value.id + '">' + value.section_name + '</option>');
-                            });
-                            $('#position_id').empty().append('<option value="">Select Position</option>');
-                        }
-                    });
-                } else {
+            function loadSections(deptId, selectedSectionId, selectedPositionId) {
+                if (!deptId) {
                     $('#section_id').empty().append('<option value="">Select Section</option>');
                     $('#position_id').empty().append('<option value="">Select Position</option>');
+                    return $.Deferred().resolve();
                 }
+
+                return $.ajax({
+                    url: '{{ route("rbac.sections.by-department", ":id") }}'.replace(':id', deptId),
+                    type: 'GET',
+                    success: function(data) {
+                        $('#section_id').empty().append('<option value="">Select Section</option>');
+                        $.each(data, function(key, value) {
+                            $('#section_id').append('<option value="' + value.id + '">' + value.section_name + '</option>');
+                        });
+
+                        if (selectedSectionId) {
+                            $('#section_id').val(selectedSectionId);
+                        }
+
+                        $('#position_id').empty().append('<option value="">Select Position</option>');
+
+                        var sectionIdToLoad = selectedSectionId || $('#section_id').val();
+                        if (sectionIdToLoad) {
+                            loadPositions(sectionIdToLoad, selectedPositionId);
+                        }
+                    }
+                });
+            }
+
+            function loadPositions(sectionId, selectedPositionId) {
+                if (!sectionId) {
+                    $('#position_id').empty().append('<option value="">Select Position</option>');
+                    return $.Deferred().resolve();
+                }
+
+                return $.ajax({
+                    url: '{{ route("rbac.positions.by-section", ":id") }}'.replace(':id', sectionId),
+                    type: 'GET',
+                    success: function(data) {
+                        $('#position_id').empty().append('<option value="">Select Position</option>');
+                        $.each(data, function(key, value) {
+                            $('#position_id').append('<option value="' + value.id + '">' + value.position_name + '</option>');
+                        });
+
+                        if (selectedPositionId) {
+                            $('#position_id').val(selectedPositionId);
+                        }
+                    }
+                });
+            }
+
+            function populateSections(sections, selectedSectionId) {
+                $('#section_id').empty().append('<option value="">Select Section</option>');
+                sections.forEach(function(section) {
+                    $('#section_id').append('<option value="' + section.id + '">' + section.section_name + '</option>');
+                });
+                if (selectedSectionId) {
+                    $('#section_id').val(selectedSectionId);
+                }
+            }
+
+            function populatePositions(positions, selectedPositionId) {
+                $('#position_id').empty().append('<option value="">Select Position</option>');
+                positions.forEach(function(position) {
+                    $('#position_id').append('<option value="' + position.id + '">' + position.position_name + '</option>');
+                });
+                if (selectedPositionId) {
+                    $('#position_id').val(selectedPositionId);
+                }
+            }
+
+            $('#dept_id').on('change', function() {
+                var deptId = $(this).val();
+                loadSections(deptId);
             });
 
             $('#section_id').on('change', function() {
                 var sectionId = $(this).val();
-                if (sectionId) {
-                    $.ajax({
-                        url: '{{ route("rbac.positions.by-section", ":id") }}'.replace(':id', sectionId),
-                        type: 'GET',
-                        success: function(data) {
-                            $('#position_id').empty().append('<option value="">Select Position</option>');
-                            $.each(data, function(key, value) {
-                                $('#position_id').append('<option value="' + value.id + '">' + value.position_name + '</option>');
-                            });
-                        }
-                    });
-                } else {
-                    $('#position_id').empty().append('<option value="">Select Position</option>');
-                }
+                loadPositions(sectionId);
             });
             
             $('#addModal').on('show.bs.modal', function(event) {
@@ -284,24 +328,25 @@
                             // Populate basic user information with null checks
                             $('#username').val(response.user.username || '');
                             $('#email').val(response.user.email || '');
-                            $('#full_name').val(response.user.userDetail ? response.user.userDetail.employee_name || '' : '');
-                            $('#gender').val(response.user.userDetail ? response.user.userDetail.gender || '' : '');
-                            $('#role_id').val(response.user.userDetail ? response.user.userDetail.role_id || '' : '');
+                            $('#full_name').val(response.user.user_detail ? response.user.user_detail.employee_name || '' : '');
+                            $('#gender').val(response.user.user_detail ? response.user.user_detail.gender || '' : '');
+                            $('#role_id').val(response.user.user_detail ? response.user.user_detail.role_id || '' : '');
 
                             // Handle department/section/position population
-                            if (response.user.userDetail && response.user.userDetail.position && response.user.userDetail.position.section) {
-                                // Set department first
-                                $('#dept_id').val(response.user.userDetail.position.section.dept_id).trigger('change');
+                            if (response.user.user_detail && response.user.user_detail.position && response.user.user_detail.position.section) {
+                                var deptId = response.user.user_detail.position.section.dept_id;
+                                var sectionId = response.user.user_detail.position.section_id;
+                                var positionId = response.user.user_detail.position_id;
 
-                                // Wait for sections to load, then set section
-                                setTimeout(function() {
-                                    $('#section_id').val(response.user.userDetail.position.section_id).trigger('change');
-
-                                    // Wait for positions to load, then set position
-                                    setTimeout(function() {
-                                        $('#position_id').val(response.user.userDetail.position_id);
-                                    }, 300);
-                                }, 300);
+                                $('#dept_id').val(deptId);
+                                if (response.sections) {
+                                    populateSections(response.sections, sectionId);
+                                } else {
+                                    loadSections(deptId, sectionId, positionId);
+                                }
+                                if (response.positions) {
+                                    populatePositions(response.positions, positionId);
+                                }
                             } else {
                                 // Clear organizational fields if no data
                                 $('#dept_id').val('');

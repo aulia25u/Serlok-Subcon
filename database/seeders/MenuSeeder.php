@@ -22,6 +22,7 @@ class MenuSeeder extends Seeder
             ['menu_name' => 'Role Management'],
             ['menu_name' => 'Plant Management'],
             ['menu_name' => 'Menu Management'],
+            ['menu_name' => 'History Management'],
             ['menu_name' => 'Customers'],
             ['menu_name' => 'Calendar Pitching'],
             ['menu_name' => 'MoM Customer'],

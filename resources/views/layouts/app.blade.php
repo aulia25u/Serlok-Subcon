@@ -2,12 +2,13 @@
 
 @push('css')
     <!-- Styles -->
+    @vite(['resources/css/app.css'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
 @endpush
 
-@section('title', 'SHIMADA')
+@section('title', 'Serlok Subcon')
 @section('content_header')
     <h1>@yield('page-title', 'Dashboard')</h1>
 @stop

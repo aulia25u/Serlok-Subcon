@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.nav-sidebar .nav-link {
+    font-size: 0.85rem;
+}
+
+.nav-sidebar .nav-icon {
+    font-size: 0.9rem;
+}
+
+.sidebar .sidebar-menu-search {
+    transition: opacity 0.2s ease;
+}
+
+body.sidebar-collapse .sidebar-menu-search {
+    display: none !important;
+}

@@ -80,9 +80,9 @@
 
     <div class="login-box">
         <div class="login-logo">
-            <img src="{{ asset('icon.png') }}" alt="Fixo Consultant Logo">
+            <img src="{{ asset('icon.png') }}" alt="Serlok Subcon Logo">
             <br>
-            <b>Fixo Consultant</b>
+            <b>Serlok Subcon</b>
         </div>
         
         <div class="card">

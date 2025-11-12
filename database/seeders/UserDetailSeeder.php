@@ -19,26 +19,31 @@ class UserDetailSeeder extends Seeder
         $users = [
             [
                 'username' => 'admin',
+                'name' => 'Admin User',
                 'email' => 'admin@shimada.com',
                 'password' => Hash::make('password'),
             ],
             [
                 'username' => 'manager1',
+                'name' => 'Manager One',
                 'email' => 'manager1@shimada.com',
                 'password' => Hash::make('password'),
             ],
             [
                 'username' => 'employee1',
+                'name' => 'Employee One',
                 'email' => 'employee1@shimada.com',
                 'password' => Hash::make('password'),
             ],
             [
                 'username' => 'hr_staff',
+                'name' => 'HR Staff',
                 'email' => 'hr@shimada.com',
                 'password' => Hash::make('password'),
             ],
             [
                 'username' => 'it_staff',
+                'name' => 'IT Staff',
                 'email' => 'it@shimada.com',
                 'password' => Hash::make('password'),
             ],
@@ -54,7 +59,6 @@ class UserDetailSeeder extends Seeder
                 'user_id' => 1,
                 'position_id' => 1, // HR Manager
                 'role_id' => 1, // Administrator
-                'plant_id' => 6, // Head Office
                 'employee_id' => 'EMP001',
                 'employee_name' => 'John Admin',
                 'gender' => 'Male',
@@ -68,7 +72,6 @@ class UserDetailSeeder extends Seeder
                 'user_id' => 2,
                 'position_id' => 11, // Production Supervisor
                 'role_id' => 2, // Manager
-                'plant_id' => 1, // Main Plant Jakarta
                 'employee_id' => 'EMP002',
                 'employee_name' => 'Jane Manager',
                 'gender' => 'Female',
@@ -82,7 +85,6 @@ class UserDetailSeeder extends Seeder
                 'user_id' => 3,
                 'position_id' => 6, // Junior Developer
                 'role_id' => 4, // Employee
-                'plant_id' => 2, // Branch Plant Surabaya
                 'employee_id' => 'EMP003',
                 'employee_name' => 'Bob Employee',
                 'gender' => 'Male',
@@ -96,7 +98,6 @@ class UserDetailSeeder extends Seeder
                 'user_id' => 4,
                 'position_id' => 2, // Recruitment Specialist
                 'role_id' => 6, // HR Staff
-                'plant_id' => 6, // Head Office
                 'employee_id' => 'EMP004',
                 'employee_name' => 'Alice HR',
                 'gender' => 'Female',
@@ -110,7 +111,6 @@ class UserDetailSeeder extends Seeder
                 'user_id' => 5,
                 'position_id' => 7, // System Administrator
                 'role_id' => 7, // IT Staff
-                'plant_id' => 1, // Main Plant Jakarta
                 'employee_id' => 'EMP005',
                 'employee_name' => 'Charlie IT',
                 'gender' => 'Male',

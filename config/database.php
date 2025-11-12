@@ -30,25 +30,6 @@ return [
     */
 
     'connections' => [
-
-        'shimada' => [
-            'driver' => env('DB_DRIVER'),
-            'host' => env('DB_HOST'),
-            'port' => env('DB_PORT'),
-            'database' => env('DB_DATABASE'),
-            'username' => env('DB_USERNAME'),
-            'password' => env('DB_PASSWORD'),
-        ],
-
-        'shimada_ski' => [
-            'driver' => env('DB_DRIVER_SKI'),
-            'host' => env('DB_HOST_SKI'),
-            'port' => env('DB_PORT_SKI'),
-            'database' => env('DB_DATABASE_SKI'),
-            'username' => env('DB_USERNAME_SKI'),
-            'password' => env('DB_PASSWORD_SKI'),
-        ],
-
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DATABASE_URL'),
@@ -58,25 +39,6 @@ return [
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'prefix_indexes' => true,
-            'strict' => true,
-            'engine' => null,
-            'options' => extension_loaded('pdo_mysql') ? array_filter([
-                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
-        ],
-
-        'mysql_invoice' => [
-            'driver' => 'mysql',
-            'host' => '192.168.196.142',
-            'port' => '3306',
-            'database' => 'invoice',
-            'username' => 'invoice',
-            'password' => 'invoice',
-            'unix_socket' => '',
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',

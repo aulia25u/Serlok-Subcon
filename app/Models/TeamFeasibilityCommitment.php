@@ -17,7 +17,6 @@ class TeamFeasibilityCommitment extends Model
         'part_no',
         'model',
         'customer_name',
-        'customer_id',
         'conclusion_status', // feasible, feasible_with_changes, not_feasible
         'conclusion_notes',
         'submitted_at',

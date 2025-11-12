@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'Fixo Consultant',
+    'title' => 'Serlok Subcon',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b>Fixo</b>Consultant',
+    'logo' => '<b>Serlok</b>Subcon',
     'logo_img' => 'icon.png',
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
@@ -133,7 +133,7 @@ return [
     |
     */
 
-    'usermenu_enabled' => true,
+    'usermenu_enabled' => false,
     'usermenu_header' => false,
     'usermenu_header_class' => 'bg-primary',
     'usermenu_image' => false,
@@ -298,197 +298,7 @@ return [
     |
     */
 
-    'menu' => [
-        // Navbar items:
-        [
-            'type' => 'fullscreen-widget',
-            'topnav_right' => true,
-        ],
-
-        // Sidebar items:
-        [
-            'type' => 'sidebar-menu-search',
-            'text' => 'search',
-        ],
-        // [
-        //     'text' => 'blog',
-        //     'url' => 'admin/blog',
-        //     'can' => 'manage-blog',
-        // ],
-        // [
-        //     'text' => 'pages',
-        //     'url' => 'admin/pages',
-        //     'icon' => 'far fa-fw fa-file',
-        //     'label' => 4,
-        //     'label_color' => 'success',
-        // ],
-        // ['header' => 'account_settings'],
-        // [
-        //     'text' => 'profile',
-        //     'url' => 'admin/settings',
-        //     'icon' => 'fas fa-fw fa-user',
-        // ],
-        // [
-        //     'text' => 'change_password',
-        //     'url' => 'admin/settings',
-        //     'icon' => 'fas fa-fw fa-lock',
-        // ],
-        // [
-        //     'text' => 'multilevel',
-        //     'icon' => 'fas fa-fw fa-share',
-        //     'submenu' => [
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //         ],
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //             'submenu' => [
-        //                 [
-        //                     'text' => 'level_two',
-        //                     'url' => '#',
-        //                 ],
-        //                 [
-        //                     'text' => 'level_two',
-        //                     'url' => '#',
-        //                     'submenu' => [
-        //                         [
-        //                             'text' => 'level_three',
-        //                             'url' => '#',
-        //                         ],
-        //                         [
-        //                             'text' => 'level_three',
-        //                             'url' => '#',
-        //                         ],
-        //                     ],
-        //                 ],
-        //             ],
-        //         ],
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //         ],
-        //     ],
-        // ],
-        // ['header' => 'labels'],
-        // [
-        //     'text' => 'important',
-        //     'icon_color' => 'red',
-        //     'url' => '#',
-        // ],
-        // [
-        //     'text' => 'warning',
-        //     'icon_color' => 'yellow',
-        //     'url' => '#',
-        // ],
-        // [
-        //     'text' => 'information',
-        //     'icon_color' => 'cyan',
-        //     'url' => '#',
-        // ],
-        ['header' => 'AUTENTIKASI'],
-        [
-            'text' => 'Autentikasi',
-            'icon' => 'fas fa-fw fa-share',
-            'submenu' => [
-                [
-                    'text' => 'Master Menu',
-                    'url' => 'rbac/master-menu',
-                    'icon' => 'fas fa-fw fa-bars',
-                ],
-                [
-                    'text' => 'User Data',
-                    'url' => 'rbac/user-data',
-                    'icon' => 'fas fa-fw fa-user-cog',
-                ],
-                [
-                    'text' => 'History',
-                    'url' => 'rbac/history',
-                    'icon' => 'fas fa-fw fa-history',
-                ],
-                [
-                    'text' => 'Departmen',
-                    'url' => 'rbac/department',
-                    'icon' => 'fas fa-fw fa-building',
-                ],
-                [
-                    'text' => 'Section',
-                    'url' => 'rbac/section',
-                    'icon' => 'fas fa-fw fa-door-closed',
-                ],
-                [
-                    'text' => 'Position',
-                    'url' => 'rbac/position',
-                    'icon' => 'fas fa-fw fa-user-tag',
-                ],
-                [
-                    'text' => 'Role',
-                    'url' => 'rbac/role',
-                    'icon' => 'fas fa-fw fa-user-tag',
-                ],
-
-            ],
-        ],
-        ['header' => 'FIXO CONSULTANT'],
-        [
-            'text' => 'Customers',
-            'icon' => 'fas fa-fw fa-users',
-            'submenu' => [
-                [
-                    'text' => 'List Customers',
-                    'url' => 'rbac/customer',
-                    'icon' => 'fas fa-fw fa-user-friends',
-                ],
-                [
-                    'text' => 'Calendar Pitching',
-                    'url' => 'rbac/calendar-pitching',
-                    'icon' => 'fas fa-fw fa-calendar-alt',
-                ],
-                [
-                    'text' => 'MoM Customer',
-                    'url' => 'rbac/mom-customer',
-                    'icon' => 'fas fa-fw fa-handshake',
-                ],
-                [
-                    'text' => 'Subscription',
-                    'url' => 'rbac/subscription',
-                    'icon' => 'fas fa-fw fa-rocket',
-                ],
-            ],
-        ],
-
-        [
-            'text' => 'Monitoring',
-            'icon' => 'fas fa-fw fa-desktop',
-            'submenu' => [
-                [
-                    'text' => 'Task Monitoring',
-                    'url' => 'rbac/monitoring',
-                    'icon' => 'fas fa-fw fa-tasks',
-                ],
-                [
-                    'text' => 'POS Monitoring',
-                    'url' => 'rbac/pos-monitoring',
-                    'icon' => 'fas fa-fw fa-cash-register',
-                ],
-                [
-                    'text' => 'Invoice Monitoring',
-                    'url' => 'rbac/invoice-monitoring',
-                    'icon' => 'fas fa-fw fa-file-invoice',
-                ],
-            ],
-        ],
-
-
-        ['header' => 'Logout'],
-        [
-            'text' => 'Logout',
-            'url' => 'logout',
-            'icon' => 'fas fa-fw fa-sign-out-alt',
-            'id' => 'logout-link', // Assign an ID to easily select it with JavaScript
-        ],
-    ],
+    'menu' => [],
 
     /*
     |--------------------------------------------------------------------------

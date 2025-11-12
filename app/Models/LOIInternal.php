@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Itempart;
 use App\Models\UploadHasilMeeting;
-use App\Models\UploadDrawingPart;
 
 class LOIInternal extends Model
 {
@@ -43,16 +42,5 @@ class LOIInternal extends Model
         );
     }
 
-    // Relationship to get upload drawing parts by part_id
-    public function uploadDrawingParts()
-    {
-        return $this->hasManyThrough(
-            UploadDrawingPart::class,
-            Itempart::class,
-            'id', // Foreign key on parts table
-            'part_id', // Foreign key on upload_drawing_parts table
-            'rfqmaster_id', // Local key on loi_internals table
-            'id' // Local key on parts table
-        );
-    }
+
 }

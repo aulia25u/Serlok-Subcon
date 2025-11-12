@@ -16,9 +16,12 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
+        $user = $request->user()->load([
+            'userDetail.position.section.dept',
+            'userDetail.role',
         ]);
+
+        return view('profile.edit', compact('user'));
     }
 
     /**
@@ -26,13 +29,29 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Update User model
+        $user->fill([
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+        ]);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        // Update UserDetail model
+        if ($user->userDetail) {
+            $user->userDetail->update([
+                'employee_name' => $validated['employee_name'],
+                'gender' => $validated['gender'],
+                'position_id' => $validated['position_id'] ?? $user->userDetail->position_id,
+            ]);
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
