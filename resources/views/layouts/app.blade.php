@@ -21,8 +21,6 @@
 @stop
 
 @section('js')
-    <script src="{{ asset('js/custom.js') }}"></script>
-
     @stack('scripts')
 @stop
 

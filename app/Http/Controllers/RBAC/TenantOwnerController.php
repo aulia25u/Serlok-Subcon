@@ -70,6 +70,54 @@ class TenantOwnerController extends Controller
         return view('rbac.tenant-owner.index', compact('users', 'customers'));
     }
 
+    public function getAll(Request $request)
+    {
+        $this->ensureInternal();
+
+        $tenantOwners = TenantOwner::with('user')->get();
+
+        $data = $tenantOwners->map(function ($owner) {
+            return [
+                'id' => $owner->id,
+                'name' => $owner->user->name ?? $owner->user->username,
+            ];
+        })->toArray();
+
+        // Add Internal (Global) option
+        array_unshift($data, [
+            'id' => null,
+            'name' => 'Internal (Global)',
+        ]);
+
+        return response()->json([
+            'data' => $data
+        ]);
+    }
+
+    public function getByCustomer()
+    {
+        $customerId = TenantService::currentCustomerId();
+
+        if (!$customerId) {
+            abort(403, 'Only tenant users can access this endpoint.');
+        }
+
+        $tenantOwners = TenantOwner::with('user')
+            ->where('customer_id', $customerId)
+            ->get();
+
+        $data = $tenantOwners->map(function ($owner) {
+            return [
+                'id' => $owner->id,
+                'name' => $owner->user->name ?? $owner->user->username,
+            ];
+        })->toArray();
+
+        return response()->json([
+            'data' => $data
+        ]);
+    }
+
     public function store(Request $request)
     {
         $this->ensureInternal();

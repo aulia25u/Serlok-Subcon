@@ -47,39 +47,53 @@ class MenuService
             ],
         ];
 
-        $rbacChildren = [];
-
-        // Separate RBAC menus for dropdown
-        foreach ($menus as $menu) {
-            $menuName = $menu->menu_name;
-            $label = self::getMenuLabel($menuName);
-
-            // Check if it's an RBAC menu (e.g., contains 'Management')
-            if (str_contains($menuName, 'Management')) {
-                $rbacChildren[] = [
-                    'text' => $label,
-                    'url' => self::getMenuUrl($menuName),
-                    'icon' => self::getMenuIcon($menuName),
-                ];
-            } else {
-                // Non-RBAC flat menus (if any)
-                $menuItems[] = [
-                    'text' => $label,
-                    'url' => self::getMenuUrl($menuName),
-                    'icon' => self::getMenuIcon($menuName),
-                ];
-            }
-        }
-
+        $menuMap = $menus->keyBy('menu_name');
+        $internalOrder = [
+            'Company Management',
+            'User Management',
+            'Menu Management',
+            'History Management',
+        ];
         $tenantLabels = ['Tenant List', 'Tenant Owner', 'Customer'];
+        $masterDataLabels = ['Master Customer', 'Master Item'];
         $tenantChildren = [];
         $internalChildren = [];
+        $masterDataChildren = [];
 
-        foreach ($rbacChildren as $child) {
-            if (in_array($child['text'], $tenantLabels)) {
-                $tenantChildren[] = $child;
+        foreach ($internalOrder as $menuName) {
+            if (!$menuMap->has($menuName)) {
+                continue;
+            }
+
+            $internalChildren[] = [
+                'text' => self::getMenuLabel($menuName),
+                'url' => self::getMenuUrl($menuName),
+                'icon' => self::getMenuIcon($menuName),
+            ];
+        }
+
+        foreach ($menus as $menu) {
+            if (in_array($menu->menu_name, $internalOrder, true)) {
+                continue;
+            }
+
+            if ($menu->menu_name === 'Master Data') {
+                continue;
+            }
+
+            $label = self::getMenuLabel($menu->menu_name);
+            $item = [
+                'text' => $label,
+                'url' => self::getMenuUrl($menu->menu_name),
+                'icon' => self::getMenuIcon($menu->menu_name),
+            ];
+
+            if (in_array($menu->menu_name, $masterDataLabels, true)) {
+                $masterDataChildren[] = $item;
+            } elseif (in_array($label, $tenantLabels, true)) {
+                $tenantChildren[] = $item;
             } else {
-                $internalChildren[] = $child;
+                $menuItems[] = $item;
             }
         }
 
@@ -96,6 +110,14 @@ class MenuService
                 'text' => 'Tenant Management',
                 'icon' => 'fas fa-door-open',
                 'submenu' => $tenantChildren,
+            ];
+        }
+
+        if (!empty($masterDataChildren)) {
+            $menuItems[] = [
+                'text' => 'Master Data',
+                'icon' => 'fas fa-fw fa-layer-group',
+                'submenu' => $masterDataChildren,
             ];
         }
 
@@ -139,16 +161,14 @@ class MenuService
         $urlMap = [
             'Dashboard' => 'dashboard',
             'User Management' => 'rbac/user-data',
-            'Role Management' => 'rbac/role',
+            'Company Management' => 'rbac/company',
             'History Management' => 'rbac/history',
-            'Department Management' => 'rbac/department',
-            'Section Management' => 'rbac/section',
-            'Position Management' => 'rbac/position',
-            'Plant Management' => 'rbac/plant',
             'Customer Management' => 'rbac/customer',
             'Tenant List Management' => 'rbac/customer',
             'Tenant Owner Management' => 'rbac/tenant-owner',
             'Menu Management' => 'rbac/master-menu',
+            'Master Customer' => 'rbac/master-customer',
+            'Master Item' => 'rbac/master-item',
         ];
 
         return $urlMap[$menuName] ?? '#';
@@ -159,16 +179,14 @@ class MenuService
         $iconMap = [
             'Dashboard' => 'fas fa-fw fa-tachometer-alt',
             'User Management' => 'fas fa-fw fa-users',
-            'Role Management' => 'fas fa-fw fa-user-shield',
+            'Company Management' => 'fas fa-fw fa-briefcase',
             'History Management' => 'fas fa-fw fa-history',
-            'Department Management' => 'fas fa-fw fa-building',
-            'Section Management' => 'fas fa-fw fa-door-closed',
-            'Position Management' => 'fas fa-fw fa-user-tag',
             'Customer Management' => 'fas fa-fw fa-user-friends',
             'Tenant Owner Management' => 'fas fa-fw fa-id-card',
             'Tenant List Management' => 'fas fa-fw fa-building',
-            'Plant Management' => 'fas fa-fw fa-industry',
             'Menu Management' => 'fas fa-fw fa-bars',
+            'Master Customer' => 'fas fa-fw fa-users',
+            'Master Item' => 'fas fa-fw fa-box-open',
         ];
 
         return $iconMap[$menuName] ?? 'fas fa-fw fa-circle';

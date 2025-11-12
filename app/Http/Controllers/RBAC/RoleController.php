@@ -34,11 +34,17 @@ class RoleController extends Controller
                 ->addColumn('customer', function ($row) {
                     return $row->customer->customer_name ?? 'Internal';
                 })
+                ->editColumn('created_at', function ($row) {
+                    return $row->created_at->format('Y-m-d H:i:s');
+                })
+                ->editColumn('updated_at', function ($row) {
+                    return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '-';
+                })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button class="btn btn-sm btn-primary edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->id . '">
+                    $btn = '<button class="btn btn-sm btn-primary edit-btn role-edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
                             </button>';
-                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">
+                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn role-delete-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-trash"></i> Delete
                             </button>';
                     return $btn;

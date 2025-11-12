@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }} - Login</title>
+    <title>{{ config('app.name', 'Laravel') }} - 2FA Check</title>
 
     <!-- Google Font: Source Sans Pro -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
@@ -87,60 +87,55 @@
         
         <div class="card">
             <div class="card-body login-card-body">
-                <p class="login-box-msg">Sign in to start your session</p>
+                <p class="login-box-msg">
+                    @if ($twoFactorEnabled)
+                        Enter the 6-digit code from your Google Authenticator app to continue.
+                    @else
+                        Two-factor authentication is not active yet. Would you like to enable it now?
+                    @endif
+                </p>
 
-                <!-- Session Status -->
-                @if (session('status'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('status') }}
-                        <button type="button" class="close" data-dismiss="alert">
-                            <span>&times;</span>
-                        </button>
+                @if ($twoFactorEnabled)
+                    <form method="POST" action="{{ route('two-factor.verify') }}">
+                        @csrf
+
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control @error('two_factor_code') is-invalid @enderror"
+                                   name="two_factor_code" value="{{ old('two_factor_code') }}"
+                                   placeholder="6-digit Google Authenticator code" autofocus>
+                            <div class="input-group-append">
+                                <div class="input-group-text">
+                                    <span class="fas fa-lock"></span>
+                                </div>
+                            </div>
+                            @error('two_factor_code')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-check-circle mr-2"></i>Verify Code
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                @else
+                    <div class="mb-3">
+                        <a href="{{ route('profile.edit') }}" class="btn btn-primary btn-block">
+                            <i class="fas fa-shield-alt mr-2"></i>Yes, activate 2FA
+                        </a>
+                        <form method="POST" action="{{ route('two-factor.skip') }}" class="mt-3">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-secondary btn-block">
+                                <i class="fas fa-times mr-2"></i>No, continue without 2FA
+                            </button>
+                        </form>
                     </div>
                 @endif
-
-                <form method="POST" action="{{ route('login') }}">
-                    @csrf
-                    
-                    <div class="input-group mb-3">
-                        <input type="text" class="form-control @error('username') is-invalid @enderror" 
-                               name="username" value="{{ old('username') }}" 
-                               placeholder="Username" required autofocus>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-user"></span>
-                            </div>
-                        </div>
-                        @error('username')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-                    
-                    <div class="input-group mb-3">
-                        <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                               name="password" placeholder="Password" required>
-                        <div class="input-group-append">
-                            <div class="input-group-text">
-                                <span class="fas fa-lock"></span>
-                            </div>
-                        </div>
-                        @error('password')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-                    </div>
-
-                    <div class="row">
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary btn-block">
-                                <i class="fas fa-sign-in-alt mr-2"></i>Sign In
-                            </button>
-                        </div>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -196,12 +191,6 @@
                 .dark-mode .input-group-text {
                     background-color: #4a5568 !important;
                     border-color: #718096 !important;
-                    color: #ffffff !important;
-                }
-                .dark-mode .text-muted {
-                    color: #a0aec0 !important;
-                }
-                .dark-mode .login-logo {
                     color: #ffffff !important;
                 }
             </style>

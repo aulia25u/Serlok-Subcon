@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RBAC\CompanyController;
 use App\Http\Controllers\RBAC\CustomerController;
 use App\Http\Controllers\RBAC\TenantOwnerController;
 use App\Http\Controllers\RBAC\DepartmentController;
@@ -11,6 +12,8 @@ use App\Http\Controllers\RBAC\PositionController;
 use App\Http\Controllers\RBAC\RoleController;
 use App\Http\Controllers\RBAC\SectionController;
 use App\Http\Controllers\RBAC\UserDataController;
+use App\Http\Controllers\RBAC\MasterCustomerController;
+use App\Http\Controllers\RBAC\MasterItemController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -21,20 +24,24 @@ Route::get('/home', function () {
     return redirect()->route('login');
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'twofactor'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'twofactor'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+    Route::post('/profile/two-factor/prepare', [ProfileController::class, 'prepareTwoFactor'])->name('profile.two-factor.prepare');
+    Route::post('/profile/two-factor/enable', [ProfileController::class, 'enableTwoFactor'])->name('profile.two-factor.enable');
+    Route::post('/profile/two-factor/disable', [ProfileController::class, 'disableTwoFactor'])->name('profile.two-factor.disable');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 // RBAC Routes
-Route::prefix('rbac')->middleware(['auth', 'verified', 'permission.check'])->group(function () {
+Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.check'])->group(function () {
     // Master Menu
     Route::get('/master-menu', [MasterMenuController::class, 'show'])->name('rbac.master-menu');
     Route::get('/master-menu/data', [MasterMenuController::class, 'data'])->name('rbac.master-menu.data');
@@ -49,6 +56,9 @@ Route::prefix('rbac')->middleware(['auth', 'verified', 'permission.check'])->gro
     Route::get('/user-data/{id}/edit', [UserDataController::class, 'edit'])->name('rbac.user-data.edit');
     Route::put('/user-data/{id}', [UserDataController::class, 'update'])->name('rbac.user-data.update');
     Route::delete('/user-data/{id}', [UserDataController::class, 'destroy'])->name('rbac.user-data.destroy');
+
+    // Company (tabs for department/section/position/role/plant)
+    Route::get('/company', [CompanyController::class, 'index'])->name('rbac.company');
 
     // Role
     Route::get('/role', [App\Http\Controllers\RBAC\RoleController::class, 'index'])->name('rbac.role');
@@ -102,6 +112,8 @@ Route::prefix('rbac')->middleware(['auth', 'verified', 'permission.check'])->gro
     Route::get('/tenant-owner/{id}/edit', [TenantOwnerController::class, 'edit'])->name('rbac.tenant-owner.edit');
     Route::put('/tenant-owner/{id}', [TenantOwnerController::class, 'update'])->name('rbac.tenant-owner.update');
     Route::delete('/tenant-owner/{id}', [TenantOwnerController::class, 'destroy'])->name('rbac.tenant-owner.destroy');
+    Route::get('/tenant-owner/by-customer', [TenantOwnerController::class, 'getByCustomer'])->name('rbac.tenant-owner.by-customer');
+    Route::get('/tenant-owner/all', [TenantOwnerController::class, 'getAll'])->name('rbac.tenant-owner.all');
 
     // Plant
     Route::get('/plant', [PlantController::class, 'index'])->name('rbac.plant');
@@ -109,6 +121,25 @@ Route::prefix('rbac')->middleware(['auth', 'verified', 'permission.check'])->gro
     Route::get('/plant/{id}/edit', [PlantController::class, 'edit'])->name('rbac.plant.edit');
     Route::put('/plant/{id}', [PlantController::class, 'update'])->name('rbac.plant.update');
     Route::delete('/plant/{id}', [PlantController::class, 'destroy'])->name('rbac.plant.destroy');
+
+    // Master Customer
+    Route::get('/master-customer', [MasterCustomerController::class, 'index'])->name('rbac.master-customer');
+    Route::post('/master-customer', [MasterCustomerController::class, 'store'])->name('rbac.master-customer.store');
+    Route::get('/master-customer/{id}/edit', [MasterCustomerController::class, 'edit'])->name('rbac.master-customer.edit');
+    Route::put('/master-customer/{id}', [MasterCustomerController::class, 'update'])->name('rbac.master-customer.update');
+    Route::delete('/master-customer/{id}', [MasterCustomerController::class, 'destroy'])->name('rbac.master-customer.destroy');
+    Route::get('/master-customer/create', [MasterCustomerController::class, 'create'])->name('rbac.master-customer.create');
+    Route::get('/master-customer/{id}', [MasterCustomerController::class, 'show'])->name('rbac.master-customer.show');
+
+    // Master Item
+    Route::get('/master-item', [MasterItemController::class, 'index'])->name('rbac.master-item');
+    Route::post('/master-item', [MasterItemController::class, 'store'])->name('rbac.master-item.store');
+    Route::get('/master-item/{id}/edit', [MasterItemController::class, 'edit'])->name('rbac.master-item.edit');
+    Route::put('/master-item/{id}', [MasterItemController::class, 'update'])->name('rbac.master-item.update');
+    Route::delete('/master-item/{id}', [MasterItemController::class, 'destroy'])->name('rbac.master-item.destroy');
+    Route::get('/master-item/create', [MasterItemController::class, 'create'])->name('rbac.master-item.create');
+    Route::get('/master-item/{id}', [MasterItemController::class, 'show'])->name('rbac.master-item.show');
+
 
 
 });

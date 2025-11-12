@@ -32,4 +32,9 @@ class TenantOwner extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function getNameAttribute()
+    {
+        return $this->customer ? $this->customer->customer_name : 'N/A';
+    }
 }

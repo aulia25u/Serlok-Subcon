@@ -28,7 +28,11 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $intended = $request->session()->pull('url.intended', route('dashboard'));
+        $request->session()->put('two_factor_intended_url', $intended);
+        $request->session()->put('two_factor_passed', false);
+
+        return redirect()->route('two-factor.challenge');
     }
 
     /**
@@ -38,6 +42,7 @@ class AuthenticatedSessionController extends Controller
     {
         Auth::guard('web')->logout();
 
+        $request->session()->forget(['two_factor_passed', 'two_factor_intended_url']);
         $request->session()->invalidate();
 
         $request->session()->regenerateToken();

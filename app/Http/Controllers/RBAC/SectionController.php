@@ -29,9 +29,11 @@ class SectionController extends Controller
                 });
 
             return DataTables::of($query)
-                ->addIndexColumn()
                 ->editColumn('created_at', function ($row) {
                     return $row->created_at->format('Y-m-d H:i:s');
+                })
+                ->editColumn('updated_at', function ($row) {
+                    return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '-';
                 })
                 ->addColumn('no', function ($row) {
                     static $no = 0;
@@ -44,10 +46,10 @@ class SectionController extends Controller
                     return $row->customer->customer_name ?? 'Internal';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
+                    $btn = '<button class="btn btn-sm btn-primary edit-btn section-edit-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
                             </button>';
-                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">
+                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn section-delete-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-trash"></i> Delete
                             </button>';
                     return $btn;
@@ -165,12 +167,17 @@ class SectionController extends Controller
 
     public function getByCustomer($customer_id)
     {
-        TenantService::assertAccess($customer_id);
+        $resolvedCustomerId = $customer_id === 'null' ? null : (int) $customer_id;
+        TenantService::assertAccess($resolvedCustomerId);
 
-        $sections = Section::where('customer_id', $customer_id)
-            ->select('id', 'section_name')
-            ->orderBy('section_name')
-            ->get();
+        $query = Section::select('id', 'section_name')->orderBy('section_name');
+        if (is_null($resolvedCustomerId)) {
+            $query->whereNull('customer_id');
+        } else {
+            $query->where('customer_id', $resolvedCustomerId);
+        }
+
+        $sections = $query->get();
 
         return response()->json($sections);
     }

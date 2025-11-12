@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\RoleToMenu;
 use App\Models\Menu;
 use App\Services\MenuService;
+use App\Services\TenantService;
 
 class CheckPermission
 {
@@ -51,9 +52,16 @@ class CheckPermission
         }
 
         // Get the role-to-menu record
-        $roleToMenu = RoleToMenu::where('role_id', $roleId)
-            ->where('menu_id', $menu->id)
-            ->first();
+        $query = RoleToMenu::where('role_id', $roleId)
+            ->where('menu_id', $menu->id);
+
+        if (TenantService::isInternal()) {
+            $query->whereNull('customer_id');
+        } else {
+            $query->where('customer_id', TenantService::currentCustomerId());
+        }
+
+        $roleToMenu = $query->first();
 
         if (!$roleToMenu) {
             abort(403, 'No permissions assigned for this menu.');
@@ -91,16 +99,28 @@ class CheckPermission
         // For new menus, add entry like: 'new-feature' => 'New Feature Management'
         $baseRouteToMenu = [
             'user-data' => 'User Management',
-            'role' => 'Role Management',
+            'role' => 'Company Management',
+            'roles' => 'Company Management',
             'history' => 'History Management',
-            'department' => 'Department Management',
-            'section' => 'Section Management',
-            'position' => 'Position Management',
-            'plant' => 'Plant Management',
+            'department' => 'Company Management',
+            'section' => 'Company Management',
+            'position' => 'Company Management',
+            'plant' => 'Company Management',
+            'company' => 'Company Management',
             'master-menu' => 'Menu Management',
             'customer' => 'Tenant List Management',
             'tenant-owner' => 'Tenant Owner Management',
+            'master-customer' => 'Master Customer',
+            'master-item' => 'Master Item',
         ];
+
+        $segments = explode('.', $routeName);
+        foreach ($segments as $segment) {
+            $segment = trim($segment);
+            if ($segment && isset($baseRouteToMenu[$segment])) {
+                return $baseRouteToMenu[$segment];
+            }
+        }
 
         foreach ($baseRouteToMenu as $baseKey => $menuName) {
             if (str_contains($routeName, $baseKey)) {

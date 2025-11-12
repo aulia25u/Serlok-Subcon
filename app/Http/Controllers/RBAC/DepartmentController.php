@@ -28,9 +28,11 @@ class DepartmentController extends Controller
                 });
 
             return DataTables::of($query)
-                ->addIndexColumn()
                 ->editColumn('created_at', function ($row) {
                     return $row->created_at->format('Y-m-d H:i:s');
+                })
+                ->editColumn('updated_at', function ($row) {
+                    return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '-';
                 })
                 ->addColumn('no', function ($row) {
                     static $no = 0;
@@ -40,10 +42,10 @@ class DepartmentController extends Controller
                     return $row->customer->customer_name ?? 'Internal';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
+                    $btn = '<button class="btn btn-sm btn-primary edit-btn dept-edit-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
                             </button>';
-                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">
+                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn dept-delete-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-trash"></i> Delete
                             </button>';
                     return $btn;
