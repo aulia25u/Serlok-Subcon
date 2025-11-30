@@ -59,7 +59,6 @@ class ProfileController extends Controller
             $user->userDetail->update([
                 'employee_name' => $validated['employee_name'],
                 'gender' => $validated['gender'],
-                'position_id' => $validated['position_id'] ?? $user->userDetail->position_id,
             ]);
         }
 
@@ -116,7 +115,7 @@ class ProfileController extends Controller
 
         $secret = $request->session()->get('two_factor_secret_setup');
 
-        if (! $secret || ! $google2FA->verify($secret, $request->input('two_factor_code'))) {
+        if (!$secret || !$google2FA->verify($secret, $request->input('two_factor_code'))) {
             return Redirect::route('profile.edit')->withErrors([
                 'two_factor_code' => 'The provided code is invalid or the setup window has expired.',
             ]);
@@ -140,11 +139,11 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (! $user->two_factor_enabled || ! $user->two_factor_secret) {
+        if (!$user->two_factor_enabled || !$user->two_factor_secret) {
             return Redirect::route('profile.edit')->with('status', 'two-factor-not-enabled');
         }
 
-        if (! $google2FA->verify($user->two_factor_secret, $request->input('two_factor_code'))) {
+        if (!$google2FA->verify($user->two_factor_secret, $request->input('two_factor_code'))) {
             return Redirect::route('profile.edit')->withErrors([
                 'two_factor_code' => 'The provided code is invalid.',
             ]);

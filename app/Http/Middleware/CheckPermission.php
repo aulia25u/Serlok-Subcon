@@ -33,22 +33,47 @@ class CheckPermission
         $roleId = $userDetail->role->id;
         $currentRouteName = $request->route()->getName();
 
-        // Skip permission check for dashboard and profile
-        if (in_array($currentRouteName, ['dashboard', 'profile.edit', 'profile.update', 'profile.destroy'])) {
+        // Skip permission check for dashboard, profile, and helper routes (dropdowns)
+        $excludedRoutes = [
+            'dashboard',
+            'profile.edit',
+            'profile.update',
+            'profile.destroy',
+            'rbac.departments.by-customer',
+            'rbac.sections.by-customer',
+            'rbac.sections.by-department',
+            'rbac.positions.by-section',
+            'rbac.roles.by-customer',
+            'rbac.departments.all',
+            'rbac.sections.all',
+            'rbac.tenant-owner.by-customer',
+            'rbac.tenant-owner.all',
+            'rbac.customer.get'
+        ];
+
+        if (in_array($currentRouteName, $excludedRoutes)) {
             return $next($request);
         }
 
-        // Map route name to menu name using reverse mapping
-        $menuName = $this->getMenuNameFromRoute($currentRouteName);
+        // Find menu based on route_name mapping in database
+        // We iterate to support comma-separated patterns and prefix matching
+        $menu = Menu::all()->first(function ($menu) use ($currentRouteName) {
+            if (empty($menu->route_name))
+                return false;
 
-        if (!$menuName) {
-            return $next($request); // Allow if no mapping
-        }
+            $patterns = explode(',', $menu->route_name);
+            foreach ($patterns as $pattern) {
+                $pattern = trim($pattern);
+                // Match exact route or route starting with pattern followed by dot (e.g. rbac.user-data.edit)
+                if ($pattern === $currentRouteName || str_starts_with($currentRouteName, $pattern . '.')) {
+                    return true;
+                }
+            }
+            return false;
+        });
 
-        // Get menu ID
-        $menu = Menu::where('menu_name', $menuName)->first();
         if (!$menu) {
-            return $next($request);
+            abort(403, 'Access denied: No menu mapping found for this route.');
         }
 
         // Get the role-to-menu record
@@ -69,7 +94,7 @@ class CheckPermission
 
         // Determine required permission based on HTTP method
         $method = $request->method();
-        $permissionField = match($method) {
+        $permissionField = match ($method) {
             'GET' => 'is_read',
             'POST' => 'is_create',
             'PUT', 'PATCH' => 'is_update',
@@ -80,7 +105,7 @@ class CheckPermission
         $hasPermission = $roleToMenu->{$permissionField};
 
         if (!$hasPermission) {
-            $action = match($method) {
+            $action = match ($method) {
                 'GET' => 'view',
                 'POST' => 'create',
                 'PUT', 'PATCH' => 'update',
@@ -91,43 +116,5 @@ class CheckPermission
         }
 
         return $next($request);
-    }
-
-    private function getMenuNameFromRoute($routeName)
-    {
-        // Base mapping from route base strings to menu names (dynamic: covers all CRUD/auxiliary variants via str_contains)
-        // For new menus, add entry like: 'new-feature' => 'New Feature Management'
-        $baseRouteToMenu = [
-            'user-data' => 'User Management',
-            'role' => 'Company Management',
-            'roles' => 'Company Management',
-            'history' => 'History Management',
-            'department' => 'Company Management',
-            'section' => 'Company Management',
-            'position' => 'Company Management',
-            'plant' => 'Company Management',
-            'company' => 'Company Management',
-            'master-menu' => 'Menu Management',
-            'customer' => 'Tenant List Management',
-            'tenant-owner' => 'Tenant Owner Management',
-            'master-customer' => 'Master Customer',
-            'master-item' => 'Master Item',
-        ];
-
-        $segments = explode('.', $routeName);
-        foreach ($segments as $segment) {
-            $segment = trim($segment);
-            if ($segment && isset($baseRouteToMenu[$segment])) {
-                return $baseRouteToMenu[$segment];
-            }
-        }
-
-        foreach ($baseRouteToMenu as $baseKey => $menuName) {
-            if (str_contains($routeName, $baseKey)) {
-                return $menuName;
-            }
-        }
-
-        return null; // Allow if no mapping
     }
 }

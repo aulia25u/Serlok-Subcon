@@ -135,4 +135,18 @@ class CustomerController extends Controller
 
         return response()->json(['success' => 'Customer deleted successfully.']);
     }
+
+    public function get()
+    {
+        $isInternal = TenantService::isInternal();
+        $currentCustomerId = TenantService::currentCustomerId();
+
+        if ($isInternal) {
+            $customers = Customer::all();
+        } else {
+            $customers = Customer::where('id', $currentCustomerId)->get();
+        }
+
+        return response()->json($customers);
+    }
 }

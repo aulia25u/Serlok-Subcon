@@ -29,6 +29,13 @@ class RoleController extends Controller
             $query = Role::with('customer');
             $query = TenantService::scopeQueryByCustomer($query);
 
+            if ($request->filled('start_date')) {
+                $query->whereDate('created_at', '>=', $request->start_date);
+            }
+            if ($request->filled('end_date')) {
+                $query->whereDate('created_at', '<=', $request->end_date);
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('customer', function ($row) {

@@ -37,12 +37,12 @@ class UserDataController extends Controller
                 'userDetail.role',
                 'userDetail.customer',
             ])
-            ->when($request->start_date, function ($q) use ($request) {
-                return $q->whereDate('created_at', '>=', $request->start_date);
-            })
-            ->when($request->end_date, function ($q) use ($request) {
-                return $q->whereDate('created_at', '<=', $request->end_date);
-            });
+                ->when($request->start_date, function ($q) use ($request) {
+                    return $q->whereDate('created_at', '>=', $request->start_date);
+                })
+                ->when($request->end_date, function ($q) use ($request) {
+                    return $q->whereDate('created_at', '<=', $request->end_date);
+                });
 
             if ($customerId) {
                 $query->whereHas('userDetail', function ($q) use ($customerId) {
@@ -78,10 +78,10 @@ class UserDataController extends Controller
                     return $row->userDetail->customer->customer_name ?? 'Internal';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button class="btn btn-sm btn-primary edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->id . '">
+                    $btn = '<button class="btn btn-sm btn-primary userData-edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
                             </button>';
-                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">
+                    $btn .= ' <button class="btn btn-sm btn-danger userData-delete-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-trash"></i> Delete
                             </button>';
                     return $btn;
@@ -89,7 +89,7 @@ class UserDataController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
-        
+
         // Pass all necessary data for the dropdowns to the view
         $departments = TenantService::scopeQueryByCustomer(
             Dept::orderBy('dept_name')
@@ -126,8 +126,34 @@ class UserDataController extends Controller
             'full_name' => 'required|string|max:255',
             'gender' => 'required|in:Male,Female',
             'dept_id' => 'required|exists:depts,id',
-            'section_id' => 'required|exists:sections,id',
-            'position_id' => 'required|exists:positions,id', // Validate position_id
+            'section_id' => [
+                'required',
+                'exists:sections,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->dept_id) {
+                        $exists = Section::where('id', $value)
+                            ->where('dept_id', $request->dept_id)
+                            ->exists();
+                        if (!$exists) {
+                            $fail('The selected section does not belong to the selected department.');
+                        }
+                    }
+                },
+            ],
+            'position_id' => [
+                'required',
+                'exists:positions,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->section_id) {
+                        $exists = Position::where('id', $value)
+                            ->where('section_id', $request->section_id)
+                            ->exists();
+                        if (!$exists) {
+                            $fail('The selected position does not belong to the selected section.');
+                        }
+                    }
+                },
+            ],
             'role_id' => 'required|exists:roles,id'
             // 'plant_id' => 'required|exists:plants,id', // Removed plant_id validation
         ]);
@@ -144,7 +170,7 @@ class UserDataController extends Controller
                 'name' => $request->full_name,
                 'password' => Hash::make($request->password),
             ]);
-    
+
             UserDetail::create([
                 'user_id' => $user->id,
                 'position_id' => $request->position_id, // Store position_id on UserDetail
@@ -230,8 +256,34 @@ class UserDataController extends Controller
             'full_name' => 'required|string|max:255',
             'gender' => 'required|in:Male,Female',
             'dept_id' => 'required|exists:depts,id',
-            'section_id' => 'required|exists:sections,id',
-            'position_id' => 'required|exists:positions,id', // Validate position_id
+            'section_id' => [
+                'required',
+                'exists:sections,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->dept_id) {
+                        $exists = Section::where('id', $value)
+                            ->where('dept_id', $request->dept_id)
+                            ->exists();
+                        if (!$exists) {
+                            $fail('The selected section does not belong to the selected department.');
+                        }
+                    }
+                },
+            ],
+            'position_id' => [
+                'required',
+                'exists:positions,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->section_id) {
+                        $exists = Position::where('id', $value)
+                            ->where('section_id', $request->section_id)
+                            ->exists();
+                        if (!$exists) {
+                            $fail('The selected position does not belong to the selected section.');
+                        }
+                    }
+                },
+            ],
             'role_id' => 'required|exists:roles,id'
             // 'plant_id' => 'required|exists:plants,id', // Removed plant_id validation
         ]);

@@ -13,11 +13,11 @@ class MasterCustomerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = MasterCustomer::with('tenantOwner')->select('*');
+            $data = MasterCustomer::with('customer')->select('*');
             return DataTables::of($data)
                 ->addIndexColumn()
-                ->addColumn('tenant_name', function(MasterCustomer $masterCustomer) {
-                    return $masterCustomer->tenantOwner ? $masterCustomer->tenantOwner->name : 'N/A';
+                ->addColumn('customer_name', function(MasterCustomer $masterCustomer) {
+                    return $masterCustomer->customer ? $masterCustomer->customer->customer_name : 'N/A';
                 })
                 ->addColumn('action', function($row){
                     $btn = '<a href="javascript:void(0)" data-id="'.$row->id.'" class="edit btn btn-primary btn-sm">Edit</a> ';
@@ -34,7 +34,9 @@ class MasterCustomerController extends Controller
             $currentTenantOwner = \App\Models\TenantOwner::where('customer_id', $currentCustomerId)->first();
         }
 
-        return view('master_customer.index', compact('isInternal', 'currentCustomerId', 'currentTenantOwner'));
+        $customers = \App\Models\Customer::all();
+
+        return view('master_customer.index', compact('isInternal', 'currentCustomerId', 'currentTenantOwner', 'customers'));
     }
 
     // Create method no longer needed as we use modal
@@ -45,18 +47,17 @@ class MasterCustomerController extends Controller
         $currentCustomerId = TenantService::currentCustomerId();
 
         if (!$isInternal && $currentCustomerId) {
-            $currentTenantOwner = \App\Models\TenantOwner::where('customer_id', $currentCustomerId)->first();
-            $request->merge(['tenant_id' => $currentTenantOwner ? $currentTenantOwner->id : null]);
+            $request->merge(['customer_id' => $currentCustomerId]);
         } else {
-            $request->merge(['tenant_id' => $request->tenant_id ?: null]);
+            $request->merge(['customer_id' => $request->customer_id ?: null]);
         }
 
         $request->validate([
-            'tenant_id' => [
+            'customer_id' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
-                    if ($value && !\DB::table('tenant_owners')->where('id', $value)->exists()) {
-                        $fail('The selected tenant id is invalid.');
+                    if ($value && !\DB::table('customers')->where('id', $value)->exists()) {
+                        $fail('The selected customer id is invalid.');
                     }
                 },
             ],
@@ -68,12 +69,12 @@ class MasterCustomerController extends Controller
 
         MasterCustomer::create($request->all());
 
-        return redirect()->route('rbac.master-customer')
-                         ->with('success','Master Customer created successfully.');
+        return response()->json(['success' => 'Master Customer created successfully.']);
     }
 
     public function show(MasterCustomer $masterCustomer)
     {
+        TenantService::assertAccess($masterCustomer->customer_id);
         return view('master_customer.show',compact('masterCustomer'));
     }
 
@@ -88,18 +89,17 @@ class MasterCustomerController extends Controller
         $currentCustomerId = TenantService::currentCustomerId();
 
         if (!$isInternal && $currentCustomerId) {
-            $currentTenantOwner = \App\Models\TenantOwner::where('customer_id', $currentCustomerId)->first();
-            $request->merge(['tenant_id' => $currentTenantOwner ? $currentTenantOwner->id : null]);
+            $request->merge(['customer_id' => $currentCustomerId]);
         } else {
-            $request->merge(['tenant_id' => $request->tenant_id ?: null]);
+            $request->merge(['customer_id' => $request->customer_id ?: null]);
         }
 
         $request->validate([
-            'tenant_id' => [
+            'customer_id' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
-                    if ($value && !\DB::table('tenant_owners')->where('id', $value)->exists()) {
-                        $fail('The selected tenant id is invalid.');
+                    if ($value && !\DB::table('customers')->where('id', $value)->exists()) {
+                        $fail('The selected customer id is invalid.');
                     }
                 },
             ],
@@ -111,14 +111,19 @@ class MasterCustomerController extends Controller
 
         $masterCustomer->update($request->all());
 
-        return redirect()->route('rbac.master-customer')
-                         ->with('success','Master Customer updated successfully');
+        return response()->json(['success' => 'Master Customer updated successfully']);
     }
 
     public function destroy(MasterCustomer $masterCustomer)
     {
+        TenantService::assertAccess($masterCustomer->customer_id);
+        $oldValues = $masterCustomer->toArray();
+
         $masterCustomer->delete();
 
-        return response()->json(['success'=>'Master Customer deleted successfully.']);
+        // Log activity
+        ActivityLogService::logDelete('master_customers', $masterCustomer->id, $oldValues);
+
+        return response()->json(['success' => 'Master Customer deleted successfully']);
     }
 }

@@ -27,7 +27,6 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'employee_name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'in:Male,Female'],
-            'position_id' => ['nullable', 'exists:positions,id'],
         ];
     }
 }

@@ -10,14 +10,14 @@ class MasterCustomer extends Model
     use HasFactory;
 
     protected $fillable = [
-        'tenant_id',
+        'customer_id',
         'customer_name',
         'customer_code',
         'address',
         'npwp',
     ];
-    public function tenantOwner()
+    public function customer()
     {
-        return $this->belongsTo(TenantOwner::class, 'tenant_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 }

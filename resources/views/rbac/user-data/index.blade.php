@@ -3,9 +3,9 @@
 @section('title', 'User Data')
 
 @section('css')
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css"/>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 @stop
 
 @section('content')
@@ -28,11 +28,11 @@
                     <div class="row mb-3">
                         <div class="col-md-3">
                             <label for="start_date">Start Date:</label>
-                            <input type="date" class="form-control" id="start_date" name="start_date">
+                            <input type="date" class="form-control" id="userData_start_date" name="start_date">
                         </div>
                         <div class="col-md-3">
                             <label for="end_date">End Date:</label>
-                            <input type="date" class="form-control" id="end_date" name="end_date">
+                            <input type="date" class="form-control" id="userData_end_date" name="end_date">
                         </div>
                         <div class="col-md-3">
                             <label>&nbsp;</label>
@@ -49,21 +49,21 @@
 
                     <table class="table table-bordered table-striped" id="userDataTable">
                         <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Tenant</th>
-                            <th>Username</th>
-                            <th>Full Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Department</th>
-                            <th>Section</th>
-                            <th>Position</th>
-                            <th>Actions</th>
-                        </tr>
+                            <tr>
+                                <th>No</th>
+                                <th>Tenant</th>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Department</th>
+                                <th>Section</th>
+                                <th>Position</th>
+                                <th>Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -82,6 +82,8 @@
             </div>
             <form id="userDataForm">
                 @csrf
+                <input type="hidden" id="userData_id" name="id">
+                <input type="hidden" id="userData_form_method" name="_method" value="POST">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -110,7 +112,7 @@
                             <div class="form-group">
                                 <label for="customer_id">Tenant</label>
                                 @if($isInternal)
-                                    <select class="form-control" id="customer_id" name="customer_id" required>
+                                    <select class="form-control" id="customer_id" name="customer_id">
                                         <option value="">Internal (Global)</option>
                                         @foreach($customers as $customer)
                                             <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
@@ -193,351 +195,274 @@
 @stop
 
 @section('js')
-    <script type="text/javascript" src="https://cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
-    <script>
-        $(document).ready(function() {
+<script src="{{ asset('js/crud-manager.js') }}"></script>
+<script>
+    $(document).ready(function() {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
 
-            var table = $('#userDataTable').DataTable({
-                processing: true,
-                serverSide: true,
-                ajax: {
-                    url: "{{ route('rbac.user-data') }}",
-                    data: function(d) {
-                        d.start_date = $('#start_date').val();
-                        d.end_date = $('#end_date').val();
-                    }
-                },
-                columns: [
-                    {data: 'no', name: 'no'},
-                    {data: 'customer_name', name: 'customer_name'},
-                    {data: 'username', name: 'username'},
-                    {data: 'full_name', name: 'full_name'},
-                    {data: 'email', name: 'email'},
-                    {data: 'role_name', name: 'role_name'},
-                    {data: 'dept_name', name: 'dept_name'},
-                    {data: 'section_name', name: 'section_name'},
-                    {data: 'position_name', name: 'position_name'},
-                    {data: 'action', name: 'action', orderable: false, searchable: false}
-                ],
-                pageLength: 10,
-                responsive: true
-            });
+        const isInternalUser = @json($isInternal);
+        const currentCustomerId = @json($currentCustomerId);
 
-            const isInternalUser = @json($isInternal);
-            const currentCustomerId = @json($currentCustomerId);
-
-            $('#filterBtn').click(function() {
-                table.draw();
-            });
-
-            $('#resetBtn').click(function() {
-                $('#start_date, #end_date').val('');
-                table.draw();
-            });
-
-            function loadSections(deptId, selectedSectionId, selectedPositionId) {
+        // Helper functions for dropdowns
+        function loadSections(deptId, selectedSectionId, selectedPositionId) {
                 if (!deptId) {
-                    $('#section_id').empty().append('<option value="">Select Section</option>');
-                    $('#position_id').empty().append('<option value="">Select Position</option>');
-                    return $.Deferred().resolve();
+            $('#section_id').empty().append('<option value="">Select Section</option>');
+        $('#position_id').empty().append('<option value="">Select Position</option>');
+        return $.Deferred().resolve();
                 }
 
-                return $.ajax({
-                    url: '{{ route("rbac.sections.by-department", ":id") }}'.replace(':id', deptId),
-                    type: 'GET',
-                    success: function(data) {
-                        $('#section_id').empty().append('<option value="">Select Section</option>');
-                        $.each(data, function(key, value) {
-                            $('#section_id').append('<option value="' + value.id + '">' + value.section_name + '</option>');
+        return $.ajax({
+            url: '{{ route("rbac.sections.by-department", ":id") }}'.replace(':id', deptId),
+        type: 'GET',
+        success: function(data) {
+            $('#section_id').empty().append('<option value="">Select Section</option>');
+        $.each(data, function(key, value) {
+            $('#section_id').append('<option value="' + value.id + '">' + value.section_name + '</option>');
                         });
 
-                        if (selectedSectionId) {
-                            $('#section_id').val(selectedSectionId);
+        if (selectedSectionId) {
+            $('#section_id').val(selectedSectionId);
                         }
 
-                        $('#position_id').empty().append('<option value="">Select Position</option>');
+        $('#position_id').empty().append('<option value="">Select Position</option>');
 
-                        var sectionIdToLoad = selectedSectionId || $('#section_id').val();
-                        if (sectionIdToLoad) {
-                            loadPositions(sectionIdToLoad, selectedPositionId);
+        var sectionIdToLoad = selectedSectionId || $('#section_id').val();
+        if (sectionIdToLoad) {
+            loadPositions(sectionIdToLoad, selectedPositionId);
                         }
                     }
                 });
             }
 
-            function loadPositions(sectionId, selectedPositionId) {
+        function loadPositions(sectionId, selectedPositionId) {
                 if (!sectionId) {
-                    $('#position_id').empty().append('<option value="">Select Position</option>');
-                    return $.Deferred().resolve();
+            $('#position_id').empty().append('<option value="">Select Position</option>');
+        return $.Deferred().resolve();
                 }
 
-                return $.ajax({
-                    url: '{{ route("rbac.positions.by-section", ":id") }}'.replace(':id', sectionId),
-                    type: 'GET',
-                    success: function(data) {
-                        $('#position_id').empty().append('<option value="">Select Position</option>');
-                        $.each(data, function(key, value) {
-                            $('#position_id').append('<option value="' + value.id + '">' + value.position_name + '</option>');
+        return $.ajax({
+            url: '{{ route("rbac.positions.by-section", ":id") }}'.replace(':id', sectionId),
+        type: 'GET',
+        success: function(data) {
+            $('#position_id').empty().append('<option value="">Select Position</option>');
+        $.each(data, function(key, value) {
+            $('#position_id').append('<option value="' + value.id + '">' + value.position_name + '</option>');
                         });
 
-                        if (selectedPositionId) {
-                            $('#position_id').val(selectedPositionId);
+        if (selectedPositionId) {
+            $('#position_id').val(selectedPositionId);
                         }
                     }
                 });
             }
 
-            function loadDepartments(customerId, selectedDeptId, selectedSectionId, selectedPositionId) {
+        function loadDepartments(customerId, selectedDeptId, selectedSectionId, selectedPositionId) {
                 const deptSelect = $('#dept_id');
-                const sectionSelect = $('#section_id');
-                const positionSelect = $('#position_id');
-                const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
+        const sectionSelect = $('#section_id');
+        const positionSelect = $('#position_id');
+        const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
 
-                if (customerId === undefined) {
-                    deptSelect.empty().append('<option value="">Select Department</option>');
-                    sectionSelect.empty().append('<option value="">Select Section</option>');
-                    positionSelect.empty().append('<option value="">Select Position</option>');
-                    return $.Deferred().resolve();
+        if (customerId === undefined) {
+            deptSelect.empty().append('<option value="">Select Department</option>');
+        sectionSelect.empty().append('<option value="">Select Section</option>');
+        positionSelect.empty().append('<option value="">Select Position</option>');
+        return $.Deferred().resolve();
                 }
 
-                return $.ajax({
-                    url: '{{ route("rbac.departments.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
-                    type: 'GET',
-                    success: function(data) {
-                        deptSelect.empty().append('<option value="">Select Department</option>');
-                        $.each(data, function(key, value) {
-                            deptSelect.append('<option value="' + value.id + '">' + value.dept_name + '</option>');
+        return $.ajax({
+            url: '{{ route("rbac.departments.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
+        type: 'GET',
+        success: function(data) {
+            deptSelect.empty().append('<option value="">Select Department</option>');
+        $.each(data, function(key, value) {
+            deptSelect.append('<option value="' + value.id + '">' + value.dept_name + '</option>');
                         });
 
-                        if (selectedDeptId) {
-                            deptSelect.val(selectedDeptId);
-                            loadSections(selectedDeptId, selectedSectionId, selectedPositionId);
+        if (selectedDeptId) {
+            deptSelect.val(selectedDeptId);
+        loadSections(selectedDeptId, selectedSectionId, selectedPositionId);
                         } else {
-                            sectionSelect.empty().append('<option value="">Select Section</option>');
-                            positionSelect.empty().append('<option value="">Select Position</option>');
+            sectionSelect.empty().append('<option value="">Select Section</option>');
+        positionSelect.empty().append('<option value="">Select Position</option>');
                         }
                     }
                 });
             }
 
-            function loadRoles(customerId, selectedRoleId) {
+        function loadRoles(customerId, selectedRoleId) {
                 const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
 
-                return $.ajax({
-                    url: '{{ route("rbac.roles.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
-                    type: 'GET',
-                    success: function(data) {
-                        $('#role_id').empty().append('<option value="">Select Role</option>');
-                        $.each(data, function(key, value) {
-                            $('#role_id').append('<option value="' + value.id + '">' + value.role_name + '</option>');
+        return $.ajax({
+            url: '{{ route("rbac.roles.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
+        type: 'GET',
+        success: function(data) {
+            $('#role_id').empty().append('<option value="">Select Role</option>');
+        $.each(data, function(key, value) {
+            $('#role_id').append('<option value="' + value.id + '">' + value.role_name + '</option>');
                         });
-                        if (selectedRoleId) {
-                            $('#role_id').val(selectedRoleId);
+        if (selectedRoleId) {
+            $('#role_id').val(selectedRoleId);
                         }
                     }
                 });
             }
 
-            function populateSections(sections, selectedSectionId) {
-                $('#section_id').empty().append('<option value="">Select Section</option>');
-                sections.forEach(function(section) {
-                    $('#section_id').append('<option value="' + section.id + '">' + section.section_name + '</option>');
-                });
-                if (selectedSectionId) {
-                    $('#section_id').val(selectedSectionId);
-                }
-            }
-
-            function populatePositions(positions, selectedPositionId) {
-                $('#position_id').empty().append('<option value="">Select Position</option>');
-                positions.forEach(function(position) {
-                    $('#position_id').append('<option value="' + position.id + '">' + position.position_name + '</option>');
-                });
-                if (selectedPositionId) {
-                    $('#position_id').val(selectedPositionId);
-                }
-            }
-
-            $('#customer_id').on('change', function() {
+        // Event Listeners for Dropdowns
+        $('#customer_id').on('change', function() {
                 const customerId = $(this).val();
-                loadDepartments(customerId).then(function() {
-                    loadRoles(customerId);
+        loadDepartments(customerId).then(function() {
+            loadRoles(customerId);
                 });
             });
 
-            $('#dept_id').on('change', function() {
+        $('#dept_id').on('change', function() {
                 var deptId = $(this).val();
-                loadSections(deptId);
+        loadSections(deptId);
             });
 
-            $('#section_id').on('change', function() {
+        $('#section_id').on('change', function() {
                 var sectionId = $(this).val();
-                loadPositions(sectionId);
+        loadPositions(sectionId);
             });
 
-            const initialCustomerId = $('#customer_id').val();
-            loadDepartments(initialCustomerId).then(function() {
-                loadRoles(initialCustomerId);
+        // Initial Load
+        const initialCustomerId = $('#customer_id').val();
+        loadDepartments(initialCustomerId).then(function() {
+            loadRoles(initialCustomerId);
             });
-            
-            $('#addModal').on('show.bs.modal', function(event) {
-                var button = $(event.relatedTarget);
-                var modal = $(this);
-                if (button.hasClass('edit-btn')) {
-                    modal.find('.modal-title').text('Edit User');
-                    var userId = button.data('id');
 
-                    $.ajax({
-                        url: "{{ route('rbac.user-data.edit', ':id') }}".replace(':id', userId),
-                        type: 'GET',
-                        success: function(response) {
-                            // console.log('Edit response:', response); // Debug log - commented out
-                            console.log('Edit response:', response); // Debug log
-                            $('#userDataForm').attr('action', "{{ route('rbac.user-data.update', ':id') }}".replace(':id', response.user.id));
-                            $('#userDataForm').find('input[name="_method"]').remove();
-                            $('#userDataForm').append('<input type="hidden" name="_method" value="PUT">');
+        // Initialize CrudManager
+        new CrudManager({
+            entity: 'userData', // Matches IDs: userDataTable, userDataForm, addModal (special handling needed)
+        routes: {
+            index: "{{ route('rbac.user-data') }}",
+        store: "{{ route('rbac.user-data.store') }}",
+                },
+        columns: [
+        {data: 'no', name: 'no'},
+        {data: 'customer_name', name: 'customer_name'},
+        {data: 'username', name: 'username'},
+        {data: 'full_name', name: 'full_name'},
+        {data: 'email', name: 'email'},
+        {data: 'role_name', name: 'role_name'},
+        {data: 'dept_name', name: 'dept_name'},
+        {data: 'section_name', name: 'section_name'},
+        {data: 'position_name', name: 'position_name'},
+        {data: 'action', name: 'action', orderable: false, searchable: false}
+        ],
+        modalId: '#addModal',
+        formId: '#userDataForm',
+        tableId: '#userDataTable',
+        filterBtnId: '#filterBtn',
+        resetBtnId: '#resetBtn',
+        addBtnId: '[data-target="#addModal"]', // Select by attribute since it doesn't have a unique ID in original code
+        dateFilters: true,
+        onAdd: function() {
+            $('#addModalLabel').text('Add New User');
 
-                            // Populate basic user information with null checks
-                            $('#username').val(response.user.username || '');
-                            $('#email').val(response.user.email || '');
-                            $('#full_name').val(response.user.user_detail ? response.user.user_detail.employee_name || '' : '');
-                            $('#gender').val(response.user.user_detail ? response.user.user_detail.gender || '' : '');
-                            $('#role_id').val(response.user.user_detail ? response.user.user_detail.role_id || '' : '');
+        // Reset dropdowns
+        $('#section_id').empty().append('<option value="">Select Section</option>');
+        $('#position_id').empty().append('<option value="">Select Position</option>');
 
-                            // Handle department/section/position population
-                            var customerId = response.customer_id ?? '';
-                            if (response.user.user_detail && response.user.user_detail.position && response.user.user_detail.position.section) {
-                                var deptId = response.user.user_detail.position.section.dept_id;
-                                var sectionId = response.user.user_detail.position.section_id;
-                                var positionId = response.user.user_detail.position_id;
-
-                                $('#customer_id').val(customerId);
-                                loadDepartments(customerId, deptId, sectionId, positionId).then(function() {
-                                    loadRoles(customerId, response.user.user_detail.role_id);
-                                });
-                            } else {
-                                // Clear organizational fields if no data
-                                $('#customer_id').val(customerId);
-                                loadDepartments(customerId);
-                                $('#dept_id').val('');
-                                $('#section_id').empty().append('<option value="">Select Section</option>');
-                                $('#position_id').empty().append('<option value="">Select Position</option>');
-
-                                if (response.message) {
-                                    toastr.warning(response.message);
-                                }
-                                loadRoles(customerId);
-                            }
-
-                            // Make password field optional when editing
-                            $('#password').closest('.form-group').show();
-                            $('#password').removeAttr('required');
-                            $('#password').attr('placeholder', 'Leave blank to keep current password');
-                        },
-                        error: function(xhr) {
-                            console.error('Error loading user data:', xhr.responseText);
-                            toastr.error('Failed to load user data for editing.');
-                        }
-                    });
-                } else {
-                    modal.find('.modal-title').text('Add New User');
-                    $('#userDataForm').trigger('reset');
-                    $('#userDataForm').find('input[name="_method"]').remove();
-                    $('#userDataForm').attr('action', "{{ route('rbac.user-data.store') }}");
-
-                    // Reset dropdowns
-                    $('#section_id').empty().append('<option value="">Select Section</option>');
-                    $('#position_id').empty().append('<option value="">Select Position</option>');
-
-                    if (isInternalUser) {
-                        $('#customer_id').val('');
+        if (isInternalUser) {
+            $('#customer_id').val('');
                     } else {
-                        $('#customer_id').val(currentCustomerId || '');
+            $('#customer_id').val(currentCustomerId || '');
                     }
-                    loadDepartments($('#customer_id').val()).then(function() {
-                        loadRoles($('#customer_id').val());
+        loadDepartments($('#customer_id').val()).then(function() {
+            loadRoles($('#customer_id').val());
                     });
 
-                    // Show password field when adding new user
-                    $('#password').closest('.form-group').show();
-                }
-            });
+        // Show password field
+        $('#password').closest('.form-group').show();
+        $('#password').attr('required', 'required');
+        $('#password').removeAttr('placeholder');
+                },
+        onEdit: function(response) {
+            $('#addModalLabel').text('Edit User');
 
-            $('#userDataForm').on('submit', function(e) {
-                e.preventDefault();
-                var form = $(this);
-                var url = form.attr('action');
-                var method = form.find('input[name="_method"]').val() || 'POST';
-                var data = form.serialize();
+        // Populate basic user information
+        $('#username').val(response.user.username || '');
+        $('#email').val(response.user.email || '');
+        $('#full_name').val(response.user.user_detail ? response.user.user_detail.employee_name || '' : '');
+        $('#gender').val(response.user.user_detail ? response.user.user_detail.gender || '' : '');
+        $('#role_id').val(response.user.user_detail ? response.user.user_detail.role_id || '' : '');
 
-                // If editing, exclude password if it's empty
-                if (method === 'PUT') {
-                    if (!$('#password').val()) {
-                        data = data.replace(/&?password=.*?(?=(&|$))/, '');
-                    }
-                }
+        // Handle department/section/position population
+        var customerId = response.customer_id ?? '';
+        if (response.user.user_detail && response.user.user_detail.position && response.user.user_detail.position.section) {
+                        var deptId = response.user.user_detail.position.section.dept_id;
+        var sectionId = response.user.user_detail.position.section_id;
+        var positionId = response.user.user_detail.position_id;
 
-                $.ajax({
-                    url: url,
-                    type: method,
-                    data: data,
-                    success: function(response) {
-                        $('#addModal').modal('hide');
-                        table.ajax.reload(null, false);
-                        toastr.success(response.success);
-                    },
-                    error: function(xhr) {
-                        if (xhr.responseJSON && xhr.responseJSON.errors) {
-                            var errors = xhr.responseJSON.errors;
-                            $.each(errors, function(key, value) {
-                                toastr.error(value[0]);
-                            });
-                        } else if (xhr.responseJSON && xhr.responseJSON.error) {
-                            toastr.error(xhr.responseJSON.error);
-                        } else {
-                            toastr.error('An unexpected error occurred.');
+        $('#customer_id').val(customerId);
+        loadDepartments(customerId, deptId, sectionId, positionId).then(function() {
+            loadRoles(customerId, response.user.user_detail.role_id);
+                        });
+                    } else {
+            // Clear organizational fields if no data
+            $('#customer_id').val(customerId);
+        loadDepartments(customerId);
+        $('#dept_id').val('');
+        $('#section_id').empty().append('<option value="">Select Section</option>');
+        $('#position_id').empty().append('<option value="">Select Position</option>');
+
+        if (response.message) {
+            toastr.warning(response.message);
                         }
+        loadRoles(customerId);
                     }
-                });
-            });
 
-            $(document).on('click', '.delete-btn', function() {
-                var userId = $(this).data('id');
-                if (confirm('Are you sure you want to delete this user?')) {
-                    $.ajax({
-                        url: "{{ route('rbac.user-data.destroy', ':id') }}".replace(':id', userId),
-                        type: 'POST',
-                        data: {
-                            _method: 'DELETE',
-                            _token: "{{ csrf_token() }}"
-                        },
-                        success: function(response) {
-                            table.ajax.reload(null, false);
-                            toastr.success(response.success);
-                        },
-                        error: function(xhr) {
-                            if (xhr.responseJSON && xhr.responseJSON.error) {
-                                toastr.error(xhr.responseJSON.error);
-                            } else {
-                                toastr.error('Something went wrong.');
-                            }
-                        }
-                    });
+        // Make password field optional when editing
+        $('#password').closest('.form-group').show();
+        $('#password').removeAttr('required');
+        $('#password').attr('placeholder', 'Leave blank to keep current password');
+                },
+        onModalHidden: function() {
+            // Reset password field state
+            $('#password').attr('required', 'required');
+        $('#password').removeAttr('placeholder');
                 }
             });
+
+            // Override the default edit button listener from CrudManager because the button class is 'edit-btn' not 'userData-edit-btn'
+            // and the ID is 'userDataTable' but the entity is 'userData' so CrudManager expects 'userData-edit-btn'
+            // We need to manually handle the edit click or change the class in the HTML.
+            // Changing the class in the HTML is cleaner but requires modifying the controller or the view where the button is generated.
+            // The controller generates the button HTML.
+
+            // Actually, CrudManager uses `.${self.entity}-edit-btn`.
+        // If entity is 'userData', it looks for `.userData-edit-btn`.
+        // The controller generates `.edit-btn`.
+        // So we need to either change the controller or add a delegated listener that triggers the CrudManager logic.
+        // Or, simpler: Just add the class 'userData-edit-btn' to the buttons via JS after draw, OR change the entity name in CrudManager config to match?
+        // No, 'edit-btn' is generic.
+
+        // Let's manually bind the edit button to the CrudManager logic since we can't easily change the controller output right now without another file edit.
+        // Wait, I AM editing the controller later. I can change the class there!
+        // But for now, I will add a compatibility layer here.
+
+        $(document).on('click', '.edit-btn', function() {
+            // Trigger the logic that CrudManager would have triggered
+            // But CrudManager instance is local.
+            // I'll attach the instance to the DOM element or make it accessible?
+            // Or just copy the logic? No, that defeats the purpose.
+
+            // Better approach: Update the controller to output `userData-edit-btn` and `userData-delete-btn`.
         });
-    </script>
+        });
+</script>
 @stop

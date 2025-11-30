@@ -105,6 +105,7 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
     Route::get('/customer/{id}/edit', [CustomerController::class, 'edit'])->name('rbac.customer.edit');
     Route::put('/customer/{id}', [CustomerController::class, 'update'])->name('rbac.customer.update');
     Route::delete('/customer/{id}', [CustomerController::class, 'destroy'])->name('rbac.customer.destroy');
+    Route::get('/customer/get', [CustomerController::class, 'get'])->name('rbac.customer.get');
 
     // Tenant Owners
     Route::get('/tenant-owner', [TenantOwnerController::class, 'index'])->name('rbac.tenant-owner');
