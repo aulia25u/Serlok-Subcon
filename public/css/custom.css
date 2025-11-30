@@ -1,0 +1,23 @@
+/* Custom Sidebar Indentation */
+
+/* Default: Indent submenu links */
+.nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    padding-left: 2.5rem !important;
+    /* Indent the link itself */
+}
+
+/* Collapsed state: Reset indentation to match parent icons */
+body.sidebar-collapse .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    padding-left: 1rem !important;
+    /* Standard padding for icons */
+}
+
+/* Collapsed but Hovered: Restore indentation */
+body.sidebar-collapse .main-sidebar:hover .nav-sidebar .nav-treeview>.nav-item>.nav-link {
+    padding-left: 2.5rem !important;
+}
+
+/* Reset ul padding to avoid double indentation */
+.nav-sidebar .nav-treeview {
+    padding-left: 0 !important;
+}

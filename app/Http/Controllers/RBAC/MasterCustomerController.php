@@ -13,15 +13,27 @@ class MasterCustomerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $data = MasterCustomer::with('customer')->select('*');
-            return DataTables::of($data)
+            $query = MasterCustomer::with('customer')->select('master_customers.*');
+
+            // Date Filter
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+            }
+
+            return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('customer_name', function(MasterCustomer $masterCustomer) {
+                ->addColumn('tenant_name', function (MasterCustomer $masterCustomer) {
                     return $masterCustomer->customer ? $masterCustomer->customer->customer_name : 'N/A';
                 })
-                ->addColumn('action', function($row){
-                    $btn = '<a href="javascript:void(0)" data-id="'.$row->id.'" class="edit btn btn-primary btn-sm">Edit</a> ';
-                    $btn .= '<a href="javascript:void(0)" data-id="'.$row->id.'" class="delete btn btn-danger btn-sm">Delete</a>';
+                ->editColumn('created_at', function ($row) {
+                    return $row->created_at ? $row->created_at->format('d-m-Y H:i:s') : '';
+                })
+                ->editColumn('updated_at', function ($row) {
+                    return $row->updated_at ? $row->updated_at->format('d-m-Y H:i:s') : '';
+                })
+                ->addColumn('action', function ($row) {
+                    $btn = '<button data-id="' . $row->id . '" class="btn btn-primary btn-sm master_customer-edit-btn me-1">Edit</button> ';
+                    $btn .= '<button data-id="' . $row->id . '" class="btn btn-danger btn-sm master_customer-delete-btn">Delete</button>';
                     return $btn;
                 })
                 ->rawColumns(['action'])
@@ -75,16 +87,19 @@ class MasterCustomerController extends Controller
     public function show(MasterCustomer $masterCustomer)
     {
         TenantService::assertAccess($masterCustomer->customer_id);
-        return view('master_customer.show',compact('masterCustomer'));
+        return view('master_customer.show', compact('masterCustomer'));
     }
 
-    public function edit(MasterCustomer $masterCustomer)
+    public function edit($id)
     {
+        $masterCustomer = MasterCustomer::findOrFail($id);
         return response()->json($masterCustomer);
     }
 
-    public function update(Request $request, MasterCustomer $masterCustomer)
+    public function update(Request $request, $id)
     {
+        $masterCustomer = MasterCustomer::findOrFail($id);
+
         $isInternal = TenantService::isInternal();
         $currentCustomerId = TenantService::currentCustomerId();
 
@@ -104,7 +119,7 @@ class MasterCustomerController extends Controller
                 },
             ],
             'customer_name' => 'required',
-            'customer_code' => 'required|unique:master_customers,customer_code,'.$masterCustomer->id,
+            'customer_code' => 'required|unique:master_customers,customer_code,' . $masterCustomer->id,
             'address' => 'required',
             'npwp' => 'required',
         ]);
@@ -114,15 +129,17 @@ class MasterCustomerController extends Controller
         return response()->json(['success' => 'Master Customer updated successfully']);
     }
 
-    public function destroy(MasterCustomer $masterCustomer)
+    public function destroy($id)
     {
+        $masterCustomer = MasterCustomer::findOrFail($id);
+
         TenantService::assertAccess($masterCustomer->customer_id);
         $oldValues = $masterCustomer->toArray();
 
         $masterCustomer->delete();
 
         // Log activity
-        ActivityLogService::logDelete('master_customers', $masterCustomer->id, $oldValues);
+        // ActivityLogService::logDelete('master_customers', $masterCustomer->id, $oldValues);
 
         return response()->json(['success' => 'Master Customer deleted successfully']);
     }

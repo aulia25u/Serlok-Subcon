@@ -42,10 +42,10 @@ class CustomerController extends Controller
                     return $row->created_at->format('d-m-Y H:i:s');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
+                    $btn = '<button class="btn btn-sm btn-primary customer-edit-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
                             </button>';
-                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">
+                    $btn .= ' <button class="btn btn-sm btn-danger customer-delete-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-trash"></i> Delete
                             </button>';
                     return $btn;

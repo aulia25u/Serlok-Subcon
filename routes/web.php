@@ -38,6 +38,7 @@ Route::middleware(['auth', 'twofactor'])->group(function () {
     Route::post('/profile/two-factor/enable', [ProfileController::class, 'enableTwoFactor'])->name('profile.two-factor.enable');
     Route::post('/profile/two-factor/disable', [ProfileController::class, 'disableTwoFactor'])->name('profile.two-factor.disable');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/tenant/switch', [App\Http\Controllers\TenantSwitcherController::class, 'switch'])->name('tenant.switch');
 });
 
 // RBAC Routes
@@ -144,4 +145,4 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
 
 
 });
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

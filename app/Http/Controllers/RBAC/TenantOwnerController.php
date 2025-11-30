@@ -52,10 +52,10 @@ class TenantOwnerController extends Controller
                     return $row->created_at->format('d-m-Y H:i:s');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button class="btn btn-sm btn-primary edit-btn" data-id="' . $row->id . '">
+                    $btn = '<button class="btn btn-sm btn-primary owner-edit-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-edit"></i> Edit
                             </button>';
-                    $btn .= ' <button class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">
+                    $btn .= ' <button class="btn btn-sm btn-danger owner-delete-btn" data-id="' . $row->id . '">
                                 <i class="fas fa-trash"></i> Delete
                             </button>';
                     return $btn;
@@ -161,10 +161,12 @@ class TenantOwnerController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        if (TenantOwner::where('user_id', $request->user_id)
-            ->where('customer_id', $request->customer_id)
-            ->where('id', '!=', $id)
-            ->exists()) {
+        if (
+            TenantOwner::where('user_id', $request->user_id)
+                ->where('customer_id', $request->customer_id)
+                ->where('id', '!=', $id)
+                ->exists()
+        ) {
             return response()->json(['error' => 'This owner is already assigned to the selected tenant.'], 422);
         }
 
