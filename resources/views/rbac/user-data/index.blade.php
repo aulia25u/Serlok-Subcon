@@ -72,7 +72,7 @@
 </div>
 
 <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addModalLabel">Add New User</h5>
@@ -85,102 +85,81 @@
                 <input type="hidden" id="userData_id" name="id">
                 <input type="hidden" id="userData_form_method" name="_method" value="POST">
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="username">Username</label>
-                                <input type="text" class="form-control" id="username" name="username" required>
+                    <ul class="nav nav-tabs" id="userTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="master-tab" data-toggle="tab" href="#master" role="tab" aria-controls="master" aria-selected="true">Master Data</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="assignments-tab" data-toggle="tab" href="#assignments" role="tab" aria-controls="assignments" aria-selected="false">Assignments</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content mt-3" id="userTabsContent">
+                        <!-- Master Data Tab -->
+                        <div class="tab-pane fade show active" id="master" role="tabpanel" aria-labelledby="master-tab">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="username">Username</label>
+                                        <input type="text" class="form-control" id="username" name="username" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="email">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="full_name">Full Name</label>
+                                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="password">Password</label>
+                                        <input type="password" class="form-control" id="password" name="password" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="accessible_tenants">Accessible Tenants (Optional)</label>
+                                        <select class="form-control select2" id="accessible_tenants" name="accessible_tenants[]" multiple="multiple" style="width: 100%;">
+                                            @foreach($customers as $customer)
+                                                <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted">Tenants assigned in "Assignments" tab are automatically included.</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="full_name">Full Name</label>
-                                <input type="text" class="form-control" id="full_name" name="full_name" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="customer_id">Tenant</label>
-                                @if($isInternal)
-                                    <select class="form-control" id="customer_id" name="customer_id">
-                                        <option value="">Internal (Global)</option>
-                                        @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
-                                        @endforeach
-                                    </select>
-                                @else
-                                    <select class="form-control" id="customer_id" name="customer_id" disabled>
-                                        <option value="{{ $currentCustomerId ?? '' }}">
-                                            {{ optional($customers->first())->customer_name ?? 'My Customer' }}
-                                        </option>
-                                    </select>
-                                    <input type="hidden" name="customer_id" value="{{ $currentCustomerId }}">
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="dept_id">Department</label>
-                                <select class="form-control" id="dept_id" name="dept_id" required>
-                                    <option value="">Select Department</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="section_id">Section</label>
-                                <select class="form-control" id="section_id" name="section_id" required>
-                                    <option value="">Select Section</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="position_id">Position</label>
-                                <select class="form-control" id="position_id" name="position_id" required>
-                                    <option value="">Select Position</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="role_id">Role</label>
-                                <select class="form-control" id="role_id" name="role_id" required>
-                                    <option value="">Select Role</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="gender">Gender</label>
-                                <select class="form-control" id="gender" name="gender" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="password">Password</label>
-                                <input type="password" class="form-control" id="password" name="password" required>
-                            </div>
+
+                        <!-- Assignments Tab -->
+                        <div class="tab-pane fade" id="assignments" role="tabpanel" aria-labelledby="assignments-tab">
+                            <table class="table table-bordered" id="assignmentsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Tenant</th>
+                                        <th>Department</th>
+                                        <th>Section</th>
+                                        <th>Position</th>
+                                        <th>Role</th>
+                                        <th>Gender</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assignmentsBody">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
+                            <button type="button" class="btn btn-success btn-sm" id="addAssignmentBtn">
+                                <i class="fas fa-plus"></i> Add Assignment
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -206,263 +185,333 @@
 
 <script src="{{ asset('js/crud-manager.js') }}"></script>
 <script>
-    $(document).ready(function() {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
+    $(document).ready(function () {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
 
         const isInternalUser = @json($isInternal);
         const currentCustomerId = @json($currentCustomerId);
+        let rowIdx = 0;
 
-        // Helper functions for dropdowns
-        function loadSections(deptId, selectedSectionId, selectedPositionId) {
-                if (!deptId) {
-            $('#section_id').empty().append('<option value="">Select Section</option>');
-        $('#position_id').empty().append('<option value="">Select Position</option>');
-        return $.Deferred().resolve();
+        // Helper functions for dropdowns (Scoped to Row)
+        function loadSections(row, deptId, selectedSectionId, selectedPositionId) {
+            const sectionSelect = row.find('.section-select');
+            const positionSelect = row.find('.position-select');
+
+            if (!deptId) {
+                sectionSelect.empty().append('<option value="">Select Section</option>');
+                positionSelect.empty().append('<option value="">Select Position</option>');
+                return $.Deferred().resolve();
+            }
+
+            return $.ajax({
+                url: '{{ route("rbac.sections.by-department", ":id") }}'.replace(':id', deptId),
+                type: 'GET',
+                success: function (data) {
+                    sectionSelect.empty().append('<option value="">Select Section</option>');
+                    $.each(data, function (key, value) {
+                        sectionSelect.append('<option value="' + value.id + '">' + value.section_name + '</option>');
+                    });
+
+                    if (selectedSectionId) {
+                        sectionSelect.val(selectedSectionId);
+                    }
+
+                    positionSelect.empty().append('<option value="">Select Position</option>');
+
+                    var sectionIdToLoad = selectedSectionId || sectionSelect.val();
+                    if (sectionIdToLoad) {
+                        loadPositions(row, sectionIdToLoad, selectedPositionId);
+                    }
                 }
+            });
+        }
 
-        return $.ajax({
-            url: '{{ route("rbac.sections.by-department", ":id") }}'.replace(':id', deptId),
-        type: 'GET',
-        success: function(data) {
-            $('#section_id').empty().append('<option value="">Select Section</option>');
-        $.each(data, function(key, value) {
-            $('#section_id').append('<option value="' + value.id + '">' + value.section_name + '</option>');
-                        });
+        function loadPositions(row, sectionId, selectedPositionId) {
+            const positionSelect = row.find('.position-select');
 
-        if (selectedSectionId) {
-            $('#section_id').val(selectedSectionId);
-                        }
-
-        $('#position_id').empty().append('<option value="">Select Position</option>');
-
-        var sectionIdToLoad = selectedSectionId || $('#section_id').val();
-        if (sectionIdToLoad) {
-            loadPositions(sectionIdToLoad, selectedPositionId);
-                        }
-                    }
-                });
+            if (!sectionId) {
+                positionSelect.empty().append('<option value="">Select Position</option>');
+                return $.Deferred().resolve();
             }
 
-        function loadPositions(sectionId, selectedPositionId) {
-                if (!sectionId) {
-            $('#position_id').empty().append('<option value="">Select Position</option>');
-        return $.Deferred().resolve();
+            return $.ajax({
+                url: '{{ route("rbac.positions.by-section", ":id") }}'.replace(':id', sectionId),
+                type: 'GET',
+                success: function (data) {
+                    positionSelect.empty().append('<option value="">Select Position</option>');
+                    $.each(data, function (key, value) {
+                        positionSelect.append('<option value="' + value.id + '">' + value.position_name + '</option>');
+                    });
+
+                    if (selectedPositionId) {
+                        positionSelect.val(selectedPositionId);
+                    }
                 }
+            });
+        }
 
-        return $.ajax({
-            url: '{{ route("rbac.positions.by-section", ":id") }}'.replace(':id', sectionId),
-        type: 'GET',
-        success: function(data) {
-            $('#position_id').empty().append('<option value="">Select Position</option>');
-        $.each(data, function(key, value) {
-            $('#position_id').append('<option value="' + value.id + '">' + value.position_name + '</option>');
-                        });
+        function loadDepartments(row, customerId, selectedDeptId, selectedSectionId, selectedPositionId) {
+            const deptSelect = row.find('.dept-select');
+            const sectionSelect = row.find('.section-select');
+            const positionSelect = row.find('.position-select');
+            const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
 
-        if (selectedPositionId) {
-            $('#position_id').val(selectedPositionId);
-                        }
-                    }
-                });
+            if (customerId === undefined) {
+                deptSelect.empty().append('<option value="">Select Department</option>');
+                sectionSelect.empty().append('<option value="">Select Section</option>');
+                positionSelect.empty().append('<option value="">Select Position</option>');
+                return $.Deferred().resolve();
             }
 
-        function loadDepartments(customerId, selectedDeptId, selectedSectionId, selectedPositionId) {
-                const deptSelect = $('#dept_id');
-        const sectionSelect = $('#section_id');
-        const positionSelect = $('#position_id');
-        const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
+            return $.ajax({
+                url: '{{ route("rbac.departments.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
+                type: 'GET',
+                success: function (data) {
+                    deptSelect.empty().append('<option value="">Select Department</option>');
+                    $.each(data, function (key, value) {
+                        deptSelect.append('<option value="' + value.id + '">' + value.dept_name + '</option>');
+                    });
 
-        if (customerId === undefined) {
-            deptSelect.empty().append('<option value="">Select Department</option>');
-        sectionSelect.empty().append('<option value="">Select Section</option>');
-        positionSelect.empty().append('<option value="">Select Position</option>');
-        return $.Deferred().resolve();
+                    if (selectedDeptId) {
+                        deptSelect.val(selectedDeptId);
+                        loadSections(row, selectedDeptId, selectedSectionId, selectedPositionId);
+                    } else {
+                        sectionSelect.empty().append('<option value="">Select Section</option>');
+                        positionSelect.empty().append('<option value="">Select Position</option>');
+                    }
                 }
+            });
+        }
 
-        return $.ajax({
-            url: '{{ route("rbac.departments.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
-        type: 'GET',
-        success: function(data) {
-            deptSelect.empty().append('<option value="">Select Department</option>');
-        $.each(data, function(key, value) {
-            deptSelect.append('<option value="' + value.id + '">' + value.dept_name + '</option>');
-                        });
+        function loadRoles(row, customerId, selectedRoleId) {
+            const roleSelect = row.find('.role-select');
+            const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
 
-        if (selectedDeptId) {
-            deptSelect.val(selectedDeptId);
-        loadSections(selectedDeptId, selectedSectionId, selectedPositionId);
-                        } else {
-            sectionSelect.empty().append('<option value="">Select Section</option>');
-        positionSelect.empty().append('<option value="">Select Position</option>');
-                        }
+            return $.ajax({
+                url: '{{ route("rbac.roles.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
+                type: 'GET',
+                success: function (data) {
+                    roleSelect.empty().append('<option value="">Select Role</option>');
+                    $.each(data, function (key, value) {
+                        roleSelect.append('<option value="' + value.id + '">' + value.role_name + '</option>');
+                    });
+                    if (selectedRoleId) {
+                        roleSelect.val(selectedRoleId);
                     }
-                });
+                }
+            });
+        }
+
+        function addAssignmentRow(data = {}) {
+            const idx = rowIdx++;
+            const customerId = data.customer_id || (isInternalUser ? '' : currentCustomerId);
+            
+            let customerOptions = '';
+            @foreach($customers as $customer)
+                customerOptions += `<option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>`;
+            @endforeach
+            
+            let customerSelect = '';
+            if (isInternalUser) {
+                customerSelect = `<select class="form-control customer-select" name="details[${idx}][customer_id]" required>
+                                    <option value="">Internal (Global)</option>
+                                    ${customerOptions}
+                                  </select>`;
+            } else {
+                customerSelect = `<select class="form-control customer-select" name="details[${idx}][customer_id]" disabled>
+                                    <option value="${currentCustomerId}">{{ optional($customers->first())->customer_name ?? 'My Customer' }}</option>
+                                  </select>
+                                  <input type="hidden" name="details[${idx}][customer_id]" value="${currentCustomerId}">`;
             }
 
-        function loadRoles(customerId, selectedRoleId) {
-                const resolvedCustomer = customerId === '' ? 'null' : (customerId ?? 'null');
+            const rowHtml = `
+                <tr id="row-${idx}">
+                    <td>
+                        ${customerSelect}
+                        <input type="hidden" name="details[${idx}][id]" value="${data.id || ''}">
+                    </td>
+                    <td>
+                        <select class="form-control dept-select" name="details[${idx}][dept_id]" required>
+                            <option value="">Select Department</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control section-select" name="details[${idx}][section_id]" required>
+                            <option value="">Select Section</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control position-select" name="details[${idx}][position_id]" required>
+                            <option value="">Select Position</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control role-select" name="details[${idx}][role_id]" required>
+                            <option value="">Select Role</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control gender-select" name="details[${idx}][gender]" required>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
 
-        return $.ajax({
-            url: '{{ route("rbac.roles.by-customer", ":id") }}'.replace(':id', resolvedCustomer),
-        type: 'GET',
-        success: function(data) {
-            $('#role_id').empty().append('<option value="">Select Role</option>');
-        $.each(data, function(key, value) {
-            $('#role_id').append('<option value="' + value.id + '">' + value.role_name + '</option>');
-                        });
-        if (selectedRoleId) {
-            $('#role_id').val(selectedRoleId);
-                        }
-                    }
-                });
-            }
+            $('#assignmentsBody').append(rowHtml);
+            const row = $(`#row-${idx}`);
 
-        // Event Listeners for Dropdowns
-        $('#customer_id').on('change', function() {
-                const customerId = $(this).val();
-        loadDepartments(customerId).then(function() {
-            loadRoles(customerId);
-                });
+            // Set initial values if provided
+            if (data.gender) row.find('.gender-select').val(data.gender);
+            if (data.customer_id) row.find('.customer-select').val(data.customer_id);
+
+            // Load dependencies
+            loadDepartments(row, customerId, data.dept_id, data.section_id, data.position_id).then(() => {
+                loadRoles(row, customerId, data.role_id);
             });
 
-        $('#dept_id').on('change', function() {
-                var deptId = $(this).val();
-        loadSections(deptId);
+            // Event listeners
+            row.find('.customer-select').on('change', function() {
+                const newCustId = $(this).val();
+                loadDepartments(row, newCustId).then(() => loadRoles(row, newCustId));
             });
+            row.find('.dept-select').on('change', function() {
+                loadSections(row, $(this).val());
+            });
+            row.find('.section-select').on('change', function() {
+                loadPositions(row, $(this).val());
+            });
+            row.find('.remove-row').on('click', function() {
+                $(this).closest('tr').remove();
+            });
+        }
 
-        $('#section_id').on('change', function() {
-                var sectionId = $(this).val();
-        loadPositions(sectionId);
-            });
+        $('#addAssignmentBtn').on('click', function() {
+            addAssignmentRow();
+        });
 
-        // Initial Load
-        const initialCustomerId = $('#customer_id').val();
-        loadDepartments(initialCustomerId).then(function() {
-            loadRoles(initialCustomerId);
-            });
+        // Initialize Select2
+        $('.select2').select2();
 
         // Initialize CrudManager
         new CrudManager({
-            entity: 'userData', // Matches IDs: userDataTable, userDataForm, addModal (special handling needed)
-        routes: {
-            index: "{{ route('rbac.user-data') }}",
-        store: "{{ route('rbac.user-data.store') }}",
-                },
-        columns: [
-        {data: 'no', name: 'no'},
-        {data: 'customer_name', name: 'customer_name'},
-        {data: 'username', name: 'username'},
-        {data: 'full_name', name: 'full_name'},
-        {data: 'email', name: 'email'},
-        {data: 'role_name', name: 'role_name'},
-        {data: 'dept_name', name: 'dept_name'},
-        {data: 'section_name', name: 'section_name'},
-        {data: 'position_name', name: 'position_name'},
-        {data: 'action', name: 'action', orderable: false, searchable: false}
-        ],
-        modalId: '#addModal',
-        formId: '#userDataForm',
-        tableId: '#userDataTable',
-        filterBtnId: '#filterBtn',
-        resetBtnId: '#resetBtn',
-        addBtnId: '[data-target="#addModal"]', // Select by attribute since it doesn't have a unique ID in original code
-        dateFilters: true,
-        onAdd: function() {
-            $('#addModalLabel').text('Add New User');
+            entity: 'userData',
+            routes: {
+                index: "{{ route('rbac.user-data') }}",
+                store: "{{ route('rbac.user-data.store') }}",
+            },
+            columns: [
+                { data: 'no', name: 'no' },
+                { data: 'customer_name', name: 'customer_name' },
+                { data: 'username', name: 'username' },
+                { data: 'full_name', name: 'full_name' },
+                { data: 'email', name: 'email' },
+                { data: 'role_name', name: 'role_name' },
+                { data: 'dept_name', name: 'dept_name' },
+                { data: 'section_name', name: 'section_name' },
+                { data: 'position_name', name: 'position_name' },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ],
+            modalId: '#addModal',
+            formId: '#userDataForm',
+            tableId: '#userDataTable',
+            filterBtnId: '#filterBtn',
+            resetBtnId: '#resetBtn',
+            addBtnId: '[data-target="#addModal"]',
+            dateFilters: true,
+            onAdd: function () {
+                $('#addModalLabel').text('Add New User');
+                $('#assignmentsBody').empty();
+                $('#accessible_tenants').val(null).trigger('change');
+                
+                // Add one empty row by default
+                addAssignmentRow();
 
-        // Reset dropdowns
-        $('#section_id').empty().append('<option value="">Select Section</option>');
-        $('#position_id').empty().append('<option value="">Select Position</option>');
+                // Show password field
+                $('#password').closest('.form-group').show();
+                $('#password').attr('required', 'required');
+                $('#password').removeAttr('placeholder');
+                
+                // Reset tab to first one
+                $('#master-tab').tab('show');
+            },
+            onEdit: function (response) {
+                $('#addModalLabel').text('Edit User');
+                $('#userData_id').val(response.user.id);
 
-        if (isInternalUser) {
-            $('#customer_id').val('');
-                    } else {
-            $('#customer_id').val(currentCustomerId || '');
-                    }
-        loadDepartments($('#customer_id').val()).then(function() {
-            loadRoles($('#customer_id').val());
-                    });
-
-        // Show password field
-        $('#password').closest('.form-group').show();
-        $('#password').attr('required', 'required');
-        $('#password').removeAttr('placeholder');
-                },
-        onEdit: function(response) {
-            $('#addModalLabel').text('Edit User');
-
-        // Populate basic user information
-        $('#username').val(response.user.username || '');
-        $('#email').val(response.user.email || '');
-        $('#full_name').val(response.user.user_detail ? response.user.user_detail.employee_name || '' : '');
-        $('#gender').val(response.user.user_detail ? response.user.user_detail.gender || '' : '');
-        $('#role_id').val(response.user.user_detail ? response.user.user_detail.role_id || '' : '');
-
-        // Handle department/section/position population
-        var customerId = response.customer_id ?? '';
-        if (response.user.user_detail && response.user.user_detail.position && response.user.user_detail.position.section) {
-                        var deptId = response.user.user_detail.position.section.dept_id;
-        var sectionId = response.user.user_detail.position.section_id;
-        var positionId = response.user.user_detail.position_id;
-
-        $('#customer_id').val(customerId);
-        loadDepartments(customerId, deptId, sectionId, positionId).then(function() {
-            loadRoles(customerId, response.user.user_detail.role_id);
-                        });
-                    } else {
-            // Clear organizational fields if no data
-            $('#customer_id').val(customerId);
-        loadDepartments(customerId);
-        $('#dept_id').val('');
-        $('#section_id').empty().append('<option value="">Select Section</option>');
-        $('#position_id').empty().append('<option value="">Select Position</option>');
-
-        if (response.message) {
-            toastr.warning(response.message);
-                        }
-        loadRoles(customerId);
-                    }
-
-        // Make password field optional when editing
-        $('#password').closest('.form-group').show();
-        $('#password').removeAttr('required');
-        $('#password').attr('placeholder', 'Leave blank to keep current password');
-                },
-        onModalHidden: function() {
-            // Reset password field state
-            $('#password').attr('required', 'required');
-        $('#password').removeAttr('placeholder');
+                // Populate basic user information
+                $('#username').val(response.user.username || '');
+                $('#email').val(response.user.email || '');
+                $('#full_name').val(response.user.name || ''); // Note: user.name in User model, employee_name in UserDetail
+                
+                // Populate Accessible Tenants
+                if (response.accessible_tenants) {
+                    $('#accessible_tenants').val(response.accessible_tenants).trigger('change');
+                } else {
+                    $('#accessible_tenants').val(null).trigger('change');
                 }
-            });
 
-            // Override the default edit button listener from CrudManager because the button class is 'edit-btn' not 'userData-edit-btn'
-            // and the ID is 'userDataTable' but the entity is 'userData' so CrudManager expects 'userData-edit-btn'
-            // We need to manually handle the edit click or change the class in the HTML.
-            // Changing the class in the HTML is cleaner but requires modifying the controller or the view where the button is generated.
-            // The controller generates the button HTML.
+                // Populate Assignments
+                $('#assignmentsBody').empty();
+                if (response.details && response.details.length > 0) {
+                    response.details.forEach(detail => {
+                        // We need to reconstruct the data object for addAssignmentRow
+                        // detail has position.section.dept_id etc.
+                        // But wait, the response.details from controller is just the UserDetail model with relations.
+                        // We need to extract IDs.
+                        
+                        let deptId = null;
+                        let sectionId = null;
+                        if (detail.position && detail.position.section) {
+                            deptId = detail.position.section.dept_id;
+                            sectionId = detail.position.section_id;
+                        }
 
-            // Actually, CrudManager uses `.${self.entity}-edit-btn`.
-        // If entity is 'userData', it looks for `.userData-edit-btn`.
-        // The controller generates `.edit-btn`.
-        // So we need to either change the controller or add a delegated listener that triggers the CrudManager logic.
-        // Or, simpler: Just add the class 'userData-edit-btn' to the buttons via JS after draw, OR change the entity name in CrudManager config to match?
-        // No, 'edit-btn' is generic.
+                        addAssignmentRow({
+                            id: detail.id,
+                            customer_id: detail.customer_id,
+                            dept_id: deptId,
+                            section_id: sectionId,
+                            position_id: detail.position_id,
+                            role_id: detail.role_id,
+                            gender: detail.gender
+                        });
+                    });
+                } else {
+                    addAssignmentRow();
+                }
 
-        // Let's manually bind the edit button to the CrudManager logic since we can't easily change the controller output right now without another file edit.
-        // Wait, I AM editing the controller later. I can change the class there!
-        // But for now, I will add a compatibility layer here.
-
-        $(document).on('click', '.edit-btn', function() {
-            // Trigger the logic that CrudManager would have triggered
-            // But CrudManager instance is local.
-            // I'll attach the instance to the DOM element or make it accessible?
-            // Or just copy the logic? No, that defeats the purpose.
-
-            // Better approach: Update the controller to output `userData-edit-btn` and `userData-delete-btn`.
+                // Make password field optional when editing
+                $('#password').closest('.form-group').show();
+                $('#password').removeAttr('required');
+                $('#password').attr('placeholder', 'Leave blank to keep current password');
+                
+                // Reset tab to first one
+                $('#master-tab').tab('show');
+            },
+            onModalHidden: function () {
+                // Reset password field state
+                $('#password').attr('required', 'required');
+                $('#password').removeAttr('placeholder');
+            }
         });
+
+        // Manual binding for edit button since we use custom class
+        $(document).on('click', '.userData-edit-btn', function () {
+            // This is handled by CrudManager's generic listener if we used the standard class.
+            // But we used 'userData-edit-btn'.
+            // CrudManager listens to `.${self.entity}-edit-btn`.
+            // Our entity is 'userData', so it listens to `.userData-edit-btn`.
+            // So it SHOULD work automatically.
         });
+    });
 </script>
 @stop

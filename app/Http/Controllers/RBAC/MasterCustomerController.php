@@ -14,6 +14,7 @@ class MasterCustomerController extends Controller
     {
         if ($request->ajax()) {
             $query = MasterCustomer::with('customer')->select('master_customers.*');
+            $query = TenantService::scopeQueryByCustomer($query);
 
             // Date Filter
             if ($request->filled('start_date') && $request->filled('end_date')) {
@@ -93,12 +94,14 @@ class MasterCustomerController extends Controller
     public function edit($id)
     {
         $masterCustomer = MasterCustomer::findOrFail($id);
+        TenantService::assertAccess($masterCustomer->customer_id);
         return response()->json($masterCustomer);
     }
 
     public function update(Request $request, $id)
     {
         $masterCustomer = MasterCustomer::findOrFail($id);
+        TenantService::assertAccess($masterCustomer->customer_id);
 
         $isInternal = TenantService::isInternal();
         $currentCustomerId = TenantService::currentCustomerId();

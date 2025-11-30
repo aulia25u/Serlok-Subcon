@@ -51,8 +51,19 @@ class User extends Authenticatable
         ];
     }
 
+    public function userDetails()
+    {
+        return $this->hasMany(UserDetail::class);
+    }
+
+    // Keep this for backward compatibility if needed, or remove if fully refactoring
     public function userDetail()
     {
-        return $this->hasOne(UserDetail::class);
+        return $this->hasOne(UserDetail::class)->latest();
+    }
+
+    public function tenants()
+    {
+        return $this->hasMany(TenantOwner::class);
     }
 }

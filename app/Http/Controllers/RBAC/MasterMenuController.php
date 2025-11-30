@@ -57,10 +57,14 @@ class MasterMenuController extends Controller
             })
             ->addColumn('permissions', function ($row) {
                 $permissions = [];
-                if ($row->is_create) $permissions[] = '<span class="badge badge-success">Create</span>';
-                if ($row->is_read) $permissions[] = '<span class="badge badge-info">Read</span>';
-                if ($row->is_update) $permissions[] = '<span class="badge badge-warning">Update</span>';
-                if ($row->is_delete) $permissions[] = '<span class="badge badge-danger">Delete</span>';
+                if ($row->is_create)
+                    $permissions[] = '<span class="badge badge-success">Create</span>';
+                if ($row->is_read)
+                    $permissions[] = '<span class="badge badge-info">Read</span>';
+                if ($row->is_update)
+                    $permissions[] = '<span class="badge badge-warning">Update</span>';
+                if ($row->is_delete)
+                    $permissions[] = '<span class="badge badge-danger">Delete</span>';
                 return implode(' ', $permissions);
             })
             ->addColumn('customer_name', function ($row) {
@@ -90,29 +94,40 @@ class MasterMenuController extends Controller
     {
         $request->validate([
             'role_id' => 'required|exists:roles,id',
-            'menu_id' => 'required|exists:menus,id',
             'customer_id' => 'nullable|exists:customers,id',
+            'items' => 'required|array',
+            'items.*.menu_id' => 'required|exists:menus,id',
         ]);
 
-        $existing = RoleToMenu::where('role_id', $request->role_id)
-            ->where('menu_id', $request->menu_id)
-            ->first();
+        $customerId = TenantService::resolveCustomerId($request->customer_id);
+        $roleId = $request->role_id;
+        $items = $request->items;
 
-        if ($existing) {
-            return response()->json(['error' => 'This role-menu combination already exists'], 400);
+        foreach ($items as $item) {
+            $menuId = $item['menu_id'];
+
+            // Check for existing record to avoid duplicates
+            $existing = RoleToMenu::where('role_id', $roleId)
+                ->where('menu_id', $menuId)
+                ->where('customer_id', $customerId)
+                ->first();
+
+            if ($existing) {
+                continue; // Skip if already exists, or we could update it. Let's skip for now.
+            }
+
+            RoleToMenu::create([
+                'role_id' => $roleId,
+                'menu_id' => $menuId,
+                'customer_id' => $customerId,
+                'is_create' => isset($item['is_create']),
+                'is_read' => isset($item['is_read']),
+                'is_update' => isset($item['is_update']),
+                'is_delete' => isset($item['is_delete']),
+            ]);
         }
 
-        RoleToMenu::create([
-            'role_id' => $request->role_id,
-            'menu_id' => $request->menu_id,
-            'customer_id' => TenantService::resolveCustomerId($request->customer_id),
-            'is_create' => $request->has('is_create'),
-            'is_read' => $request->has('is_read'),
-            'is_update' => $request->has('is_update'),
-            'is_delete' => $request->has('is_delete'),
-        ]);
-
-        return response()->json(['success' => 'Master menu created successfully']);
+        return response()->json(['success' => 'Master menus created successfully']);
     }
 
     public function edit($id)
@@ -129,9 +144,12 @@ class MasterMenuController extends Controller
         ]);
 
         $roleToMenu = RoleToMenu::findOrFail($id);
-        
+
+        $customerId = TenantService::resolveCustomerId($request->customer_id);
+
         $existing = RoleToMenu::where('role_id', $request->role_id)
             ->where('menu_id', $request->menu_id)
+            ->where('customer_id', $customerId)
             ->where('id', '!=', $id)
             ->first();
 
@@ -156,7 +174,7 @@ class MasterMenuController extends Controller
     {
         $roleToMenu = RoleToMenu::findOrFail($id);
         $roleToMenu->delete();
-        
+
         return response()->json(['success' => 'Master menu deleted successfully']);
     }
 }

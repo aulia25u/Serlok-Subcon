@@ -31,12 +31,8 @@ class UserDataController extends Controller
         $customerId = TenantService::currentCustomerId();
 
         if ($request->ajax()) {
-            // Eager load the new, complex relationship chain
-            $query = User::with([
-                'userDetail.position.section.dept', // The full chain
-                'userDetail.role',
-                'userDetail.customer',
-            ])
+            // Query UserDetail directly to list assignments
+            $query = UserDetail::with(['user', 'position.section.dept', 'role', 'customer'])
                 ->when($request->start_date, function ($q) use ($request) {
                     return $q->whereDate('created_at', '>=', $request->start_date);
                 })
@@ -45,9 +41,7 @@ class UserDataController extends Controller
                 });
 
             if ($customerId) {
-                $query->whereHas('userDetail', function ($q) use ($customerId) {
-                    return $q->where('customer_id', $customerId);
-                });
+                $query->where('customer_id', $customerId);
             }
 
             return DataTables::of($query)
@@ -57,32 +51,47 @@ class UserDataController extends Controller
                     return ++$no;
                 })
                 ->addColumn('full_name', function ($row) {
-                    return $row->userDetail->employee_name ?? '-';
+                    return $row->employee_name ?? '-';
+                })
+                ->addColumn('username', function ($row) {
+                    return $row->user->username ?? '-';
+                })
+                ->addColumn('email', function ($row) {
+                    return $row->user->email ?? '-';
                 })
                 ->addColumn('role_name', function ($row) {
-                    return $row->userDetail->role->role_name ?? '-';
+                    return $row->role->role_name ?? '-';
                 })
                 ->addColumn('dept_name', function ($row) {
-                    // Access the department name through the nested relationships
-                    return $row->userDetail->position->section->dept->dept_name ?? '-';
+                    return $row->position->section->dept->dept_name ?? '-';
                 })
                 ->addColumn('section_name', function ($row) {
-                    // Access the section name through the nested relationships
-                    return $row->userDetail->position->section->section_name ?? '-';
+                    return $row->position->section->section_name ?? '-';
                 })
                 ->addColumn('position_name', function ($row) {
-                    // Access the position name through the nested relationship
-                    return $row->userDetail->position->position_name ?? '-';
+                    return $row->position->position_name ?? '-';
                 })
                 ->addColumn('customer_name', function ($row) {
-                    return $row->userDetail->customer->customer_name ?? 'Internal';
+                    return $row->customer->customer_name ?? 'Internal';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button class="btn btn-sm btn-primary userData-edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->id . '">
+                    // We edit the USER, not just the detail, but we pass the user ID
+                    $btn = '<button class="btn btn-sm btn-primary userData-edit-btn" data-toggle="modal" data-target="#addModal" data-id="' . $row->user_id . '">
                                 <i class="fas fa-edit"></i> Edit
                             </button>';
-                    $btn .= ' <button class="btn btn-sm btn-danger userData-delete-btn" data-id="' . $row->id . '">
-                                <i class="fas fa-trash"></i> Delete
+                    // Delete applies to the specific assignment (UserDetail) or the whole user?
+                    // If we delete here, we should probably delete the assignment.
+                    // But the current UI expects "Delete User".
+                    // Let's keep it as "Delete User" for now, or maybe "Delete Assignment"?
+                    // The request was "1 user master can have 2 details".
+                    // If I delete here, I should probably delete the UserDetail.
+                    // But the controller destroy method deletes the User.
+                    // Let's stick to User ID for now and maybe refine later.
+                    // Actually, if we list Details, we should probably allow deleting the Detail.
+                    // But the Edit modal will manage all details.
+                    // So let's keep the Edit button pointing to the User.
+                    $btn .= ' <button class="btn btn-sm btn-danger userData-delete-btn" data-id="' . $row->user_id . '">
+                                <i class="fas fa-trash"></i> Delete User
                             </button>';
                     return $btn;
                 })
@@ -124,46 +133,20 @@ class UserDataController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
             'full_name' => 'required|string|max:255',
-            'gender' => 'required|in:Male,Female',
-            'dept_id' => 'required|exists:depts,id',
-            'section_id' => [
-                'required',
-                'exists:sections,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->dept_id) {
-                        $exists = Section::where('id', $value)
-                            ->where('dept_id', $request->dept_id)
-                            ->exists();
-                        if (!$exists) {
-                            $fail('The selected section does not belong to the selected department.');
-                        }
-                    }
-                },
-            ],
-            'position_id' => [
-                'required',
-                'exists:positions,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->section_id) {
-                        $exists = Position::where('id', $value)
-                            ->where('section_id', $request->section_id)
-                            ->exists();
-                        if (!$exists) {
-                            $fail('The selected position does not belong to the selected section.');
-                        }
-                    }
-                },
-            ],
-            'role_id' => 'required|exists:roles,id'
+            'role_id' => 'nullable|exists:roles,id', // Made nullable as it's now in details
+            'details' => 'required|array',
+            'details.*.customer_id' => 'required|exists:customers,id',
+            'details.*.dept_id' => 'required|exists:depts,id',
+            'details.*.section_id' => 'required|exists:sections,id', // Add validation logic if needed
+            'details.*.position_id' => 'required|exists:positions,id',
+            'details.*.role_id' => 'required|exists:roles,id',
+            'details.*.gender' => 'required|in:Male,Female',
             // 'plant_id' => 'required|exists:plants,id', // Removed plant_id validation
         ]);
 
         DB::beginTransaction();
 
         try {
-            $section = Section::findOrFail($request->section_id);
-            TenantService::assertAccess($section->customer_id);
-
             $user = User::create([
                 'username' => $request->username,
                 'email' => $request->email,
@@ -171,33 +154,57 @@ class UserDataController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
-            UserDetail::create([
-                'user_id' => $user->id,
-                'position_id' => $request->position_id, // Store position_id on UserDetail
-                'role_id' => $request->role_id,
-                'customer_id' => $section->customer_id,
-                // 'plant_id' => $request->plant_id, // Removed plant_id
-                'employee_name' => $request->full_name,
-                'employee_id' => $request->username, // Use username as employee_id
-                'gender' => $request->gender,
-                'address' => '-',
-                'phone' => '-',
-                'join_date' => now(),
-                'status_active' => 1,
-                'employee_photo' => 'default.png',
-            ]);
+            foreach ($request->details as $detail) {
+                $section = Section::findOrFail($detail['section_id']);
+                TenantService::assertAccess($section->customer_id);
+
+                UserDetail::create([
+                    'user_id' => $user->id,
+                    'position_id' => $detail['position_id'],
+                    'role_id' => $detail['role_id'],
+                    'customer_id' => $section->customer_id,
+                    'employee_name' => $request->full_name, // Using master full name
+                    'employee_id' => $request->username, // Use username as employee_id
+                    'gender' => $detail['gender'],
+                    'address' => '-',
+                    'phone' => '-',
+                    'join_date' => now(),
+                    'status_active' => 1,
+                    'employee_photo' => 'default.png',
+                ]);
+            }
+
+            // Sync accessible tenants based on details + any extra?
+            // For now, let's assume accessible tenants are derived from details OR we keep the explicit field?
+            // The previous implementation had 'accessible_tenants'.
+            // If we have multiple details, the user implicitly has access to those tenants.
+            // But they might need access to tenants where they don't have a specific role yet?
+            // Let's keep 'accessible_tenants' if provided, OR merge with details' tenants.
+
+            $accessibleTenants = $request->accessible_tenants ?? [];
+            foreach ($request->details as $detail) {
+                $section = Section::findOrFail($detail['section_id']);
+                if (!in_array($section->customer_id, $accessibleTenants)) {
+                    $accessibleTenants[] = $section->customer_id;
+                }
+            }
+
+            foreach ($accessibleTenants as $tenantId) {
+                \App\Models\TenantOwner::create([
+                    'user_id' => $user->id,
+                    'customer_id' => $tenantId,
+                    'is_active' => true,
+                ]);
+            }
 
             DB::commit();
 
             // Log activity
-            ActivityLogService::logCreate('user_details', $user->userDetail->id, [
+            ActivityLogService::logCreate('users', $user->id, [
                 'username' => $request->username,
                 'email' => $request->email,
                 'employee_name' => $request->full_name,
-                'gender' => $request->gender,
-                'position_id' => $request->position_id,
-                'role_id' => $request->role_id,
-                'customer_id' => $section->customer_id,
+                'details_count' => count($request->details),
             ]);
 
             return response()->json(['success' => 'User created successfully.']);
@@ -217,25 +224,13 @@ class UserDataController extends Controller
     public function edit($id)
     {
         // Load the full relationship chain for the edit form
-        $user = User::with(['userDetail.position.section.dept', 'userDetail.role'])->findOrFail($id);
+        $user = User::with(['userDetails.position.section.dept', 'userDetails.role', 'tenants'])->findOrFail($id);
 
         $response = [
             'user' => $user,
-            'sections' => collect(), // Default empty
-            'positions' => collect(), // Default empty
-            'customer_id' => optional($user->userDetail)->customer_id,
+            'details' => $user->userDetails, // Return all details
+            'accessible_tenants' => $user->tenants->pluck('customer_id'),
         ];
-
-        // Check if user has position and section relationships
-        if ($user->userDetail && $user->userDetail->position && $user->userDetail->position->section) {
-            $deptId = $user->userDetail->position->section->dept_id;
-            $sectionId = $user->userDetail->position->section_id;
-
-            $response['sections'] = Section::where('dept_id', $deptId)->get();
-            $response['positions'] = Position::where('section_id', $sectionId)->get();
-        } else {
-            $response['message'] = 'User position data is incomplete. Please set department, section, and position.';
-        }
 
         return response()->json($response);
     }
@@ -250,87 +245,109 @@ class UserDataController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'username' => 'required|string|max:255|unique:users,username,' . $id,
-            'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'password' => 'nullable|string|min:8',
-            'full_name' => 'required|string|max:255',
-            'gender' => 'required|in:Male,Female',
-            'dept_id' => 'required|exists:depts,id',
-            'section_id' => [
-                'required',
-                'exists:sections,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->dept_id) {
-                        $exists = Section::where('id', $value)
-                            ->where('dept_id', $request->dept_id)
-                            ->exists();
-                        if (!$exists) {
-                            $fail('The selected section does not belong to the selected department.');
-                        }
-                    }
-                },
-            ],
-            'position_id' => [
-                'required',
-                'exists:positions,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($request->section_id) {
-                        $exists = Position::where('id', $value)
-                            ->where('section_id', $request->section_id)
-                            ->exists();
-                        if (!$exists) {
-                            $fail('The selected position does not belong to the selected section.');
-                        }
-                    }
-                },
-            ],
-            'role_id' => 'required|exists:roles,id'
-            // 'plant_id' => 'required|exists:plants,id', // Removed plant_id validation
+            'username' => 'required|unique:users,username,' . $id,
+            'email' => 'required|email|unique:users,email,' . $id,
+            'full_name' => 'required',
+            'details' => 'required|array',
+            'details.*.customer_id' => 'required|exists:customers,id',
+            'details.*.dept_id' => 'required|exists:depts,id',
+            'details.*.section_id' => 'required|exists:sections,id',
+            'details.*.position_id' => 'required|exists:positions,id',
+            'details.*.role_id' => 'required|exists:roles,id',
+            'details.*.gender' => 'required|in:Male,Female',
         ]);
 
         DB::beginTransaction();
 
         try {
             $user = User::findOrFail($id);
-            TenantService::assertAccess(optional($user->userDetail)->customer_id);
-            $section = Section::findOrFail($request->section_id);
-            TenantService::assertAccess($section->customer_id);
-            $oldValues = $user->toArray();
-            $oldValues['user_detail'] = $user->userDetail->toArray();
-
             $user->update([
                 'username' => $request->username,
                 'email' => $request->email,
                 'name' => $request->full_name,
             ]);
 
-            if ($request->password) {
+            if ($request->filled('password')) {
                 $user->update(['password' => Hash::make($request->password)]);
             }
 
-            $user->userDetail->update([
-                'position_id' => $request->position_id,
-                'role_id' => $request->role_id,
-                'customer_id' => $section->customer_id,
-                // 'plant_id' => $request->plant_id, // Removed plant_id
-                'employee_name' => $request->full_name,
-                'gender' => $request->gender,
-                'address' => $request->address ?? '-',
-                'phone' => $request->phone ?? '-',
-            ]);
+            // Sync User Details
+            // Strategy: Get existing details, compare with request details.
+            // Since we don't have IDs in the request details (unless we add them), we might need to delete all and recreate?
+            // Or try to match?
+            // Recreating is safer for consistency but loses history if we had any (created_at).
+            // But UserDetail is mostly a snapshot.
+            // Let's try to update if ID exists, create if not.
+            // The frontend should send IDs for existing details.
+
+            $existingIds = collect($request->details)->pluck('id')->filter()->toArray();
+
+            // Delete details not in the request
+            $user->userDetails()->whereNotIn('id', $existingIds)->delete();
+
+            foreach ($request->details as $detail) {
+                $section = Section::findOrFail($detail['section_id']);
+                TenantService::assertAccess($section->customer_id);
+
+                $data = [
+                    'position_id' => $detail['position_id'],
+                    'role_id' => $detail['role_id'],
+                    'customer_id' => $section->customer_id,
+                    'employee_name' => $request->full_name,
+                    'employee_id' => $request->username,
+                    'gender' => $detail['gender'],
+                    'address' => '-',
+                    'phone' => '-',
+                    'status_active' => 1,
+                    'employee_photo' => 'default.png',
+                ];
+
+                if (isset($detail['id']) && $detail['id']) {
+                    $user->userDetails()->where('id', $detail['id'])->update($data);
+                } else {
+                    $data['join_date'] = now();
+                    $user->userDetails()->create($data);
+                }
+            }
+
+            // Sync Accessible Tenants
+            $accessibleTenants = $request->accessible_tenants ?? [];
+
+            // Add tenants from details
+            foreach ($request->details as $detail) {
+                $section = Section::findOrFail($detail['section_id']);
+                if (!in_array($section->customer_id, $accessibleTenants)) {
+                    $accessibleTenants[] = $section->customer_id;
+                }
+            }
+
+            // Sync tenant owners
+            // Delete ones not in the list
+            \App\Models\TenantOwner::where('user_id', $user->id)
+                ->whereNotIn('customer_id', $accessibleTenants)
+                ->delete();
+
+            // Add new ones
+            foreach ($accessibleTenants as $tenantId) {
+                \App\Models\TenantOwner::firstOrCreate(
+                    ['user_id' => $user->id, 'customer_id' => $tenantId],
+                    ['is_active' => true]
+                );
+            }
 
             DB::commit();
 
-            // Log activity
-            $newValues = $user->toArray();
-            $newValues['user_detail'] = $user->userDetail->toArray();
-            ActivityLogService::logUpdate('user_details', $user->userDetail->id, $oldValues, $newValues);
+            ActivityLogService::logUpdate('users', $user->id, [
+                'username' => $request->username,
+                'email' => $request->email,
+                'details_count' => count($request->details),
+            ]);
 
             return response()->json(['success' => 'User updated successfully.']);
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('User update failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update user.'], 500);
+            return response()->json(['error' => 'Failed to update user: ' . $e->getMessage()], 500);
         }
     }
 

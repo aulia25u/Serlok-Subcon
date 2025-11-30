@@ -15,7 +15,7 @@ class MenuService
             return self::getDefaultMenu();
         }
 
-        $userDetail = $user->userDetail;
+        $userDetail = \App\Services\TenantService::currentUserDetail();
         if (!$userDetail || !$userDetail->role) {
             return self::getDefaultMenu();
         }
@@ -23,10 +23,17 @@ class MenuService
         $roleId = $userDetail->role->id;
 
         // Get menu IDs that this role has read access to
-        $allowedMenuIds = RoleToMenu::where('role_id', $roleId)
-            ->where('is_read', true)
-            ->pluck('menu_id')
-            ->toArray();
+        // Get menu IDs that this role has read access to
+        $query = RoleToMenu::where('role_id', $roleId)
+            ->where('is_read', true);
+
+        if (\App\Services\TenantService::isInternal()) {
+            $query->whereNull('customer_id');
+        } else {
+            $query->where('customer_id', \App\Services\TenantService::currentCustomerId());
+        }
+
+        $allowedMenuIds = $query->pluck('menu_id')->toArray();
 
         // Get the menu records
         $menus = Menu::whereIn('id', $allowedMenuIds)->get();
@@ -79,6 +86,13 @@ class MenuService
 
             if ($menu->menu_name === 'Master Data') {
                 continue;
+            }
+
+            // Hardcoded exclusion for internal-only menus
+            if (!\App\Services\TenantService::isInternal()) {
+                if (in_array($menu->menu_name, ['Customer Management', 'Tenant List Management'])) {
+                    continue;
+                }
             }
 
             $label = self::getMenuLabel($menu->menu_name);
@@ -222,7 +236,7 @@ class MenuService
 
     private static function getUserDisplayName($user)
     {
-        return optional($user->userDetail)->employee_name
+        return optional(\App\Services\TenantService::currentUserDetail())->employee_name
             ?? $user->name
             ?? $user->username
             ?? 'User';

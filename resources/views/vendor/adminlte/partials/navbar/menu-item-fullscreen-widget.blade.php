@@ -1,13 +1,15 @@
 @php
     $user = Auth::user();
-    $userDetail = optional($user)->userDetail;
+    $userDetail = \App\Services\TenantService::currentUserDetail();
     $activeTenantName = optional($userDetail->customer)->customer_name ?? 'Internal Tenant';
 
     $myTenants = \App\Models\TenantOwner::where('user_id', $user->id)
         ->where('is_active', true)
         ->with('customer')
         ->get()
-        ->pluck('customer');
+        ->pluck('customer')
+        ->filter()
+        ->unique('id');
 @endphp
 
 @auth

@@ -27,10 +27,8 @@ class TenantSwitcherController extends Controller
             return back()->with('error', 'You do not have permission to switch to this tenant.');
         }
 
-        // Update active tenant
-        $userDetail = $user->userDetail;
-        $userDetail->customer_id = $newCustomerId;
-        $userDetail->save();
+        // Update active tenant in session
+        session(['current_tenant_id' => $newCustomerId]);
 
         return back()->with('success', 'Switched tenant successfully.');
     }

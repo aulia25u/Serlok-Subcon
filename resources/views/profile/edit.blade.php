@@ -104,7 +104,7 @@
                                     <div class="row">
                                         <div class="col-md-6 mb-2">
                                             <strong>Nama Lengkap</strong>
-                                            <p class="mb-0">{{ $user->userDetail->employee_name ?? 'Not Set' }}</p>
+                                            <p class="mb-0">{{ $userDetail->employee_name ?? 'Not Set' }}</p>
                                         </div>
                                         <div class="col-md-6 mb-2">
                                             <strong>Email</strong>
@@ -112,15 +112,15 @@
                                         </div>
                                         <div class="col-md-6 mb-2">
                                             <strong>Phone</strong>
-                                            <p class="mb-0">{{ $user->userDetail->phone ?? 'Not Set' }}</p>
+                                            <p class="mb-0">{{ $userDetail->phone ?? 'Not Set' }}</p>
                                         </div>
                                         <div class="col-md-6 mb-2">
                                             <strong>Address</strong>
-                                            <p class="mb-0">{{ $user->userDetail->address ?? 'Not Set' }}</p>
+                                            <p class="mb-0">{{ $userDetail->address ?? 'Not Set' }}</p>
                                         </div>
                                         <div class="col-md-6 mb-2">
                                             <strong>Role</strong>
-                                            <p class="mb-0">{{ $user->userDetail->role->role_name ?? 'Not Assigned' }}
+                                            <p class="mb-0">{{ $userDetail->role->role_name ?? 'Not Assigned' }}
                                             </p>
                                         </div>
                                     </div>
@@ -167,7 +167,7 @@
                                             <label for="employee_name">Full Name</label>
                                             <input type="text" class="form-control" id="employee_name"
                                                 name="employee_name"
-                                                value="{{ old('employee_name', $user->userDetail->employee_name ?? '') }}"
+                                                value="{{ old('employee_name', $userDetail->employee_name ?? '') }}"
                                                 required>
                                             @error('employee_name')
                                                 <div class="text-danger">{{ $message }}</div>
@@ -179,8 +179,8 @@
                                             <label for="gender">Gender</label>
                                             <select class="form-control" id="gender" name="gender" required>
                                                 <option value="">Select Gender</option>
-                                                <option value="Male" {{ old('gender', $user->userDetail->gender ?? '') == 'Male' ? 'selected' : '' }}>Male</option>
-                                                <option value="Female" {{ old('gender', $user->userDetail->gender ?? '') == 'Female' ? 'selected' : '' }}>Female</option>
+                                                <option value="Male" {{ old('gender', $userDetail->gender ?? '') == 'Male' ? 'selected' : '' }}>Male</option>
+                                                <option value="Female" {{ old('gender', $userDetail->gender ?? '') == 'Female' ? 'selected' : '' }}>Female</option>
                                             </select>
                                             @error('gender')
                                                 <div class="text-danger">{{ $message }}</div>
@@ -194,14 +194,14 @@
                                         <div class="form-group">
                                             <label>Role</label>
                                             <input type="text" class="form-control" readonly
-                                                value="{{ $user->userDetail->role->role_name ?? 'Not Assigned' }}">
+                                                value="{{ $userDetail->role->role_name ?? 'Not Assigned' }}">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Current Position</label>
                                             <input type="text" class="form-control" readonly
-                                                value="{{ $user->userDetail->position->position_name ?? 'Not Assigned' }} ({{ $user->userDetail->position->section->section_name ?? '' }} - {{ $user->userDetail->position->section->dept->dept_name ?? '' }})">
+                                                value="{{ $userDetail->position->position_name ?? 'Not Assigned' }} ({{ $userDetail->position->section->section_name ?? '' }} - {{ $userDetail->position->section->dept->dept_name ?? '' }})">
                                         </div>
                                     </div>
                                 </div>
@@ -211,14 +211,14 @@
                                         <div class="form-group">
                                             <label>Employee ID</label>
                                             <input type="text" class="form-control" readonly
-                                                value="{{ $user->userDetail->employee_id ?? 'Not Assigned' }}">
+                                                value="{{ $userDetail->employee_id ?? 'Not Assigned' }}">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label>Join Date</label>
                                             <input type="text" class="form-control" readonly
-                                                value="{{ $user->userDetail->join_date ? $user->userDetail->join_date->format('d M Y') : 'Not Set' }}">
+                                                value="{{ $userDetail->join_date ? $userDetail->join_date->format('d M Y') : 'Not Set' }}">
                                         </div>
                                     </div>
                                 </div>

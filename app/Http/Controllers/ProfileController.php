@@ -18,20 +18,24 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $user = $request->user()->load([
-            'userDetail.position.section.dept',
-            'userDetail.role',
-        ]);
+        $user = $request->user();
+        $userDetail = \App\Services\TenantService::currentUserDetail();
+
+        // Load relationships if detail exists
+        if ($userDetail) {
+            $userDetail->load(['position.section.dept', 'role']);
+        }
+
         $photoUrl = null;
 
-        if ($user->userDetail && $user->userDetail->employee_photo) {
-            $photoPath = 'profile_photos/' . $user->userDetail->employee_photo;
+        if ($userDetail && $userDetail->employee_photo) {
+            $photoPath = 'profile_photos/' . $userDetail->employee_photo;
             if (Storage::disk('public')->exists($photoPath)) {
                 $photoUrl = Storage::url($photoPath);
             }
         }
 
-        return view('profile.edit', compact('user', 'photoUrl'));
+        return view('profile.edit', compact('user', 'userDetail', 'photoUrl'));
     }
 
     /**
@@ -55,8 +59,9 @@ class ProfileController extends Controller
         $user->save();
 
         // Update UserDetail model
-        if ($user->userDetail) {
-            $user->userDetail->update([
+        $userDetail = \App\Services\TenantService::currentUserDetail();
+        if ($userDetail) {
+            $userDetail->update([
                 'employee_name' => $validated['employee_name'],
                 'gender' => $validated['gender'],
             ]);
@@ -72,22 +77,23 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        $userDetail = \App\Services\TenantService::currentUserDetail();
 
-        if (!$user->userDetail) {
+        if (!$userDetail) {
             return Redirect::route('profile.edit')->withErrors(['employee_photo' => 'Please complete your profile before updating the photo.']);
         }
 
         $photo = $request->file('employee_photo');
         $photoPath = $photo->store('profile_photos', 'public');
 
-        if ($user->userDetail->employee_photo) {
-            $existing = 'profile_photos/' . $user->userDetail->employee_photo;
-            if (Storage::disk('public')->exists($existing) && $user->userDetail->employee_photo !== 'default.png') {
+        if ($userDetail->employee_photo) {
+            $existing = 'profile_photos/' . $userDetail->employee_photo;
+            if (Storage::disk('public')->exists($existing) && $userDetail->employee_photo !== 'default.png') {
                 Storage::disk('public')->delete($existing);
             }
         }
 
-        $user->userDetail->update([
+        $userDetail->update([
             'employee_photo' => basename($photoPath),
         ]);
 

@@ -25,7 +25,7 @@ class CheckPermission
             return redirect('/login');
         }
 
-        $userDetail = $user->userDetail;
+        $userDetail = \App\Services\TenantService::currentUserDetail();
         if (!$userDetail || !$userDetail->role) {
             return redirect('/dashboard'); // Or abort(403)
         }
@@ -48,7 +48,8 @@ class CheckPermission
             'rbac.sections.all',
             'rbac.tenant-owner.by-customer',
             'rbac.tenant-owner.all',
-            'rbac.customer.get'
+            'rbac.customer.get',
+            'tenant.switch'
         ];
 
         if (in_array($currentRouteName, $excludedRoutes)) {
