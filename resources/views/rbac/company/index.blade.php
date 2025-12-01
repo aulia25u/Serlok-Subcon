@@ -3,13 +3,49 @@
 @section('title', 'Company Management')
 
 @section('css')
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 <style>
-    .dataTables_length select {
-        min-width: 50px;
+    /* Force side-by-side display for bottom start section */
+    .dt-layout-cell.dt-start {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dt-layout-cell.dt-start select {
+        width: auto !important;
+        min-width: 60px;
+        padding-right: 30px !important;
+        /* Ensure space for arrow */
+    }
+
+    /* Custom Search Input Style */
+    .dt-search {
+        position: relative;
+    }
+
+    .dt-search input {
+        padding-left: 30px !important;
+        /* Space for the icon */
+        border-radius: 3px !important;
+        /* Rounded corners */
+    }
+
+    .dt-search::before {
+        content: "\f002";
+        /* FontAwesome magnifying glass */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #aaa;
+        pointer-events: none;
+        /* Let clicks pass through */
+        z-index: 1;
     }
 </style>
 @stop
@@ -49,7 +85,7 @@
                 <div class="tab-content pt-3" id="companyTabContent">
                     <div class="tab-pane fade show active" id="tab-department" role="tabpanel"
                         aria-labelledby="tab-department-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 d-none" style="display: none !important;">
                             <h5 class="mb-0">Department</h5>
                             <button type="button" class="btn btn-primary" id="deptAddBtn" data-toggle="modal"
                                 data-target="#deptAddModal">
@@ -90,7 +126,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-section" role="tabpanel" aria-labelledby="tab-section-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
                             <h5 class="mb-0">Section</h5>
                             <button type="button" class="btn btn-primary" id="sectionAddBtn" data-toggle="modal"
                                 data-target="#sectionModal">
@@ -132,7 +168,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-position" role="tabpanel" aria-labelledby="tab-position-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="mb-3 d-none" style="display: none !important;">
                             <h5 class="mb-0">Position</h5>
                             <button type="button" class="btn btn-primary" id="positionAddBtn" data-toggle="modal"
                                 data-target="#positionModal">
@@ -174,7 +210,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-plant" role="tabpanel" aria-labelledby="tab-plant-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
                             <h5 class="mb-0">Plant</h5>
                             <button type="button" class="btn btn-primary" id="plantAddBtn" data-toggle="modal"
                                 data-target="#plantModal">
@@ -218,7 +254,7 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-role" role="tabpanel" aria-labelledby="tab-role-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
                             <h5 class="mb-0">Role</h5>
                             <button type="button" class="btn btn-primary" id="roleAddBtn" data-toggle="modal"
                                 data-target="#roleModal">
@@ -567,8 +603,13 @@
 
 @push('scripts')
 
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="{{ asset('js/crud-manager.js') }}"></script>
     <script>
@@ -600,7 +641,41 @@
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ],
                 responsive: true,
-                pageLength: 10
+                pageLength: 10,
+                layout: {
+                    topStart: 'search',
+                    topEnd: 'buttons',
+                    bottomStart: ['pageLength', 'info'],
+                    bottomEnd: 'paging'
+                },
+                language: {
+                    lengthMenu: "_MENU_",
+                    search: "",
+                    searchPlaceholder: "Search"
+                },
+                buttons: [
+                    {
+                        text: '<i class="fas fa-plus"></i> Add New',
+                        className: 'btn btn-primary',
+                        action: function (e, dt, node, config) {
+                            $('#deptAddForm')[0].reset();
+                            $('#deptAddModal').find('.modal-title').text('Add Department');
+                            $('#deptAddForm').find('input[name="id"]').val('');
+                            $('#deptAddForm').find('input[name="_method"]').val('POST');
+                            $('#deptAddModal').modal('show');
+                        }
+                    },
+                    {
+                        extend: 'csv',
+                        text: '<i class="fas fa-file-csv"></i> Export CSV',
+                        className: 'btn btn-success'
+                    },
+                    {
+                        extend: 'print',
+                        text: '<i class="fas fa-print"></i> Print',
+                        className: 'btn btn-info'
+                    }
+                ]
             });
 
             $('#deptFilterBtn').on('click', () => deptTable.draw());
@@ -695,7 +770,7 @@
             };
 
             // --- Section ---
-            new CrudManager({
+            const sectionManager = new CrudManager({
                 entity: 'section',
                 routes: {
                     index: "{{ route('rbac.section') }}",
@@ -717,6 +792,38 @@
                 resetBtnId: '#sectionResetBtn',
                 addBtnId: '#sectionAddBtn',
                 dateFilters: true,
+                options: {
+                    layout: {
+                        topStart: 'search',
+                        topEnd: 'buttons',
+                        bottomStart: ['pageLength', 'info'],
+                        bottomEnd: 'paging'
+                    },
+                    language: {
+                        lengthMenu: "_MENU_",
+                        search: "",
+                        searchPlaceholder: "Search"
+                    },
+                    buttons: [
+                        {
+                            text: '<i class="fas fa-plus"></i> Add New',
+                            className: 'btn btn-primary',
+                            action: function (e, dt, node, config) {
+                                sectionManager.showAddModal();
+                            }
+                        },
+                        {
+                            extend: 'csv',
+                            text: '<i class="fas fa-file-csv"></i> Export CSV',
+                            className: 'btn btn-success'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="fas fa-print"></i> Print',
+                            className: 'btn btn-info'
+                        }
+                    ]
+                },
                 onAdd: function () {
                     @if(!$isInternal)
                         loadOptions(
@@ -724,7 +831,7 @@
                             '#section_dept_id', 'Select Department', 'id', 'dept_name'
                         );
                     @endif
-                            },
+                                                },
                 onEdit: function (response) {
                     $('#section_name').val(response.section_name);
                     $('#section_customer_id').val(response.customer_id ?? '');
@@ -751,7 +858,7 @@
 
 
             // --- Position ---
-            new CrudManager({
+            const positionManager = new CrudManager({
                 entity: 'position',
                 routes: {
                     index: "{{ route('rbac.position') }}",
@@ -773,6 +880,38 @@
                 resetBtnId: '#positionResetBtn',
                 addBtnId: '#positionAddBtn',
                 dateFilters: true,
+                options: {
+                    layout: {
+                        topStart: 'search',
+                        topEnd: 'buttons',
+                        bottomStart: ['pageLength', 'info'],
+                        bottomEnd: 'paging'
+                    },
+                    language: {
+                        lengthMenu: "_MENU_",
+                        search: "",
+                        searchPlaceholder: "Search"
+                    },
+                    buttons: [
+                        {
+                            text: '<i class="fas fa-plus"></i> Add New',
+                            className: 'btn btn-primary',
+                            action: function (e, dt, node, config) {
+                                positionManager.showAddModal();
+                            }
+                        },
+                        {
+                            extend: 'csv',
+                            text: '<i class="fas fa-file-csv"></i> Export CSV',
+                            className: 'btn btn-success'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="fas fa-print"></i> Print',
+                            className: 'btn btn-info'
+                        }
+                    ]
+                },
                 onAdd: function () {
                     @if(!$isInternal)
                         loadOptions(
@@ -780,7 +919,7 @@
                             '#position_section_id', 'Select Section', 'id', 'section_name'
                         );
                     @endif
-                            },
+                                                },
                 onEdit: function (response) {
                     $('#position_name').val(response.position_name);
                     $('#position_customer_id').val(response.customer_id ?? '');
@@ -807,7 +946,7 @@
 
 
             // --- Plant ---
-            new CrudManager({
+            const plantManager = new CrudManager({
                 entity: 'plant',
                 routes: {
                     index: "{{ route('rbac.plant') }}",
@@ -824,6 +963,38 @@
                     { data: 'updated_at', name: 'updated_at' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ],
+                options: {
+                    layout: {
+                        topStart: 'search',
+                        topEnd: 'buttons',
+                        bottomStart: ['pageLength', 'info'],
+                        bottomEnd: 'paging'
+                    },
+                    language: {
+                        lengthMenu: "_MENU_",
+                        search: "",
+                        searchPlaceholder: "Search"
+                    },
+                    buttons: [
+                        {
+                            text: '<i class="fas fa-plus"></i> Add New',
+                            className: 'btn btn-primary',
+                            action: function (e, dt, node, config) {
+                                plantManager.showAddModal();
+                            }
+                        },
+                        {
+                            extend: 'csv',
+                            text: '<i class="fas fa-file-csv"></i> Export CSV',
+                            className: 'btn btn-success'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="fas fa-print"></i> Print',
+                            className: 'btn btn-info'
+                        }
+                    ]
+                },
                 modalId: '#plantModal',
                 formId: '#plantForm',
                 tableId: '#plantTable',
@@ -842,7 +1013,7 @@
 
 
             // --- Role ---
-            new CrudManager({
+            const roleManager = new CrudManager({
                 entity: 'role',
                 routes: {
                     index: "{{ route('rbac.role') }}",
@@ -856,6 +1027,38 @@
                     { data: 'updated_at', name: 'updated_at' },
                     { data: 'action', name: 'action', orderable: false, searchable: false }
                 ],
+                options: {
+                    layout: {
+                        topStart: 'search',
+                        topEnd: 'buttons',
+                        bottomStart: ['pageLength', 'info'],
+                        bottomEnd: 'paging'
+                    },
+                    language: {
+                        lengthMenu: "_MENU_",
+                        search: "",
+                        searchPlaceholder: "Search"
+                    },
+                    buttons: [
+                        {
+                            text: '<i class="fas fa-plus"></i> Add New',
+                            className: 'btn btn-primary',
+                            action: function (e, dt, node, config) {
+                                roleManager.showAddModal();
+                            }
+                        },
+                        {
+                            extend: 'csv',
+                            text: '<i class="fas fa-file-csv"></i> Export CSV',
+                            className: 'btn btn-success'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="fas fa-print"></i> Print',
+                            className: 'btn btn-info'
+                        }
+                    ]
+                },
                 modalId: '#roleModal',
                 formId: '#roleForm',
                 tableId: '#roleTable',
@@ -867,7 +1070,7 @@
                     @if(!$isInternal)
                         $('#role_customer_id').val('{{ $currentCustomerId ?? '' }}');
                     @endif
-                            },
+                                                },
                 onEdit: function (response) {
                     $('#role_name').val(response.role_name);
                     $('#role_customer_id').val(response.customer_id ?? '');

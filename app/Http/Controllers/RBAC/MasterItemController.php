@@ -17,11 +17,28 @@ class MasterItemController extends Controller
             $user = Auth::user();
             $query = MasterItem::with('tenantOwner')->select('master_items.*');
 
-            // RBAC: If user is Tenant (has customer_id), only show their items
-            if ($user->userDetail && $user->userDetail->customer_id) {
-                $query->whereHas('tenantOwner', function ($q) use ($user) {
-                    $q->where('customer_id', $user->userDetail->customer_id);
+            $currentCustomerId = \App\Services\TenantService::currentCustomerId();
+
+            \Illuminate\Support\Facades\Log::info('MasterItem Debug', [
+                'user_id' => $user->id,
+                'customer_id' => $currentCustomerId,
+                'is_admin' => $user->userDetail && $user->userDetail->role ? $user->userDetail->role->role_name : 'no-role',
+            ]);
+
+            // RBAC:
+            // 1. If user is Tenant (has customer_id), only show their items.
+            // 2. If user is Internal (no customer_id), ONLY show items if they are Administrator.
+            if ($currentCustomerId) {
+                $query->whereHas('tenantOwner', function ($q) use ($currentCustomerId) {
+                    $q->where('customer_id', $currentCustomerId);
                 });
+            } else {
+                // Internal user
+                $isAdmin = $user->userDetail && $user->userDetail->role && $user->userDetail->role->role_name === 'Administrator';
+                if (!$isAdmin) {
+                    // If not Administrator, show nothing
+                    $query->whereRaw('1 = 0');
+                }
             }
 
             // Date Filter
@@ -68,7 +85,8 @@ class MasterItemController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        $isTenant = $user->userDetail && $user->userDetail->customer_id;
+        $currentCustomerId = \App\Services\TenantService::currentCustomerId();
+        $isTenant = !is_null($currentCustomerId);
 
         $rules = [
             'item_name' => 'required|string|max:255',
@@ -88,7 +106,7 @@ class MasterItemController extends Controller
             // Auto-assign tenant_id for Tenant users
             // Assuming the first TenantOwner for this customer is the target
             // Ideally, the logged-in user IS the TenantOwner or linked to one
-            $tenantOwner = TenantOwner::where('customer_id', $user->userDetail->customer_id)->first();
+            $tenantOwner = TenantOwner::where('customer_id', $currentCustomerId)->first();
 
             if (!$tenantOwner) {
                 return response()->json(['error' => 'No Tenant Owner record found for your organization.'], 403);

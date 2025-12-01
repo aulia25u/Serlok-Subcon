@@ -1,6 +1,7 @@
 class CrudManager {
     constructor(config) {
         this.entity = config.entity; // e.g., 'dept', 'section'
+        this.config = config;
         this.routes = config.routes;
         this.columns = config.columns;
         this.modalId = config.modalId;
@@ -25,7 +26,7 @@ class CrudManager {
 
     initDataTable() {
         const self = this;
-        this.table = $(this.tableId).DataTable({
+        const defaultOptions = {
             processing: true,
             serverSide: true,
             ajax: {
@@ -44,7 +45,11 @@ class CrudManager {
             columns: this.columns,
             responsive: true,
             pageLength: 10
-        });
+        };
+
+        const options = $.extend(true, {}, defaultOptions, this.config.options || {});
+
+        this.table = $(this.tableId).DataTable(options);
     }
 
     initListeners() {
@@ -70,12 +75,7 @@ class CrudManager {
                 $(`#${self.entity}_form_method`).val('POST');
 
                 // Specific logic for Role which uses a different form action approach in original code
-                if (self.entity === 'role') {
-                    $(`${self.formId}`).attr('action', self.routes.store);
-                    $(`${self.formId}`).find('input[name="_method"]').remove();
-                }
-
-                if (self.onAdd) self.onAdd();
+                self.showAddModal();
             });
         }
 
@@ -166,6 +166,23 @@ class CrudManager {
                 });
             }
         });
+    }
+
+    showAddModal() {
+        const self = this;
+        $(self.formId)[0].reset();
+        $(self.modalId).find('.modal-title').text('Add ' + self.capitalize(self.entity));
+        $(self.formId).find('input[name="id"]').val('');
+        $(self.formId).find('input[name="_method"]').val('POST');
+        
+        // Specific logic for Role
+        if (self.entity === 'role') {
+             $(`${self.formId}`).attr('action', self.routes.store);
+             $(`${self.formId}`).find('input[name="_method"]').remove();
+        }
+
+        $(self.modalId).modal('show');
+        if (self.onAdd) self.onAdd();
     }
 
     capitalize(str) {

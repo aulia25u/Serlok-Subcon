@@ -4,13 +4,9 @@
        href="{{ $item['href'] }}" @isset($item['target']) target="{{ $item['target'] }}" @endisset
        {!! $item['data-compiled'] ?? '' !!}>
 
-        @if(isset($item['is_submenu']) && $item['is_submenu'])
-            <i class="nav-icon fas fa-minus"></i>
-        @else
-            <i class="nav-icon {{ $item['icon'] ?? 'far fa-fw fa-circle' }} {{
-                isset($item['icon_color']) ? 'text-'.$item['icon_color'] : 'text-info'
-            }}"></i>
-        @endif
+        <i class="nav-icon {{ $item['icon'] ?? 'far fa-fw fa-circle' }} {{
+            isset($item['icon_color']) ? 'text-'.$item['icon_color'] : ''
+        }}"></i>
 
         <p>
             {{ $item['text'] }}

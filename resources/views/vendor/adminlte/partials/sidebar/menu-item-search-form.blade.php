@@ -1,22 +1,25 @@
 <li>
 
-    <div class="form-inline my-2">
-        <div class="input-group" data-widget="sidebar-search" data-arrow-sign="&raquo;">
+    <form class="form-inline my-2" action="{{ $item['href'] }}" method="{{ $item['method'] }}">
+        {{ csrf_field() }}
+
+        <div class="input-group">
 
             {{-- Search input --}}
             <input class="form-control form-control-sidebar" type="search"
                 @isset($item['id']) id="{{ $item['id'] }}" @endisset
+                name="{{ $item['input_name'] }}"
                 placeholder="{{ $item['text'] }}"
                 aria-label="{{ $item['text'] }}">
 
             {{-- Search button --}}
             <div class="input-group-append">
-                <button class="btn btn-sidebar">
+                <button class="btn btn-sidebar" type="submit">
                     <i class="fas fa-fw fa-search"></i>
                 </button>
             </div>
 
         </div>
-    </div>
+    </form>
 
 </li>

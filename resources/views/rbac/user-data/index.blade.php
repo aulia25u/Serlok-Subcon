@@ -4,8 +4,50 @@
 
 @section('css')
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css" />
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<style>
+    /* Force side-by-side display for bottom start section */
+    .dt-layout-cell.dt-start {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dt-layout-cell.dt-start select {
+        width: auto !important;
+        min-width: 60px;
+        padding-right: 30px !important;
+        /* Ensure space for arrow */
+    }
+
+    /* Custom Search Input Style */
+    .dt-search {
+        position: relative;
+    }
+
+    .dt-search input {
+        padding-left: 30px !important;
+        /* Space for the icon */
+        border-radius: 3px !important;
+        /* Rounded corners */
+    }
+
+    .dt-search::before {
+        content: "\f002";
+        /* FontAwesome magnifying glass */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #aaa;
+        pointer-events: none;
+        /* Let clicks pass through */
+        z-index: 1;
+    }
+</style>
 @stop
 
 @section('content')
@@ -19,9 +61,6 @@
                 <div class="card-header">
                     <h1 class="card-title">User Data Management</h1>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
-                            <i class="fas fa-plus"></i> Add New
-                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -87,10 +126,12 @@
                 <div class="modal-body">
                     <ul class="nav nav-tabs" id="userTabs" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="master-tab" data-toggle="tab" href="#master" role="tab" aria-controls="master" aria-selected="true">Master Data</a>
+                            <a class="nav-link active" id="master-tab" data-toggle="tab" href="#master" role="tab"
+                                aria-controls="master" aria-selected="true">Master Data</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="assignments-tab" data-toggle="tab" href="#assignments" role="tab" aria-controls="assignments" aria-selected="false">Assignments</a>
+                            <a class="nav-link" id="assignments-tab" data-toggle="tab" href="#assignments" role="tab"
+                                aria-controls="assignments" aria-selected="false">Assignments</a>
                         </li>
                     </ul>
                     <div class="tab-content mt-3" id="userTabsContent">
@@ -114,13 +155,15 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="full_name">Full Name</label>
-                                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                                        <input type="text" class="form-control" id="full_name" name="full_name"
+                                            required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="password">Password</label>
-                                        <input type="password" class="form-control" id="password" name="password" required>
+                                        <input type="password" class="form-control" id="password" name="password"
+                                            required>
                                     </div>
                                 </div>
                             </div>
@@ -128,12 +171,14 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="accessible_tenants">Accessible Tenants (Optional)</label>
-                                        <select class="form-control select2" id="accessible_tenants" name="accessible_tenants[]" multiple="multiple" style="width: 100%;">
+                                        <select class="form-control select2" id="accessible_tenants"
+                                            name="accessible_tenants[]" multiple="multiple" style="width: 100%;">
                                             @foreach($customers as $customer)
                                                 <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
                                             @endforeach
                                         </select>
-                                        <small class="form-text text-muted">Tenants assigned in "Assignments" tab are automatically included.</small>
+                                        <small class="form-text text-muted">Tenants assigned in "Assignments" tab are
+                                            automatically included.</small>
                                     </div>
                                 </div>
                             </div>
@@ -175,12 +220,12 @@
 
 @section('js')
 <script type="text/javascript" src="https://cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <script src="{{ asset('js/crud-manager.js') }}"></script>
@@ -309,12 +354,12 @@
         function addAssignmentRow(data = {}) {
             const idx = rowIdx++;
             const customerId = data.customer_id || (isInternalUser ? '' : currentCustomerId);
-            
+
             let customerOptions = '';
             @foreach($customers as $customer)
                 customerOptions += `<option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>`;
             @endforeach
-            
+
             let customerSelect = '';
             if (isInternalUser) {
                 customerSelect = `<select class="form-control customer-select" name="details[${idx}][customer_id]" required>
@@ -379,22 +424,22 @@
             });
 
             // Event listeners
-            row.find('.customer-select').on('change', function() {
+            row.find('.customer-select').on('change', function () {
                 const newCustId = $(this).val();
                 loadDepartments(row, newCustId).then(() => loadRoles(row, newCustId));
             });
-            row.find('.dept-select').on('change', function() {
+            row.find('.dept-select').on('change', function () {
                 loadSections(row, $(this).val());
             });
-            row.find('.section-select').on('change', function() {
+            row.find('.section-select').on('change', function () {
                 loadPositions(row, $(this).val());
             });
-            row.find('.remove-row').on('click', function() {
+            row.find('.remove-row').on('click', function () {
                 $(this).closest('tr').remove();
             });
         }
 
-        $('#addAssignmentBtn').on('click', function() {
+        $('#addAssignmentBtn').on('click', function () {
             addAssignmentRow();
         });
 
@@ -427,11 +472,43 @@
             resetBtnId: '#resetBtn',
             addBtnId: '[data-target="#addModal"]',
             dateFilters: true,
+            options: {
+                layout: {
+                    topStart: 'search',
+                    topEnd: 'buttons',
+                    bottomStart: ['pageLength', 'info'],
+                    bottomEnd: 'paging'
+                },
+                language: {
+                    lengthMenu: "_MENU_",
+                    search: "",
+                    searchPlaceholder: "Search"
+                },
+                buttons: [
+                    {
+                        text: '<i class="fas fa-plus"></i> Add New',
+                        className: 'btn btn-primary',
+                        action: function (e, dt, node, config) {
+                            $('#addModal').modal('show');
+                        }
+                    },
+                    {
+                        extend: 'csv',
+                        text: '<i class="fas fa-file-csv"></i> Export CSV',
+                        className: 'btn btn-success'
+                    },
+                    {
+                        extend: 'print',
+                        text: '<i class="fas fa-print"></i> Print',
+                        className: 'btn btn-info'
+                    }
+                ]
+            },
             onAdd: function () {
                 $('#addModalLabel').text('Add New User');
                 $('#assignmentsBody').empty();
                 $('#accessible_tenants').val(null).trigger('change');
-                
+
                 // Add one empty row by default
                 addAssignmentRow();
 
@@ -439,7 +516,7 @@
                 $('#password').closest('.form-group').show();
                 $('#password').attr('required', 'required');
                 $('#password').removeAttr('placeholder');
-                
+
                 // Reset tab to first one
                 $('#master-tab').tab('show');
             },
@@ -451,7 +528,7 @@
                 $('#username').val(response.user.username || '');
                 $('#email').val(response.user.email || '');
                 $('#full_name').val(response.user.name || ''); // Note: user.name in User model, employee_name in UserDetail
-                
+
                 // Populate Accessible Tenants
                 if (response.accessible_tenants) {
                     $('#accessible_tenants').val(response.accessible_tenants).trigger('change');
@@ -467,7 +544,7 @@
                         // detail has position.section.dept_id etc.
                         // But wait, the response.details from controller is just the UserDetail model with relations.
                         // We need to extract IDs.
-                        
+
                         let deptId = null;
                         let sectionId = null;
                         if (detail.position && detail.position.section) {
@@ -493,7 +570,7 @@
                 $('#password').closest('.form-group').show();
                 $('#password').removeAttr('required');
                 $('#password').attr('placeholder', 'Leave blank to keep current password');
-                
+
                 // Reset tab to first one
                 $('#master-tab').tab('show');
             },

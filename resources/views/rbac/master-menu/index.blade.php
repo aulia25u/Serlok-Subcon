@@ -4,8 +4,50 @@
 
 @section('css')
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css" />
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.dataTables.min.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+<style>
+    /* Force side-by-side display for bottom start section */
+    .dt-layout-cell.dt-start {
+        display: flex !important;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dt-layout-cell.dt-start select {
+        width: auto !important;
+        min-width: 60px;
+        padding-right: 30px !important;
+        /* Ensure space for arrow */
+    }
+
+    /* Custom Search Input Style */
+    .dt-search {
+        position: relative;
+    }
+
+    .dt-search input {
+        padding-left: 30px !important;
+        /* Space for the icon */
+        border-radius: 3px !important;
+        /* Rounded corners */
+    }
+
+    .dt-search::before {
+        content: "\f002";
+        /* FontAwesome magnifying glass */
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #aaa;
+        pointer-events: none;
+        /* Let clicks pass through */
+        z-index: 1;
+    }
+</style>
 @stop
 
 @section('content')
@@ -15,8 +57,9 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Master Menu Management</h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">
+                    <div class="card-tools d-none">
+                        <button type="button" class="btn btn-primary" id="addBtn" data-toggle="modal"
+                            data-target="#addModal">
                             <i class="fas fa-plus"></i> Add New
                         </button>
                     </div>
@@ -219,12 +262,12 @@
 
 @section('js')
 <script type="text/javascript" src="https://cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <script>
@@ -258,25 +301,35 @@
             responsive: true,
             autoWidth: false,
             pageLength: 10,
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-            dom: 'Bfrtip',
+            layout: {
+                topStart: 'search',
+                topEnd: 'buttons',
+                bottomStart: ['pageLength', 'info'],
+                bottomEnd: 'paging'
+            },
             buttons: [
-                'excelHtml5',
-                'print'
+                {
+                    text: '<i class="fas fa-plus"></i> Add New',
+                    className: 'btn btn-primary',
+                    action: function (e, dt, node, config) {
+                        $('#addBtn').trigger('click');
+                    }
+                },
+                {
+                    extend: 'excelHtml5',
+                    className: 'btn btn-success',
+                    text: '<i class="fas fa-file-excel"></i> Export Excel'
+                },
+                {
+                    extend: 'print',
+                    className: 'btn btn-info',
+                    text: '<i class="fas fa-print"></i> Print'
+                }
             ],
             language: {
-                processing: "Loading...",
-                search: "Search:",
-                lengthMenu: "Show _MENU_ entries",
-                info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                infoEmpty: "Showing 0 to 0 of 0 entries",
-                infoFiltered: "(filtered from _MAX_ total entries)",
-                paginate: {
-                    first: "First",
-                    last: "Last",
-                    next: "Next",
-                    previous: "Previous"
-                }
+                lengthMenu: "_MENU_",
+                search: "",
+                searchPlaceholder: "Search"
             }
         });
 
@@ -322,23 +375,23 @@
             table.draw();
         });
 
-            // Dynamic Menu Rows
-            let rowCount = 0;
-            const menus = @json($menus);
-            const restrictedMenus = @json($restrictedMenus);
-            const isInternal = @json($isInternal);
+        // Dynamic Menu Rows
+        let rowCount = 0;
+        const menus = @json($menus);
+        const restrictedMenus = @json($restrictedMenus);
+        const isInternal = @json($isInternal);
 
-            function addMenuRow() {
-                rowCount++;
-                let menuOptions = '<option value="">Select Menu</option>';
-                menus.forEach(function(menu) {
-                    if (!isInternal && restrictedMenus.includes(menu.menu_name)) {
-                        return;
-                    }
-                    menuOptions += `<option value="${menu.id}">${menu.menu_name}</option>`;
-                });
+        function addMenuRow() {
+            rowCount++;
+            let menuOptions = '<option value="">Select Menu</option>';
+            menus.forEach(function (menu) {
+                if (!isInternal && restrictedMenus.includes(menu.menu_name)) {
+                    return;
+                }
+                menuOptions += `<option value="${menu.id}">${menu.menu_name}</option>`;
+            });
 
-                const row = `
+            const row = `
                     <tr id="row_${rowCount}">
                         <td>
                             <select class="form-control" name="items[${rowCount}][menu_id]" required>
@@ -370,48 +423,48 @@
                         </td>
                     </tr>
                 `;
-                $('#menuTableBody').append(row);
-            }
+            $('#menuTableBody').append(row);
+        }
 
-            $('#addMenuRow').click(function() {
+        $('#addMenuRow').click(function () {
+            addMenuRow();
+        });
+
+        $(document).on('click', '.remove-row', function () {
+            const id = $(this).data('id');
+            $('#row_' + id).remove();
+        });
+
+        // Initialize with one row
+        $('#addModal').on('show.bs.modal', function () {
+            if ($('#menuTableBody').children().length === 0) {
                 addMenuRow();
-            });
+            }
+        });
 
-            $(document).on('click', '.remove-row', function() {
-                const id = $(this).data('id');
-                $('#row_' + id).remove();
-            });
-
-            // Initialize with one row
-            $('#addModal').on('show.bs.modal', function () {
-                if ($('#menuTableBody').children().length === 0) {
+        // Add form submission
+        $('#addForm').on('submit', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: "{{ route('rbac.master-menu.store') }}",
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function (response) {
+                    $('#addModal').modal('hide');
+                    table.draw();
+                    toastr.success(response.success);
+                    $('#addForm')[0].reset();
+                    $('#menuTableBody').empty();
                     addMenuRow();
+                },
+                error: function (xhr) {
+                    var errors = xhr.responseJSON.errors;
+                    $.each(errors, function (key, value) {
+                        toastr.error(value[0]);
+                    });
                 }
             });
-
-            // Add form submission
-            $('#addForm').on('submit', function(e) {
-                e.preventDefault();
-                $.ajax({
-                    url: "{{ route('rbac.master-menu.store') }}",
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    success: function(response) {
-                        $('#addModal').modal('hide');
-                        table.draw();
-                        toastr.success(response.success);
-                        $('#addForm')[0].reset();
-                        $('#menuTableBody').empty();
-                        addMenuRow();
-                    },
-                    error: function(xhr) {
-                        var errors = xhr.responseJSON.errors;
-                        $.each(errors, function(key, value) {
-                            toastr.error(value[0]);
-                        });
-                    }
-                });
-            });
+        });
 
         // Edit button click
         $(document).on('click', '.edit-btn', function () {

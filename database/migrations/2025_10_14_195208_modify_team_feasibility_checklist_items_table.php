@@ -5,27 +5,23 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        // Drop foreign key first if exists
-        $foreignKeys = DB::select("
-            SELECT CONSTRAINT_NAME
-            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-            WHERE TABLE_SCHEMA = DATABASE()
-            AND TABLE_NAME = 'team_feasibility_checklist_items'
-            AND REFERENCED_TABLE_NAME IS NOT NULL
-            AND COLUMN_NAME = 'parent_item_id'
-        ");
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
 
-        if (! empty($foreignKeys)) {
+        // Try to drop foreign key - wrap in try-catch for SQLite/Idempotency
+        try {
             Schema::table('team_feasibility_checklist_items', function (Blueprint $table) {
                 $table->dropForeign('fk_checklist_parent_id');
             });
+        } catch (\Exception $e) {
+            // Ignore if FK doesn't exist or driver doesn't support dropping it this way
         }
 
         Schema::table('team_feasibility_checklist_items', function (Blueprint $table) {

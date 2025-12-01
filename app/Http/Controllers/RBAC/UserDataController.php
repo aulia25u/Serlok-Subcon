@@ -91,7 +91,7 @@ class UserDataController extends Controller
                     // But the Edit modal will manage all details.
                     // So let's keep the Edit button pointing to the User.
                     $btn .= ' <button class="btn btn-sm btn-danger userData-delete-btn" data-id="' . $row->user_id . '">
-                                <i class="fas fa-trash"></i> Delete User
+                                <i class="fas fa-trash"></i> Delete
                             </button>';
                     return $btn;
                 })
