@@ -95,6 +95,49 @@ class UserDataController extends Controller
                             </button>';
                     return $btn;
                 })
+                ->filterColumn('customer_name', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        if (stripos('Internal', $keyword) !== false) {
+                            $q->whereNull('customer_id');
+                        }
+                        $q->orWhereHas('customer', function ($subQ) use ($keyword) {
+                            $subQ->where('customer_name', 'like', "%{$keyword}%");
+                        });
+                    });
+                })
+                ->filterColumn('username', function ($query, $keyword) {
+                    $query->whereHas('user', function ($q) use ($keyword) {
+                        $q->where('username', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('email', function ($query, $keyword) {
+                    $query->whereHas('user', function ($q) use ($keyword) {
+                        $q->where('email', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('full_name', function ($query, $keyword) {
+                    $query->where('employee_name', 'like', "%{$keyword}%");
+                })
+                ->filterColumn('role_name', function ($query, $keyword) {
+                    $query->whereHas('role', function ($q) use ($keyword) {
+                        $q->where('role_name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('dept_name', function ($query, $keyword) {
+                    $query->whereHas('position.section.dept', function ($q) use ($keyword) {
+                        $q->where('dept_name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('section_name', function ($query, $keyword) {
+                    $query->whereHas('position.section', function ($q) use ($keyword) {
+                        $q->where('section_name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('position_name', function ($query, $keyword) {
+                    $query->whereHas('position', function ($q) use ($keyword) {
+                        $q->where('position_name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->rawColumns(['action'])
                 ->make(true);
         }
