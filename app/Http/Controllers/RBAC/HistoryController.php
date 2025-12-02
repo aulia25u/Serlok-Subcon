@@ -5,6 +5,7 @@ namespace App\Http\Controllers\RBAC;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 class HistoryController extends Controller
@@ -12,8 +13,15 @@ class HistoryController extends Controller
     public function index(Request $request)
     {
         // Get filter options
+        $user = Auth::user();
+        $tenantId = $user->userDetail->customer_id ?? null;
+
         $users = \App\Models\User::with('userDetail')
-            ->whereHas('userDetail')
+            ->whereHas('userDetail', function ($query) use ($tenantId) {
+                if ($tenantId) {
+                    $query->where('customer_id', $tenantId);
+                }
+            })
             ->get()
             ->map(function ($user) {
                 return [
@@ -22,7 +30,9 @@ class HistoryController extends Controller
                 ];
             });
 
-        $totalLogs = ActivityLog::count();
+        $totalLogs = ActivityLog::when($tenantId, function ($q) use ($tenantId) {
+            $q->where('tenant_id', $tenantId);
+        })->count();
 
         return view('rbac.history.index', compact('users', 'totalLogs'));
     }
@@ -30,7 +40,13 @@ class HistoryController extends Controller
     public function data(Request $request)
     {
         try {
-            $query = ActivityLog::with('user.userDetail')
+            $user = Auth::user();
+            $tenantId = $user->userDetail->customer_id ?? null;
+
+            $query = ActivityLog::with(['user.userDetail', 'tenant'])
+                ->when($tenantId, function ($q) use ($tenantId) {
+                    $q->where('tenant_id', $tenantId);
+                })
                 ->when($request->start_date, function ($q) use ($request) {
                     return $q->whereDate('created_at', '>=', $request->start_date);
                 })
@@ -50,6 +66,9 @@ class HistoryController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('tenant_name', function ($row) {
+                    return $row->tenant->customer_name ?? '-';
+                })
                 ->addColumn('user_name', function ($row) {
                     // Debug: Handle missing userDetail gracefully
                     if (!$row->user) {
@@ -93,12 +112,13 @@ class HistoryController extends Controller
 
     private function formatValues($values)
     {
-        if (!$values) return '-';
+        if (!$values)
+            return '-';
 
         $formatted = [];
         foreach ($values as $key => $value) {
             $formattedKey = ucwords(str_replace(['_', 'id'], [' ', ''], $key));
-            
+
             // Check if the value is a date string and format it
             if (is_string($value) && preg_match('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z$/', $value)) {
                 $formattedValue = \Carbon\Carbon::parse($value)->format('Y-m-d H:i:s');

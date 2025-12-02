@@ -123,6 +123,7 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
+                                    <th>Tenant</th>
                                     <th>User</th>
                                     <th>Action</th>
                                     <th>Module</th>
@@ -174,6 +175,7 @@
                 },
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'tenant_name', name: 'tenant_name' },
                     { data: 'user_name', name: 'user_name' },
                     { data: 'action_badge', name: 'action_badge' },
                     { data: 'table_name_formatted', name: 'table_name_formatted' },
@@ -184,35 +186,35 @@
                 ],
                 pageLength: 25,
                 responsive: true,
-                order: [[7, 'desc']], // Sort by timestamp descending
+                order: [[8, 'desc']], // Sort by timestamp descending
                 layout: {
                     topStart: 'search',
                     topEnd: 'buttons',
                     bottomStart: ['pageLength', 'info'],
                     bottomEnd: 'paging'
                 },
-                buttons: [
-                    {
-                        extend: 'csv',
-                        text: '<i class="fas fa-file-csv"></i> Export CSV',
-                        className: 'btn btn-success'
+                    buttons: [
+                        {
+                            extend: 'csv',
+                            text: '<i class="fas fa-file-csv"></i> Export CSV',
+                            className: 'btn btn-success'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="fas fa-print"></i> Print',
+                            className: 'btn btn-info'
+                        }
+                    ],
+                    language: {
+                        processing: '<i class="fas fa-spinner fa-spin"></i> Loading...',
+                        lengthMenu: "_MENU_",
+                        search: "",
+                        searchPlaceholder: "Search"
                     },
-                    {
-                        extend: 'print',
-                        text: '<i class="fas fa-print"></i> Print',
-                        className: 'btn btn-info'
+                    initComplete: function () {
+                        console.log('DataTable initialized');
                     }
-                ],
-                language: {
-                    processing: '<i class="fas fa-spinner fa-spin"></i> Loading...',
-                    lengthMenu: "_MENU_",
-                    search: "",
-                    searchPlaceholder: "Search"
-                },
-                initComplete: function () {
-                    console.log('DataTable initialized');
-                }
-            });
+                });
 
             // Filter functionality
             $('#filterBtn').click(function () {

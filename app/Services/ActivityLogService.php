@@ -10,14 +10,19 @@ class ActivityLogService
 {
     public static function log($action, $tableName, $recordId, $oldValues = null, $newValues = null)
     {
+        $user = Auth::user();
+        $tenantId = $user?->userDetail?->customer_id;
+
         ActivityLog::create([
-            'user_id' => Auth::id(),
+            'user_id' => $user?->id,
+            'tenant_id' => $tenantId,
             'action' => $action,
             'table_name' => $tableName,
             'record_id' => $recordId,
             'old_values' => $oldValues,
             'new_values' => $newValues,
             'ip_address' => Request::ip(),
+            'user_agent' => Request::userAgent(),
         ]);
     }
 

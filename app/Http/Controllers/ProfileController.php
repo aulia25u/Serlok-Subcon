@@ -35,7 +35,12 @@ class ProfileController extends Controller
             }
         }
 
-        return view('profile.edit', compact('user', 'userDetail', 'photoUrl'));
+        $activities = \App\Models\ActivityLog::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return view('profile.edit', compact('user', 'userDetail', 'photoUrl', 'activities'));
     }
 
     /**

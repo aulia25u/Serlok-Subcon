@@ -31,5 +31,8 @@ class AppServiceProvider extends ServiceProvider
             $menus = MenuService::getAllowedMenus();
             $event->menu->add(...$menus);
         });
+
+        $this->app['events']->listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\LoginListener::class);
+        $this->app['events']->listen(\Illuminate\Auth\Events\Logout::class, \App\Listeners\LogoutListener::class);
     }
 }

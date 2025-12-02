@@ -304,6 +304,15 @@ class UserDataController extends Controller
 
         try {
             $user = User::findOrFail($id);
+
+            // Capture old values for logging
+            $oldValues = [
+                'username' => $user->username,
+                'email' => $user->email,
+                'name' => $user->name,
+                'details_count' => $user->userDetails()->count(),
+            ];
+
             $user->update([
                 'username' => $request->username,
                 'email' => $request->email,
@@ -380,9 +389,10 @@ class UserDataController extends Controller
 
             DB::commit();
 
-            ActivityLogService::logUpdate('users', $user->id, [
+            ActivityLogService::logUpdate('users', $user->id, $oldValues, [
                 'username' => $request->username,
                 'email' => $request->email,
+                'name' => $request->full_name,
                 'details_count' => count($request->details),
             ]);
 

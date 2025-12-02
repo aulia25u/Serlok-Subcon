@@ -69,6 +69,11 @@
                                 <i class="fas fa-lock mr-2"></i> Security
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#history" data-toggle="tab">
+                                <i class="fas fa-history mr-2"></i> History
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -310,6 +315,106 @@
                                     </form>
                                 </div>
                             @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Tab -->
+                <div class="tab-pane" id="history">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">Activity History</h3>
+                        </div>
+                        <div class="card-body table-responsive p-0">
+                            <table class="table table-hover text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>Action</th>
+                                        <th>Module</th>
+                                        <th>Description</th>
+                                        <th>Time</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($activities as $activity)
+                                        <tr>
+                                            <td>{!! $activity->action_badge !!}</td>
+                                            <td>{{ $activity->table_name_formatted }}</td>
+                                            <td>
+                                                @if($activity->action == 'login' || $activity->action == 'logout')
+                                                    IP: {{ $activity->new_values['ip'] ?? '-' }}
+                                                @else
+                                                    Record ID: {{ $activity->record_id }}
+                                                @endif
+                                            </td>
+                                            <td>{{ $activity->created_at->diffForHumans() }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-info" data-toggle="modal"
+                                                    data-target="#activityModal{{ $activity->id }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+
+                                                <!-- Modal -->
+                                                <div class="modal fade" id="activityModal{{ $activity->id }}" tabindex="-1"
+                                                    role="dialog" aria-labelledby="activityModalLabel{{ $activity->id }}"
+                                                    aria-hidden="true">
+                                                    <div class="modal-dialog modal-lg" role="document">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title"
+                                                                    id="activityModalLabel{{ $activity->id }}">Activity
+                                                                    Details</h5>
+                                                                <button type="button" class="close" data-dismiss="modal"
+                                                                    aria-label="Close">
+                                                                    <span aria-hidden="true">&times;</span>
+                                                                </button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="row">
+                                                                    <div class="col-md-6">
+                                                                        <strong>Action:</strong>
+                                                                        {!! $activity->action_badge !!}<br>
+                                                                        <strong>Module:</strong>
+                                                                        {{ $activity->table_name_formatted }}<br>
+                                                                        <strong>Time:</strong>
+                                                                        {{ $activity->created_at->format('d M Y H:i:s') }}
+                                                                    </div>
+                                                                    <div class="col-md-6">
+                                                                        <strong>IP Address:</strong>
+                                                                        {{ $activity->ip_address }}<br>
+                                                                        <strong>Browser:</strong>
+                                                                        {{ $activity->browser }}<br>
+                                                                        <strong>Operating System:</strong>
+                                                                        {{ $activity->platform }}
+                                                                    </div>
+                                                                </div>
+                                                                <hr>
+                                                                @if($activity->old_values)
+                                                                    <h5>Old Values</h5>
+                                                                    <pre>{{ json_encode($activity->old_values, JSON_PRETTY_PRINT) }}</pre>
+                                                                @endif
+                                                                @if($activity->new_values)
+                                                                    <h5>New Values</h5>
+                                                                    <pre>{{ json_encode($activity->new_values, JSON_PRETTY_PRINT) }}</pre>
+                                                                @endif
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary"
+                                                                    data-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center">No activity found.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
