@@ -37,9 +37,14 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Tenant</th>
-                                    <th>Item Name</th>
-                                    <th>Item Code</th>
-                                    <th>Description</th>
+                                    <th>Customer Name</th>
+                                    <th>Product Status</th>
+                                    <th>Code Product</th>
+                                    <th>Part Number</th>
+                                    <th>Part Name</th>
+                                    <th>Model</th>
+                                    <th>Unit</th>
+                                    <th>Note</th>
                                     <th>Created At</th>
                                     <th>Updated At</th>
                                     <th>Actions</th>
@@ -81,19 +86,54 @@
                         @endif
 
                         <div class="form-group">
-                            <label for="item_name">Item Name</label>
-                            <input type="text" name="item_name" id="item_name" class="form-control"
-                                placeholder="Enter Item Name" required>
+                            <label for="master_customer_id">Customer Name</label>
+                            <select name="master_customer_id" id="master_customer_id" class="form-control">
+                                <option value="">Select Customer</option>
+                                @foreach($masterCustomers as $customer)
+                                    <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label for="item_code">Item Code</label>
+                            <label for="product_status">Product Status</label>
+                            <select name="product_status" id="product_status" class="form-control">
+                                <option value="">Select Status</option>
+                                <option value="Continue">Continue</option>
+                                <option value="Not Continue">Not Continue</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="item_code">Code Product</label>
                             <input type="text" name="item_code" id="item_code" class="form-control"
-                                placeholder="Enter Item Code" required>
+                                placeholder="Enter Code Product" required>
                         </div>
                         <div class="form-group">
-                            <label for="description">Description</label>
+                            <label for="part_number">Part Number</label>
+                            <input type="text" name="part_number" id="part_number" class="form-control"
+                                placeholder="Enter Part Number">
+                        </div>
+                        <div class="form-group">
+                            <label for="item_name">Part Name</label>
+                            <input type="text" name="item_name" id="item_name" class="form-control"
+                                placeholder="Enter Part Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="model">Model</label>
+                            <input type="text" name="model" id="model" class="form-control" placeholder="Enter Model">
+                        </div>
+                        <div class="form-group">
+                            <label for="unit">Unit</label>
+                            <select name="unit" id="unit" class="form-control">
+                                <option value="">Select Unit</option>
+                                <option value="PCS">PCS</option>
+                                <option value="KG">KG</option>
+                                <option value="ROLL">ROLL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Note</label>
                             <textarea name="description" id="description" rows="3" class="form-control"
-                                placeholder="Enter description"></textarea>
+                                placeholder="Enter Note"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -181,8 +221,13 @@
                 columns: [
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'tenant_name', name: 'tenant_name' },
-                    { data: 'item_name', name: 'item_name' },
+                    { data: 'customer_name', name: 'customer_name' },
+                    { data: 'product_status', name: 'product_status' },
                     { data: 'item_code', name: 'item_code' },
+                    { data: 'part_number', name: 'part_number' },
+                    { data: 'item_name', name: 'item_name' },
+                    { data: 'model', name: 'model' },
+                    { data: 'unit', name: 'unit' },
                     { data: 'description', name: 'description' },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'updated_at', name: 'updated_at' },
@@ -231,6 +276,11 @@
                     $('#item_name').val(data.item_name);
                     $('#item_code').val(data.item_code);
                     $('#description').val(data.description);
+                    $('#master_customer_id').val(data.master_customer_id);
+                    $('#product_status').val(data.product_status);
+                    $('#part_number').val(data.part_number);
+                    $('#model').val(data.model);
+                    $('#unit').val(data.unit);
                     if ($('#tenant_id').length) {
                         $('#tenant_id').val(data.tenant_id);
                     }
@@ -240,6 +290,9 @@
                     if ($('#tenant_id').length) {
                         $('#tenant_id').val('');
                     }
+                    $('#master_customer_id').val('');
+                    $('#product_status').val('');
+                    $('#unit').val('');
                 }
             });
         });

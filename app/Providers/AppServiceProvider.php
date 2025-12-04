@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \App\Models\Receiving::observe(\App\Observers\ReceivingObserver::class);
+
         /** @var Router $router */
         $router = $this->app['router'];
         $router->aliasMiddleware('twofactor', EnsureTwoFactorIsVerified::class);

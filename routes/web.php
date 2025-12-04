@@ -150,7 +150,19 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
     Route::put('/master-finance/{id}', [MasterFinanceController::class, 'update'])->name('rbac.master-finance.update');
     Route::delete('/master-finance/{id}', [MasterFinanceController::class, 'destroy'])->name('rbac.master-finance.destroy');
 
+    // Receiving
+    Route::get('/receiving', [App\Http\Controllers\RBAC\ReceivingController::class, 'index'])->name('rbac.receiving');
+    Route::post('/receiving', [App\Http\Controllers\RBAC\ReceivingController::class, 'store'])->name('rbac.receiving.store');
+    Route::get('/receiving/{id}/edit', [App\Http\Controllers\RBAC\ReceivingController::class, 'edit'])->name('rbac.receiving.edit');
+    Route::put('/receiving/{id}', [App\Http\Controllers\RBAC\ReceivingController::class, 'update'])->name('rbac.receiving.update');
+    Route::delete('/receiving/{id}', [App\Http\Controllers\RBAC\ReceivingController::class, 'destroy'])->name('rbac.receiving.destroy');
 
+    // Inventory
+    Route::get('/inventory', [App\Http\Controllers\RBAC\InventoryController::class, 'index'])->name('rbac.inventory');
+    Route::get('/inventory/capture', [App\Http\Controllers\RBAC\InventoryCaptureController::class, 'index'])->name('rbac.inventory.capture');
+    Route::post('/inventory/capture', [App\Http\Controllers\RBAC\InventoryCaptureController::class, 'store'])->name('rbac.inventory.capture.store');
 
 });
+
+
 require __DIR__ . '/auth.php';

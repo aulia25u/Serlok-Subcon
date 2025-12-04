@@ -52,7 +52,7 @@
     @endif
 
     <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Settings</h3>
@@ -78,7 +78,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-9">
+        <div class="col-md-10">
             <div class="tab-content">
                 <!-- General Tab -->
                 <div class="tab-pane active" id="general">
@@ -127,6 +127,18 @@
                                             <strong>Role</strong>
                                             <p class="mb-0">{{ $userDetail->role->role_name ?? 'Not Assigned' }}
                                             </p>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <strong>NIP</strong>
+                                            <p class="mb-0">{{ $userDetail->nip ?? 'Not Set' }}</p>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <strong>Employee Status</strong>
+                                            <p class="mb-0">{{ $userDetail->employee_status ?? 'Not Set' }}</p>
+                                        </div>
+                                        <div class="col-md-6 mb-2">
+                                            <strong>Plant</strong>
+                                            <p class="mb-0">{{ $userDetail->plant->plant_name ?? 'Not Assigned' }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -197,6 +209,64 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
+                                            <label for="phone">Phone</label>
+                                            <input type="text" class="form-control" id="phone" name="phone"
+                                                value="{{ old('phone', $userDetail->phone ?? '') }}">
+                                            @error('phone')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="address">Address</label>
+                                            <textarea class="form-control" id="address" name="address"
+                                                rows="1">{{ old('address', $userDetail->address ?? '') }}</textarea>
+                                            @error('address')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="bank_name">Bank Name</label>
+                                            <input type="text" class="form-control" id="bank_name" name="bank_name"
+                                                value="{{ old('bank_name', $userDetail->bank_name ?? '') }}">
+                                            @error('bank_name')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="bank_account_name">Bank Account Name</label>
+                                            <input type="text" class="form-control" id="bank_account_name"
+                                                name="bank_account_name"
+                                                value="{{ old('bank_account_name', $userDetail->bank_account_name ?? '') }}">
+                                            @error('bank_account_name')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="bank_account_number">Bank Account Number</label>
+                                            <input type="text" class="form-control" id="bank_account_number"
+                                                name="bank_account_number"
+                                                value="{{ old('bank_account_number', $userDetail->bank_account_number ?? '') }}">
+                                            @error('bank_account_number')
+                                                <div class="text-danger">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
                                             <label>Role</label>
                                             <input type="text" class="form-control" readonly
                                                 value="{{ $userDetail->role->role_name ?? 'Not Assigned' }}">
@@ -227,6 +297,32 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>NIP</label>
+                                            <input type="text" class="form-control" readonly
+                                                value="{{ $userDetail->nip ?? 'Not Set' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Employee Status</label>
+                                            <input type="text" class="form-control" readonly
+                                                value="{{ $userDetail->employee_status ?? 'Not Set' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Plant</label>
+                                            <input type="text" class="form-control" readonly
+                                                value="{{ $userDetail->plant->plant_name ?? 'Not Assigned' }}">
+                                        </div>
+                                    </div>
+                                </div>
+
+
 
                                 <div class="row">
                                     <div class="col-12">

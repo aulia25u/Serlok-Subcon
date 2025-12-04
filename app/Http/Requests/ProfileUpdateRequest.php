@@ -27,6 +27,11 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'employee_name' => ['required', 'string', 'max:255'],
             'gender' => ['required', 'in:Male,Female'],
+            'phone' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string'],
+            'bank_name' => ['nullable', 'string', 'max:255'],
+            'bank_account_name' => ['nullable', 'string', 'max:255'],
+            'bank_account_number' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

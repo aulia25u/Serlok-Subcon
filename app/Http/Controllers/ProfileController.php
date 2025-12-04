@@ -23,7 +23,7 @@ class ProfileController extends Controller
 
         // Load relationships if detail exists
         if ($userDetail) {
-            $userDetail->load(['position.section.dept', 'role']);
+            $userDetail->load(['position.section.dept', 'role', 'plant']);
         }
 
         $photoUrl = null;
@@ -69,6 +69,11 @@ class ProfileController extends Controller
             $userDetail->update([
                 'employee_name' => $validated['employee_name'],
                 'gender' => $validated['gender'],
+                'phone' => $validated['phone'] ?? null,
+                'address' => $validated['address'] ?? null,
+                'bank_name' => $validated['bank_name'] ?? null,
+                'bank_account_name' => $validated['bank_account_name'] ?? null,
+                'bank_account_number' => $validated['bank_account_number'] ?? null,
             ]);
         }
 

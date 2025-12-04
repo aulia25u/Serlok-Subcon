@@ -5,6 +5,7 @@ namespace App\Http\Controllers\RBAC;
 use App\Http\Controllers\Controller;
 use App\Models\MasterItem;
 use App\Models\TenantOwner;
+use App\Models\MasterCustomer;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,7 @@ class MasterItemController extends Controller
     {
         if ($request->ajax()) {
             $user = Auth::user();
-            $query = MasterItem::with('tenantOwner')->select('master_items.*');
+            $query = MasterItem::with(['tenantOwner', 'masterCustomer'])->select('master_items.*');
 
             $currentCustomerId = \App\Services\TenantService::currentCustomerId();
 
@@ -51,6 +52,9 @@ class MasterItemController extends Controller
                 ->addColumn('tenant_name', function (MasterItem $masterItem) {
                     return $masterItem->tenantOwner ? $masterItem->tenantOwner->name : 'N/A';
                 })
+                ->addColumn('customer_name', function (MasterItem $masterItem) {
+                    return $masterItem->masterCustomer ? $masterItem->masterCustomer->customer_name : 'N/A';
+                })
                 ->editColumn('created_at', function ($row) {
                     return $row->created_at ? $row->created_at->format('d-m-Y H:i:s') : '';
                 })
@@ -73,7 +77,9 @@ class MasterItemController extends Controller
             $tenantOwners = TenantOwner::all();
         }
 
-        return view('master_item.index', compact('tenantOwners'));
+        $masterCustomers = MasterCustomer::all();
+
+        return view('master_item.index', compact('tenantOwners', 'masterCustomers'));
     }
 
     public function create()
@@ -91,6 +97,11 @@ class MasterItemController extends Controller
         $rules = [
             'item_name' => 'required|string|max:255',
             'item_code' => 'required|string|max:255|unique:master_items,item_code',
+            'master_customer_id' => 'nullable|exists:master_customers,id',
+            'product_status' => 'nullable|string|in:Continue,Not Continue',
+            'part_number' => 'nullable|string|max:255',
+            'model' => 'nullable|string|max:255',
+            'unit' => 'nullable|string|in:PCS,KG,ROLL',
             'description' => 'nullable|string',
         ];
 
@@ -159,6 +170,11 @@ class MasterItemController extends Controller
         $rules = [
             'item_name' => 'required|string|max:255',
             'item_code' => 'required|string|max:255|unique:master_items,item_code,' . $masterItem->id,
+            'master_customer_id' => 'nullable|exists:master_customers,id',
+            'product_status' => 'nullable|string|in:Continue,Not Continue',
+            'part_number' => 'nullable|string|max:255',
+            'model' => 'nullable|string|max:255',
+            'unit' => 'nullable|string|in:PCS,KG,ROLL',
             'description' => 'nullable|string',
         ];
 

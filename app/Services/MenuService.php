@@ -63,9 +63,11 @@ class MenuService
         ];
         $tenantLabels = ['Tenant List', 'Tenant Owner', 'Customer'];
         $masterDataLabels = ['Master Customer', 'Master Item', 'Master Finance'];
+        $warehouseLabels = ['Receiving', 'Inventory'];
         $tenantChildren = [];
         $internalChildren = [];
         $masterDataChildren = [];
+        $warehouseChildren = [];
 
         foreach ($internalOrder as $menuName) {
             if (!$menuMap->has($menuName)) {
@@ -106,6 +108,8 @@ class MenuService
                 $masterDataChildren[] = $item;
             } elseif (in_array($label, $tenantLabels, true)) {
                 $tenantChildren[] = $item;
+            } elseif (in_array($menu->menu_name, $warehouseLabels, true)) {
+                $warehouseChildren[] = $item;
             } else {
                 $menuItems[] = $item;
             }
@@ -132,6 +136,14 @@ class MenuService
                 'text' => 'Master Data',
                 'icon' => 'fas fa-fw fa-layer-group',
                 'submenu' => $masterDataChildren,
+            ];
+        }
+
+        if (!empty($warehouseChildren)) {
+            $menuItems[] = [
+                'text' => 'Warehouse',
+                'icon' => 'fas fa-warehouse',
+                'submenu' => $warehouseChildren,
             ];
         }
 
@@ -184,6 +196,8 @@ class MenuService
             'Master Customer' => 'rbac/master-customer',
             'Master Item' => 'rbac/master-item',
             'Master Finance' => 'rbac/master-finance',
+            'Receiving' => 'rbac/receiving',
+            'Inventory' => 'rbac/inventory',
         ];
 
         return $urlMap[$menuName] ?? '#';
@@ -203,6 +217,8 @@ class MenuService
             'Master Customer' => 'fas fa-fw fa-users',
             'Master Item' => 'fas fa-fw fa-box-open',
             'Master Finance' => 'fas fa-fw fa-money-bill-wave',
+            'Receiving' => 'fas fa-fw fa-truck-loading',
+            'Inventory' => 'fas fa-fw fa-boxes',
         ];
 
         return $iconMap[$menuName] ?? 'fas fa-fw fa-circle';

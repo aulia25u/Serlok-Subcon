@@ -24,3 +24,8 @@ body.sidebar-closed .sidebar-menu-search {
     display: block !important;
     opacity: 1;
 }
+
+table.dataTable thead th,
+table.dataTable thead td {
+    text-align: left !important;
+}

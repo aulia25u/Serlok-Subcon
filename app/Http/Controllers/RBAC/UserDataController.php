@@ -10,6 +10,7 @@ use App\Models\Position;
 use App\Models\Role;
 use App\Models\Section;
 use App\Models\Dept;
+use App\Models\Plant;
 use App\Services\ActivityLogService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
@@ -63,13 +64,13 @@ class UserDataController extends Controller
                     return $row->role->role_name ?? '-';
                 })
                 ->addColumn('dept_name', function ($row) {
-                    return $row->position->section->dept->dept_name ?? '-';
+                    return $row->position?->section?->dept?->dept_name ?? '-';
                 })
                 ->addColumn('section_name', function ($row) {
-                    return $row->position->section->section_name ?? '-';
+                    return $row->position?->section?->section_name ?? '-';
                 })
                 ->addColumn('position_name', function ($row) {
-                    return $row->position->position_name ?? '-';
+                    return $row->position?->position_name ?? '-';
                 })
                 ->addColumn('customer_name', function ($row) {
                     return $row->customer->customer_name ?? 'Internal';
@@ -92,6 +93,9 @@ class UserDataController extends Controller
                     // So let's keep the Edit button pointing to the User.
                     $btn .= ' <button class="btn btn-sm btn-danger userData-delete-btn" data-id="' . $row->user_id . '">
                                 <i class="fas fa-trash"></i> Delete
+                            </button>';
+                    $btn .= ' <button class="btn btn-sm btn-info userData-detail-btn" data-id="' . $row->user_id . '">
+                                <i class="fas fa-eye"></i> Detail
                             </button>';
                     return $btn;
                 })
@@ -158,8 +162,11 @@ class UserDataController extends Controller
         $customers = TenantService::isInternal()
             ? Customer::orderBy('customer_name')->get()
             : Customer::where('id', $customerId)->get();
+        $plants = TenantService::scopeQueryByCustomer(
+            Plant::orderBy('plant_name')
+        )->get();
 
-        return view('rbac.user-data.index', compact('departments', 'sections', 'positions', 'roles', 'customers'))
+        return view('rbac.user-data.index', compact('departments', 'sections', 'positions', 'roles', 'customers', 'plants'))
             ->with('currentCustomerId', $customerId);
     }
 
@@ -177,14 +184,24 @@ class UserDataController extends Controller
             'password' => 'required|string|min:8',
             'full_name' => 'required|string|max:255',
             'role_id' => 'nullable|exists:roles,id', // Made nullable as it's now in details
+            'nip' => 'nullable|string|max:255',
+            'employee_status' => 'nullable|string|in:Tetap,Kontrak,Borongan',
+            'blacklist_note' => 'nullable|string',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'phone' => 'nullable|string|max:255',
+            'status_active' => 'nullable|boolean',
+            'employee_photo' => 'nullable|image|max:2048',
             'details' => 'required|array',
             'details.*.customer_id' => 'required|exists:customers,id',
             'details.*.dept_id' => 'required|exists:depts,id',
             'details.*.section_id' => 'required|exists:sections,id', // Add validation logic if needed
             'details.*.position_id' => 'required|exists:positions,id',
             'details.*.role_id' => 'required|exists:roles,id',
-            'details.*.gender' => 'required|in:Male,Female',
-            // 'plant_id' => 'required|exists:plants,id', // Removed plant_id validation
+            'gender' => 'required|in:Male,Female',
+            'details.*.plant_id' => 'required|exists:plants,id',
         ]);
 
         DB::beginTransaction();
@@ -197,6 +214,11 @@ class UserDataController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
+            $photoPath = 'default.png';
+            if ($request->hasFile('employee_photo')) {
+                $photoPath = $request->file('employee_photo')->store('employee_photos', 'public');
+            }
+
             foreach ($request->details as $detail) {
                 $section = Section::findOrFail($detail['section_id']);
                 TenantService::assertAccess($section->customer_id);
@@ -208,12 +230,19 @@ class UserDataController extends Controller
                     'customer_id' => $section->customer_id,
                     'employee_name' => $request->full_name, // Using master full name
                     'employee_id' => $request->username, // Use username as employee_id
-                    'gender' => $detail['gender'],
-                    'address' => '-',
-                    'phone' => '-',
+                    'nip' => $request->nip,
+                    'employee_status' => $request->employee_status,
+                    'blacklist_note' => $request->blacklist_note,
+                    'bank_name' => $request->bank_name,
+                    'bank_account_name' => $request->bank_account_name,
+                    'bank_account_number' => $request->bank_account_number,
+                    'gender' => $request->gender,
+                    'plant_id' => $detail['plant_id'],
+                    'address' => $request->address ?? '-',
+                    'phone' => $request->phone ?? '-',
                     'join_date' => now(),
-                    'status_active' => 1,
-                    'employee_photo' => 'default.png',
+                    'status_active' => $request->status_active ?? 1,
+                    'employee_photo' => $photoPath,
                 ]);
             }
 
@@ -297,7 +326,18 @@ class UserDataController extends Controller
             'details.*.section_id' => 'required|exists:sections,id',
             'details.*.position_id' => 'required|exists:positions,id',
             'details.*.role_id' => 'required|exists:roles,id',
-            'details.*.gender' => 'required|in:Male,Female',
+            'gender' => 'required|in:Male,Female',
+            'details.*.plant_id' => 'required|exists:plants,id',
+            'nip' => 'nullable|string|max:255',
+            'employee_status' => 'nullable|string|in:Tetap,Kontrak,Borongan',
+            'blacklist_note' => 'nullable|string',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'address' => 'nullable|string',
+            'phone' => 'nullable|string|max:255',
+            'status_active' => 'nullable|boolean',
+            'employee_photo' => 'nullable|image|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -347,12 +387,31 @@ class UserDataController extends Controller
                     'customer_id' => $section->customer_id,
                     'employee_name' => $request->full_name,
                     'employee_id' => $request->username,
-                    'gender' => $detail['gender'],
-                    'address' => '-',
-                    'phone' => '-',
-                    'status_active' => 1,
-                    'employee_photo' => 'default.png',
+                    'nip' => $request->nip,
+                    'employee_status' => $request->employee_status,
+                    'blacklist_note' => $request->blacklist_note,
+                    'bank_name' => $request->bank_name,
+                    'bank_account_name' => $request->bank_account_name,
+                    'bank_account_number' => $request->bank_account_number,
+                    'gender' => $request->gender,
+                    'plant_id' => $detail['plant_id'],
+                    'address' => $request->address ?? '-',
+                    'phone' => $request->phone ?? '-',
+                    'status_active' => $request->status_active ?? 1,
                 ];
+
+                if ($request->hasFile('employee_photo')) {
+                    $data['employee_photo'] = $request->file('employee_photo')->store('employee_photos', 'public');
+                } elseif ($user->userDetails()->exists()) {
+                    // Keep existing photo if not uploaded
+                    // Actually, we are iterating details.
+                    // If we are updating, we should keep the old one.
+                    // But here we are constructing data for update/create.
+                    // If we don't include 'employee_photo' in $data, it won't be updated (which is good).
+                    // But for create, we need a default.
+                } else {
+                    $data['employee_photo'] = 'default.png';
+                }
 
                 if (isset($detail['id']) && $detail['id']) {
                     $user->userDetails()->where('id', $detail['id'])->update($data);
