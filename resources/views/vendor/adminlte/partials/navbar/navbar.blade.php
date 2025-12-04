@@ -15,10 +15,57 @@
         {{-- Fullscreen Widget --}}
         @include('adminlte::partials.navbar.menu-item-fullscreen-widget')
 
-        {{-- User Name --}}
-        <li class="nav-item d-none d-sm-inline-block">
-            <span class="nav-link">Hi, {{ Auth::user()->name }}</span>
+        {{-- User Menu Dropdown --}}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">
+                Hi, {{ Auth::user()->name }}
+            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <span class="dropdown-item dropdown-header">User Profile</span>
+                <div class="dropdown-divider"></div>
+
+                {{-- Profile Link --}}
+                <a href="{{ route('profile.edit') }}" class="dropdown-item">
+                    <i class="fas fa-user mr-2"></i> Profile
+                </a>
+
+                <div class="dropdown-divider"></div>
+
+                {{-- IP & Location --}}
+                <div class="dropdown-item">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    <span class="text-muted text-sm">
+                        IP: {{ request()->ip() }}
+                        <br>
+                        <span id="user-location" style="margin-left: 20px;">Loading location...</span>
+                    </span>
+                </div>
+            </div>
         </li>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                fetch('https://ipwho.is/')
+                    .then(response => response.json())
+                    .then(data => {
+                        const locationSpan = document.getElementById('user-location');
+                        if (locationSpan) {
+                            if (data.success) {
+                                locationSpan.textContent = `${data.city}, ${data.country}`;
+                            } else {
+                                locationSpan.textContent = 'Location unavailable';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching location:', error);
+                        const locationSpan = document.getElementById('user-location');
+                        if (locationSpan) {
+                            locationSpan.textContent = 'Location error';
+                        }
+                    });
+            });
+        </script>
 
         {{-- Tenant Switcher --}}
         @auth

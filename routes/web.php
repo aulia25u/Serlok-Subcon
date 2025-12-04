@@ -14,6 +14,7 @@ use App\Http\Controllers\RBAC\SectionController;
 use App\Http\Controllers\RBAC\UserDataController;
 use App\Http\Controllers\RBAC\MasterCustomerController;
 use App\Http\Controllers\RBAC\MasterItemController;
+use App\Http\Controllers\RBAC\MasterFinanceController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -141,6 +142,13 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
     Route::delete('/master-item/{id}', [MasterItemController::class, 'destroy'])->name('rbac.master-item.destroy');
     Route::get('/master-item/create', [MasterItemController::class, 'create'])->name('rbac.master-item.create');
     Route::get('/master-item/{id}', [MasterItemController::class, 'show'])->name('rbac.master-item.show');
+
+    // Master Finance
+    Route::get('/master-finance', [MasterFinanceController::class, 'index'])->name('rbac.master-finance');
+    Route::post('/master-finance', [MasterFinanceController::class, 'store'])->name('rbac.master-finance.store');
+    Route::get('/master-finance/{id}/edit', [MasterFinanceController::class, 'edit'])->name('rbac.master-finance.edit');
+    Route::put('/master-finance/{id}', [MasterFinanceController::class, 'update'])->name('rbac.master-finance.update');
+    Route::delete('/master-finance/{id}', [MasterFinanceController::class, 'destroy'])->name('rbac.master-finance.destroy');
 
 
 

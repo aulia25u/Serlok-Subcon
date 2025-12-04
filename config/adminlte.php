@@ -335,6 +335,16 @@ return [
     */
 
     'plugins' => [
+        'CustomZoom' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'css/custom.css',
+                ],
+            ],
+        ],
         'Datatables' => [
             'active' => true,
             'files' => [

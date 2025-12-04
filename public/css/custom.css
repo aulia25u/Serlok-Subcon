@@ -1,5 +1,35 @@
 /* Custom Sidebar Indentation */
 
+html {
+    background-color: #f4f6f9;
+    /* Ensure html background matches body */
+}
+
+body {
+    zoom: 90%;
+    min-height: 111.2vh;
+    /* Compensate for 90% zoom */
+    background-color: #f4f6f9;
+}
+
+.wrapper,
+.content-wrapper {
+    min-height: 111.2vh !important;
+    /* Ensure wrapper also fills the height */
+}
+
+.modal-backdrop {
+    min-height: 111.2vh !important;
+    width: 111.2vw !important;
+    /* Ensure backdrop fills height and width */
+}
+
+.preloader {
+    height: 111.2vh;
+    /* No !important so JS can hide it */
+}
+
+
 /* Default: Indent submenu links */
 .nav-sidebar .nav-treeview>.nav-item>.nav-link {
     padding-left: 2.5rem !important;
