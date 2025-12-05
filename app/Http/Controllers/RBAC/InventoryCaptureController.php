@@ -51,7 +51,7 @@ class InventoryCaptureController extends Controller
                     });
                 })
                 ->editColumn('captured_at', function ($row) {
-                    return $row->captured_at ? $row->captured_at->format('Y-m-d') : '';
+                    return $row->captured_at ? $row->captured_at->format('Y-m-d H:i:s') : '';
                 })
                 ->make(true);
         }

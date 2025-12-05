@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \App\Models\Receiving::observe(\App\Observers\ReceivingObserver::class);
+        \App\Models\Outgoing::observe(\App\Observers\OutgoingObserver::class);
 
         /** @var Router $router */
         $router = $this->app['router'];

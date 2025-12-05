@@ -10,6 +10,10 @@ use App\Http\Controllers\RBAC\MasterMenuController;
 use App\Http\Controllers\RBAC\PlantController;
 use App\Http\Controllers\RBAC\PositionController;
 use App\Http\Controllers\RBAC\RoleController;
+use App\Http\Controllers\RBAC\ReceivingController;
+use App\Http\Controllers\RBAC\InventoryController;
+use App\Http\Controllers\RBAC\InventoryCaptureController;
+use App\Http\Controllers\RBAC\OutgoingController;
 use App\Http\Controllers\RBAC\SectionController;
 use App\Http\Controllers\RBAC\UserDataController;
 use App\Http\Controllers\RBAC\MasterCustomerController;
@@ -158,9 +162,17 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
     Route::delete('/receiving/{id}', [App\Http\Controllers\RBAC\ReceivingController::class, 'destroy'])->name('rbac.receiving.destroy');
 
     // Inventory
-    Route::get('/inventory', [App\Http\Controllers\RBAC\InventoryController::class, 'index'])->name('rbac.inventory');
-    Route::get('/inventory/capture', [App\Http\Controllers\RBAC\InventoryCaptureController::class, 'index'])->name('rbac.inventory.capture');
-    Route::post('/inventory/capture', [App\Http\Controllers\RBAC\InventoryCaptureController::class, 'store'])->name('rbac.inventory.capture.store');
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('rbac.inventory');
+    Route::get('/inventory/capture', [InventoryCaptureController::class, 'index'])->name('rbac.inventory.capture');
+    Route::post('/inventory/capture', [InventoryCaptureController::class, 'store'])->name('rbac.inventory.capture.store');
+    Route::resource('outgoing', OutgoingController::class)
+        ->except(['create', 'show', 'edit', 'update'])
+        ->names([
+            'index' => 'rbac.outgoing.index',
+            'store' => 'rbac.outgoing.store',
+            'destroy' => 'rbac.outgoing.destroy',
+        ]);
+    Route::post('/outgoing/{id}/verify', [OutgoingController::class, 'verify'])->name('rbac.outgoing.verify');
 
 });
 

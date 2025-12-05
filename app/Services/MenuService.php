@@ -63,7 +63,7 @@ class MenuService
         ];
         $tenantLabels = ['Tenant List', 'Tenant Owner', 'Customer'];
         $masterDataLabels = ['Master Customer', 'Master Item', 'Master Finance'];
-        $warehouseLabels = ['Receiving', 'Inventory'];
+        $warehouseLabels = ['Receiving', 'Inventory', 'Outgoing'];
         $tenantChildren = [];
         $internalChildren = [];
         $masterDataChildren = [];
@@ -198,6 +198,7 @@ class MenuService
             'Master Finance' => 'rbac/master-finance',
             'Receiving' => 'rbac/receiving',
             'Inventory' => 'rbac/inventory',
+            'Outgoing' => 'rbac/outgoing',
         ];
 
         return $urlMap[$menuName] ?? '#';
@@ -219,6 +220,7 @@ class MenuService
             'Master Finance' => 'fas fa-fw fa-money-bill-wave',
             'Receiving' => 'fas fa-fw fa-truck-loading',
             'Inventory' => 'fas fa-fw fa-boxes',
+            'Outgoing' => 'fas fa-fw fa-dolly-flatbed',
         ];
 
         return $iconMap[$menuName] ?? 'fas fa-fw fa-circle';

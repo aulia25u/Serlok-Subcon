@@ -18,17 +18,33 @@
                     </div>
                     <div class="card-body">
                         <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="receiving_start_date">Start Date</label>
-                                <input type="date" id="receiving_start_date" class="form-control">
+                            <div class="col-md-3">
+                                <label for="delivery_date_filter">Delivery Date</label>
+                                <input type="date" id="delivery_date_filter" class="form-control">
                             </div>
-                            <div class="col-md-4">
-                                <label for="receiving_end_date">End Date</label>
-                                <input type="date" id="receiving_end_date" class="form-control">
+                            <div class="col-md-3">
+                                <label for="incoming_date_filter">Incoming Date</label>
+                                <input type="text" id="incoming_date_filter" class="form-control"
+                                    placeholder="Select Date Range">
                             </div>
-                            <div class="col-md-4 d-flex align-items-end">
-                                <button id="filterBtn" class="btn btn-primary mr-2">Filter</button>
-                                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                            <div class="col-md-2">
+                                <label for="status_filter">Status</label>
+                                <select id="status_filter" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="Waiting">Waiting</option>
+                                    <option value="Verified">Verified</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="ng_status_filter">NG Status</label>
+                                <select id="ng_status_filter" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="OK">OK</option>
+                                    <option value="NG">NG</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button id="resetBtn" class="btn btn-secondary btn-block">Reset</button>
                             </div>
                         </div>
                         <table class="table table-bordered table-striped" id="receivingTable">
@@ -45,7 +61,6 @@
                                     <th>Qty Pack</th>
                                     <th>Qty/Pack</th>
                                     <th>NG Status</th>
-                                    <th>Actions</th>
                                 </tr>
                             </thead>
                         </table>
@@ -209,9 +224,9 @@
             transform: translateY(-50%);
             color: #aaa;
             pointer-events: none;
-            z-index: 1;
         }
     </style>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 @endsection
 
 @push('scripts')
@@ -222,6 +237,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="{{ asset('js/crud-manager.js') }}"></script>
     <script>
@@ -232,25 +249,94 @@
                 }
             });
 
+            // Initialize DateRangePicker
+            $('#incoming_date_filter').daterangepicker({
+
+                autoUpdateInput: false,
+                locale: {
+                    cancelLabel: 'Clear'
+                }
+            });
+
+            $('#incoming_date_filter').on('apply.daterangepicker', function (ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+                crudManager.table.draw();
+            });
+
+            $('#incoming_date_filter').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val('');
+                crudManager.table.draw();
+            });
+
+            // Auto-submit for other filters
+            $('#delivery_date_filter, #status_filter, #ng_status_filter').on('change', function () {
+                crudManager.table.draw();
+            });
+
             const crudManager = new CrudManager({
+
                 entity: 'receiving',
                 routes: {
                     index: "{{ route('rbac.receiving') }}",
                     store: "{{ route('rbac.receiving.store') }}",
-                },
-                columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'item_name', name: 'item_name' },
-                    { data: 'doc_number_internal', name: 'doc_number_internal' },
-                    { data: 'doc_number_customer', name: 'doc_number_customer' },
-                    { data: 'product_status', name: 'product_status' },
-                    { data: 'delivery_date_customer', name: 'delivery_date_customer' },
-                    { data: 'incoming_date', name: 'incoming_date' },
-                    { data: 'receiver_name', name: 'receiver_name' },
-                    { data: 'qty_pack', name: 'qty_pack' },
-                    { data: 'qty_per_pack', name: 'qty_per_pack' },
-                    { data: 'ng_customer', name: 'ng_customer' },
-                    { data: 'action', name: 'action', orderable: false, searchable: false },
+                }
+
+                ,
+                columns: [{
+                    data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false
+                }
+
+                    ,
+                {
+                    data: 'item_name', name: 'item_name'
+                }
+
+                    ,
+                {
+                    data: 'doc_number_internal', name: 'doc_number_internal'
+                }
+
+                    ,
+                {
+                    data: 'doc_number_customer', name: 'doc_number_customer'
+                }
+
+                    ,
+                {
+                    data: 'product_status', name: 'product_status'
+                }
+
+                    ,
+                {
+                    data: 'delivery_date_customer', name: 'delivery_date_customer'
+                }
+
+                    ,
+                {
+                    data: 'incoming_date', name: 'incoming_date'
+                }
+
+                    ,
+                {
+                    data: 'receiver_name', name: 'receiver_name'
+                }
+
+                    ,
+                {
+                    data: 'qty_pack', name: 'qty_pack'
+                }
+
+                    ,
+                {
+                    data: 'qty_per_pack', name: 'qty_per_pack'
+                }
+
+                    ,
+                {
+                    data: 'ng_customer', name: 'ng_customer'
+                }
+
+                    ,
                 ],
                 modalId: '#receivingModal',
                 formId: '#receivingForm',
@@ -258,39 +344,57 @@
                 filterBtnId: '#filterBtn',
                 resetBtnId: '#resetBtn',
                 addBtnId: '#addReceivingBtn',
-                dateFilters: true,
+                dateFilters: false, // Disable default date filters
+
+                ajaxData: function (data) {
+                    data.incoming_date = $('#incoming_date_filter').val();
+                    data.status = $('#status_filter').val();
+                    data.ng_status = $('#ng_status_filter').val();
+                    data.delivery_date = $('#delivery_date_filter').val();
+                }
+
+                ,
                 options: {
                     layout: {
                         topStart: 'search',
                         topEnd: 'buttons',
                         bottomStart: ['pageLength', 'info'],
                         bottomEnd: 'paging'
-                    },
-                    buttons: [
-                        {
-                            text: '<i class="fas fa-plus"></i> Add Receiving',
-                            className: 'btn btn-primary',
-                            action: function (e, dt, node, config) {
-                                $('#addReceivingBtn').trigger('click');
-                            }
-                        },
-                        {
-                            extend: 'csv',
-                            text: '<i class="fas fa-file-csv"></i> Export CSV',
-                            className: 'btn btn-success'
-                        },
-                        {
-                            extend: 'print',
-                            text: '<i class="fas fa-print"></i> Print',
-                            className: 'btn btn-info'
+                    }
+
+                    ,
+                    buttons: [{
+
+                        text: '<i class="fas fa-plus"></i> Add Receiving',
+                        className: 'btn btn-primary',
+                        action: function (e, dt, node, config) {
+                            $('#addReceivingBtn').trigger('click');
                         }
+                    }
+
+                        ,
+                    {
+                        extend: 'csv',
+                        text: '<i class="fas fa-file-csv"></i> Export CSV',
+                        className: 'btn btn-success'
+                    }
+
+                        ,
+                    {
+                        extend: 'print',
+                        text: '<i class="fas fa-print"></i> Print',
+                        className: 'btn btn-info'
+                    }
+
                     ],
                     language: {
                         lengthMenu: "_MENU_",
                         search: "",
                         searchPlaceholder: "Search"
                     }
-                },
+                }
+
+                ,
                 onEdit: function (data) {
                     $('#master_item_id').val(data.master_item_id);
                     $('#doc_number_internal').val(data.doc_number_internal);
@@ -302,13 +406,23 @@
                     $('#qty_per_pack').val(data.qty_per_pack);
                     $('#delivery_by').val(data.delivery_by);
                     $('#ng_customer').val(data.ng_customer);
-                },
+                }
+
+                ,
                 onAdd: function () {
                     $('#master_item_id').val('');
                     $('#product_status').val('Waiting');
                     $('#ng_customer').val('OK');
                 }
             });
+
+            // Custom Reset Logic
+            $('#resetBtn').on('click', function () {
+                $('#incoming_date_filter').val('');
+                $('#status_filter').val('');
+                $('#ng_status_filter').val('');
+                $('#delivery_date_filter').val('');
+                crudManager.table.draw();
+            });
         });
-    </script>
-@endpush
+</script>@endpush

@@ -16,7 +16,7 @@ class InventoryCapture extends Model
     ];
 
     protected $casts = [
-        'captured_at' => 'date',
+        'captured_at' => 'datetime',
     ];
 
     public function masterItem()

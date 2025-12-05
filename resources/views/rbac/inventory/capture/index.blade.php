@@ -36,8 +36,7 @@
                                 </select>
                             </div>
                             <div class="col-md-4 d-flex align-items-end">
-                                <button id="filterBtn" class="btn btn-primary mr-2">Filter</button>
-                                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                                <button id="resetBtn" class="btn btn-secondary btn-block">Reset</button>
                             </div>
                         </div>
                         <table class="table table-bordered table-striped" id="inventoryCaptureTable">
@@ -157,7 +156,7 @@
                 }
             });
 
-            $('#filterBtn').click(function () {
+            $('#filter_month, #filter_year').change(function () {
                 table.draw();
             });
 

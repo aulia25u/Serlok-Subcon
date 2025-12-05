@@ -23,8 +23,23 @@ class ReceivingController extends Controller
                 });
             }
 
-            if ($request->filled('start_date') && $request->filled('end_date')) {
-                $query->whereBetween('incoming_date', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+            if ($request->filled('incoming_date')) {
+                $dates = explode(' - ', $request->incoming_date);
+                if (count($dates) == 2) {
+                    $query->whereBetween('incoming_date', [$dates[0] . ' 00:00:00', $dates[1] . ' 23:59:59']);
+                }
+            }
+
+            if ($request->filled('status')) {
+                $query->where('product_status', $request->status);
+            }
+
+            if ($request->filled('ng_status')) {
+                $query->where('ng_customer', $request->ng_status);
+            }
+
+            if ($request->filled('delivery_date')) {
+                $query->whereDate('delivery_date_customer', $request->delivery_date);
             }
 
             return DataTables::of($query)
@@ -41,12 +56,16 @@ class ReceivingController extends Controller
                 ->editColumn('delivery_date_customer', function ($row) {
                     return $row->delivery_date_customer ? $row->delivery_date_customer->format('d-m-Y') : '';
                 })
-                ->addColumn('action', function ($row) {
-                    $btn = '<button data-id="' . $row->id . '" class="btn btn-primary btn-sm receiving-edit-btn me-1">Edit</button>';
-                    $btn .= '<button data-id="' . $row->id . '" class="btn btn-danger btn-sm receiving-delete-btn">Delete</button>';
-                    return $btn;
+                ->filterColumn('item_name', function ($query, $keyword) {
+                    $query->whereHas('masterItem', function ($q) use ($keyword) {
+                        $q->where('item_name', 'like', "%{$keyword}%");
+                    });
                 })
-                ->rawColumns(['action'])
+                ->filterColumn('receiver_name', function ($query, $keyword) {
+                    $query->whereHas('receiver', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
                 ->make(true);
         }
 

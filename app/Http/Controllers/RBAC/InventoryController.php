@@ -30,6 +30,16 @@ class InventoryController extends Controller
                 ->addColumn('item_code', function ($row) {
                     return $row->masterItem ? $row->masterItem->item_code : 'N/A';
                 })
+                ->filterColumn('item_name', function ($query, $keyword) {
+                    $query->whereHas('masterItem', function ($q) use ($keyword) {
+                        $q->where('item_name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('item_code', function ($query, $keyword) {
+                    $query->whereHas('masterItem', function ($q) use ($keyword) {
+                        $q->where('item_code', 'like', "%{$keyword}%");
+                    });
+                })
                 ->editColumn('updated_at', function ($row) {
                     return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '';
                 })
