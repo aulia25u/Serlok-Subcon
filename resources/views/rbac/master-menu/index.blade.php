@@ -513,7 +513,8 @@
                             width: '100%'
                         });
                     }, 100);
-                });
+                }
+            });
         });
 
         // Edit form submission
