@@ -14,6 +14,7 @@ class CrudManager {
         this.onEdit = config.onEdit || null;
         this.onAdd = config.onAdd || null;
         this.onModalHidden = config.onModalHidden || null;
+        this.select2 = config.select2 !== false; // Enable by default unless explicitly set to false
 
         this.table = null;
         this.init();
@@ -86,6 +87,16 @@ class CrudManager {
             if ($(`#${self.entity}_form_method`).length) {
                 $(`#${self.entity}_form_method`).val('POST');
             }
+            
+            // Destroy Select2 to allow clean re-init
+            if (self.select2) {
+                $(self.modalId).find('select').each(function() {
+                    if ($(this).data('select2')) {
+                        $(this).select2('destroy');
+                    }
+                });
+            }
+
             if (self.onModalHidden) self.onModalHidden();
         });
 
@@ -143,6 +154,17 @@ class CrudManager {
 
                 if (self.onEdit) self.onEdit(response);
                 $(self.modalId).modal('show');
+
+                // Initialize Select2 if enabled
+                if (self.select2) {
+                    $(self.modalId).find('select').each(function() {
+                        $(this).select2({
+                            theme: 'bootstrap4',
+                            dropdownParent: $(self.modalId),
+                            width: '100%'
+                        });
+                    });
+                }
             }).fail(function () {
                 toastr.error('Failed to load data.');
             });
@@ -182,6 +204,18 @@ class CrudManager {
         }
 
         $(self.modalId).modal('show');
+        
+        // Initialize Select2 if enabled
+        if (self.select2) {
+            $(self.modalId).find('select').each(function() {
+                $(this).select2({
+                    theme: 'bootstrap4',
+                    dropdownParent: $(self.modalId),
+                    width: '100%'
+                });
+            });
+        }
+
         if (self.onAdd) self.onAdd();
     }
 
