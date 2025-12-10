@@ -22,6 +22,9 @@ class SuratJalanController extends Controller
                 'employeeJob.inspector'
             ]);
 
+            // Tenant Scoping
+            \App\Services\TenantService::scopeQueryByCustomer($query, 'tenant_id');
+
             // Date Range Filter
             if ($request->filled('date_range')) {
                 $dates = explode(' - ', $request->date_range);
@@ -70,14 +73,24 @@ class SuratJalanController extends Controller
                 ->make(true);
         }
 
-        // Fetch Employee Jobs that don't have a Surat Jalan yet (or all for now)
-        // And Customers for dropdown
-        $employeeJobs = \App\Models\EmployeeJob::whereDoesntHave('suratJalan')->with(['outgoing.masterItem', 'user'])->get(); // Use relationship if defined reverse, or just all
-        // Actually EmployeeJob doesn't have 'suratJalan' relation defined yet in Model, but we can assume logic.
-        // For simplicity, let's just show all or filter.
-        // Let's add 'suratJalan' relation to EmployeeJob if needed, or just select all.
-        $employeeJobs = \App\Models\EmployeeJob::with(['outgoing.masterItem'])->orderBy('created_at', 'desc')->get();
-        $customers = \App\Models\MasterCustomer::all();
+        // Fetch Employee Jobs and Customers with Scoping
+        $employeeJobs = \App\Models\EmployeeJob::with(['outgoing.masterItem'])->orderBy('created_at', 'desc');
+        $customers = \App\Models\MasterCustomer::query();
+
+        if (!\App\Services\TenantService::isInternal()) {
+            $scopedCustomerId = \App\Services\TenantService::currentCustomerId();
+
+            // Scope Employee Jobs (via Outgoing -> MasterItem -> TenantOwner -> Customer)
+            $employeeJobs->whereHas('outgoing.masterItem.tenantOwner', function ($q) use ($scopedCustomerId) {
+                $q->where('customer_id', $scopedCustomerId);
+            });
+
+            // Scope Customers (only self)
+            $customers->where('id', $scopedCustomerId);
+        }
+
+        $employeeJobs = $employeeJobs->get();
+        $customers = $customers->get();
         $users = \App\Models\User::all();
 
         return view('rbac.surat_jalan.index', compact('employeeJobs', 'customers', 'users'));
@@ -102,6 +115,7 @@ class SuratJalanController extends Controller
                 'status' => $request->status ?? 'Draft',
                 'employee_job_id' => $request->employee_job_id,
                 'customer_id' => $request->customer_id,
+                'tenant_id' => \App\Services\TenantService::resolveCustomerId(),
                 'known_by' => $request->known_by,
             ]);
 
@@ -116,6 +130,10 @@ class SuratJalanController extends Controller
     public function edit($id)
     {
         $suratJalan = SuratJalan::with('employeeJob')->findOrFail($id);
+
+        // Tenant Access Assertion
+        \App\Services\TenantService::assertAccess($suratJalan->tenant_id);
+
         return response()->json($suratJalan);
     }
 
@@ -129,6 +147,10 @@ class SuratJalanController extends Controller
         ]);
 
         $suratJalan = SuratJalan::findOrFail($id);
+
+        // Tenant Access Assertion
+        \App\Services\TenantService::assertAccess($suratJalan->tenant_id);
+
         $suratJalan->update([
             'status' => $request->status,
             'employee_job_id' => $request->employee_job_id,
@@ -149,6 +171,9 @@ class SuratJalanController extends Controller
             'employeeJob.inspector'
         ])->findOrFail($id);
 
+        // Tenant Access Assertion
+        \App\Services\TenantService::assertAccess($suratJalan->tenant_id);
+
         return response()->json([
             'id_employee_jobs' => $suratJalan->employee_job_id,
             'item_information' => $suratJalan->employeeJob && $suratJalan->employeeJob->outgoing && $suratJalan->employeeJob->outgoing->masterItem ? $suratJalan->employeeJob->outgoing->masterItem->item_name : 'N/A',
@@ -161,6 +186,10 @@ class SuratJalanController extends Controller
     public function destroy($id)
     {
         $suratJalan = SuratJalan::findOrFail($id);
+
+        // Tenant Access Assertion
+        \App\Services\TenantService::assertAccess($suratJalan->tenant_id);
+
         $suratJalan->delete();
         return response()->json(['success' => 'Surat Jalan deleted successfully.']);
     }

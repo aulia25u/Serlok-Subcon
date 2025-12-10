@@ -10,6 +10,7 @@ class SuratJalan extends Model
     use HasFactory;
 
     protected $fillable = [
+        'tenant_id',
         'document_number',
         'surat_jalan_date',
         'status',

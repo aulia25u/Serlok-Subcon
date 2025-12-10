@@ -149,7 +149,7 @@
                     <!-- Turnstile Widget -->
                     <div class="mb-3 d-flex justify-content-center">
                         <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}"
-                            data-theme="auto"></div>
+                            data-theme="light"></div>
                     </div>
                     @error('cf-turnstile-response')
                         <div class="text-danger text-center mb-3 text-sm">

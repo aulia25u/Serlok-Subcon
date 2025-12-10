@@ -37,5 +37,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app['events']->listen(\Illuminate\Auth\Events\Login::class, \App\Listeners\LoginListener::class);
         $this->app['events']->listen(\Illuminate\Auth\Events\Logout::class, \App\Listeners\LogoutListener::class);
+
+        if ($this->app->environment('production', 'staging')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
     }
 }
