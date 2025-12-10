@@ -215,7 +215,7 @@
                             text: '<i class="fas fa-plus"></i> Assign Owner',
                             className: 'btn btn-primary',
                             action: function (e, dt, node, config) {
-                                $('#ownerModal').modal('show');
+                                $('#addBtn').trigger('click');
                             }
                         },
                         {
@@ -254,6 +254,20 @@
             // Custom logic for is_active toggle which is specific to this form
             $('#owner_active').on('change', function () {
                 $('#owner_active_value').val($(this).is(':checked') ? 1 : 0);
+            });
+
+            // Fallback: Initialize Select2 when modal is shown (covers cases missed by CrudManager)
+            $('#ownerModal').on('shown.bs.modal', function () {
+                $(this).find('select.select2').each(function () {
+                    // Check if already initialized to avoid double init
+                    if (!$(this).hasClass("select2-hidden-accessible")) {
+                        $(this).select2({
+                            theme: 'bootstrap4',
+                            dropdownParent: $('#ownerModal'),
+                            width: '100%'
+                        });
+                    }
+                });
             });
         });
     </script>
