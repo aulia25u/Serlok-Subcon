@@ -122,7 +122,7 @@
                         <table class="table table-bordered table-striped" id="historyTable">
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th>ID</th>
                                     <th>Tenant</th>
                                     <th>User</th>
                                     <th>Action</th>
@@ -174,7 +174,7 @@
                     }
                 },
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'tenant_name', name: 'tenant_name' },
                     { data: 'user_name', name: 'user_name' },
                     { data: 'action_badge', name: 'action_badge' },
@@ -193,28 +193,28 @@
                     bottomStart: ['pageLength', 'info'],
                     bottomEnd: 'paging'
                 },
-                    buttons: [
-                        {
-                            extend: 'csv',
-                            text: '<i class="fas fa-file-csv"></i> Export CSV',
-                            className: 'btn btn-success'
-                        },
-                        {
-                            extend: 'print',
-                            text: '<i class="fas fa-print"></i> Print',
-                            className: 'btn btn-info'
-                        }
-                    ],
-                    language: {
-                        processing: '<i class="fas fa-spinner fa-spin"></i> Loading...',
-                        lengthMenu: "_MENU_",
-                        search: "",
-                        searchPlaceholder: "Search"
+                buttons: [
+                    {
+                        extend: 'csv',
+                        text: '<i class="fas fa-file-csv"></i> Export CSV',
+                        className: 'btn btn-success'
                     },
-                    initComplete: function () {
-                        console.log('DataTable initialized');
+                    {
+                        extend: 'print',
+                        text: '<i class="fas fa-print"></i> Print',
+                        className: 'btn btn-info'
                     }
-                });
+                ],
+                language: {
+                    processing: '<i class="fas fa-spinner fa-spin"></i> Loading...',
+                    lengthMenu: "_MENU_",
+                    search: "",
+                    searchPlaceholder: "Search"
+                },
+                initComplete: function () {
+                    console.log('DataTable initialized');
+                }
+            });
 
             // Filter functionality
             $('#filterBtn').click(function () {

@@ -9,7 +9,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Outgoing Management</h3>
-                        <div class="card-tools">
+                        <div class="card-tools d-none">
                             <button type="button" class="btn btn-primary btn-sm" id="addOutgoingBtn" data-toggle="modal"
                                 data-target="#outgoingModal">
                                 <i class="fas fa-plus"></i> Add Outgoing
@@ -19,28 +19,33 @@
                     <div class="card-body">
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label for="start_date">Start Date</label>
-                                <input type="date" id="start_date" class="form-control">
+                                <label for="outgoing_date_filter">Date Outgoing</label>
+                                <input type="text" id="outgoing_date_filter" class="form-control"
+                                    placeholder="Select Date Range">
                             </div>
                             <div class="col-md-4">
-                                <label for="end_date">End Date</label>
-                                <input type="date" id="end_date" class="form-control">
+                                <label for="status_filter">Status</label>
+                                <select id="status_filter" class="form-control">
+                                    <option value="">All</option>
+                                    <option value="un-verified">Un-verified</option>
+                                    <option value="verified">Verified</option>
+                                </select>
                             </div>
                             <div class="col-md-4 d-flex align-items-end">
-                                <button id="filterBtn" class="btn btn-primary mr-2">Filter</button>
-                                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                                <button id="resetBtn" class="btn btn-secondary btn-block">Reset</button>
                             </div>
                         </div>
                         <table class="table table-bordered table-striped" id="outgoingTable">
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th>ID</th>
                                     <th>Item Name</th>
                                     <th>Item Code</th>
                                     <th>Assigned To</th>
                                     <th>Assign By</th>
                                     <th>Quantity</th>
                                     <th>Date Outgoing</th>
+                                    <th>Note</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -149,6 +154,7 @@
             z-index: 1;
         }
     </style>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 @endsection
 
 @push('scripts')
@@ -159,6 +165,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="{{ asset('js/crud-manager.js') }}"></script>
     <script>
@@ -169,6 +177,36 @@
                 }
             });
 
+            // Initialize DateRangePicker
+            $('#outgoing_date_filter').daterangepicker({
+                autoUpdateInput: false,
+                locale: {
+                    cancelLabel: 'Clear'
+                }
+            });
+
+            $('#outgoing_date_filter').on('apply.daterangepicker', function (ev, picker) {
+                $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+                crudManager.table.draw();
+            });
+
+            $('#outgoing_date_filter').on('cancel.daterangepicker', function (ev, picker) {
+                $(this).val('');
+                crudManager.table.draw();
+            });
+
+            // Auto-submit for status filter
+            $('#status_filter').change(function () {
+                crudManager.table.draw();
+            });
+
+            // Custom Reset Logic
+            $('#resetBtn').click(function () {
+                $('#outgoing_date_filter').val('');
+                $('#status_filter').val('');
+                crudManager.table.draw();
+            });
+
             const crudManager = new CrudManager({
                 entity: 'outgoing',
                 routes: {
@@ -176,23 +214,27 @@
                     store: "{{ route('rbac.outgoing.store') }}",
                 },
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'item_name', name: 'item_name' },
                     { data: 'item_code', name: 'item_code' },
                     { data: 'assigned_to', name: 'assigned_to' },
                     { data: 'created_by', name: 'created_by' },
                     { data: 'quantity', name: 'quantity' },
                     { data: 'outgoing_date', name: 'outgoing_date' },
+                    { data: 'notes', name: 'notes' },
                     { data: 'status', name: 'status' },
                     { data: 'action', name: 'action', orderable: false, searchable: false },
                 ],
                 modalId: '#outgoingModal',
                 formId: '#outgoingForm',
                 tableId: '#outgoingTable',
-                filterBtnId: '#filterBtn',
                 resetBtnId: '#resetBtn',
                 addBtnId: '#addOutgoingBtn',
-                dateFilters: true,
+                dateFilters: false,
+                ajaxData: function (d) {
+                    d.outgoing_date = $('#outgoing_date_filter').val();
+                    d.status = $('#status_filter').val();
+                },
                 options: {
                     layout: {
                         topStart: 'search',

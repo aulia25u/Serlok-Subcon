@@ -14,7 +14,7 @@
                         <table class="table table-bordered table-striped" id="inventoryTable">
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th>ID</th>
                                     <th>Item Name</th>
                                     <th>Item Code</th>
                                     <th>Quantity</th>
@@ -84,7 +84,7 @@
                 serverSide: true,
                 ajax: "{{ route('rbac.inventory') }}",
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'item_name', name: 'item_name' },
                     { data: 'item_code', name: 'item_code' },
                     { data: 'quantity', name: 'quantity' },

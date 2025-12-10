@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Master Finance')
+@section('title', 'Master Variable')
 
 @section('content')
     <div class="container-fluid">
@@ -8,23 +8,23 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Master Finance Management</h3>
+                        <h3 class="card-title">Master Variable Management</h3>
                         <div class="card-tools d-none">
-                            <button type="button" class="btn btn-primary btn-sm" id="addMasterFinanceBtn"
-                                data-toggle="modal" data-target="#masterFinanceModal">
-                                <i class="fas fa-plus"></i> Add Master Finance
+                            <button type="button" class="btn btn-primary btn-sm" id="addMasterVariableBtn"
+                                data-toggle="modal" data-target="#variableModal">
+                                <i class="fas fa-plus"></i> Add Variable
                             </button>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="row mb-3">
                             <div class="col-md-4">
-                                <label for="master_finance_start_date">Start Date</label>
-                                <input type="date" id="master_finance_start_date" class="form-control">
+                                <label for="master_variable_start_date">Start Date</label>
+                                <input type="date" id="master_variable_start_date" class="form-control">
                             </div>
                             <div class="col-md-4">
-                                <label for="master_finance_end_date">End Date</label>
-                                <input type="date" id="master_finance_end_date" class="form-control">
+                                <label for="master_variable_end_date">End Date</label>
+                                <input type="date" id="master_variable_end_date" class="form-control">
                             </div>
                             <div class="col-md-4 d-flex align-items-end">
                                 <button id="filterBtn" class="btn btn-primary mr-2">Filter</button>
@@ -32,16 +32,15 @@
                             </div>
                         </div>
 
-                        <table class="table table-bordered table-striped" id="masterFinanceTable">
+                        <table class="table table-bordered table-striped" id="variableTable">
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Tenant</th>
-                                    <th>Bank Name</th>
-                                    <th>Bank Account Name</th>
-                                    <th>Bank Account Number</th>
-                                    <th>Created At</th>
-                                    <th>Updated At</th>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Value</th>
+                                    <th>Description</th>
+                                    <th>Last Updated</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -53,47 +52,39 @@
     </div>
 
     <!-- Modal -->
-    <div class="modal fade" id="masterFinanceModal" tabindex="-1" role="dialog" aria-labelledby="masterFinanceModalLabel"
+    <div class="modal fade" id="variableModal" tabindex="-1" role="dialog" aria-labelledby="variableModalLabel"
         aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="masterFinanceModalLabel">Add Master Finance</h5>
+                    <h5 class="modal-title" id="variableModalLabel">Add Master Variable</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <form id="masterFinanceForm">
+                <form id="variableForm">
                     @csrf
-                    <input type="hidden" id="master_finance_id" name="id">
-                    <input type="hidden" id="master_finance_form_method" name="_method" value="POST">
+                    <input type="hidden" id="master-variable_id" name="id">
+                    <input type="hidden" id="master-variable_form_method" name="_method" value="POST">
                     <div class="modal-body">
-                        @if(empty(auth()->user()->userDetail->customer_id))
-                            <div class="form-group" id="tenant_id_group">
-                                <label for="tenant_id">Tenant Owner</label>
-                                <select name="tenant_id" id="tenant_id" class="form-control">
-                                    <option value="">Select Tenant Owner</option>
-                                    @foreach($tenantOwners as $tenantOwner)
-                                        <option value="{{ $tenantOwner->id }}">{{ $tenantOwner->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        @endif
-
                         <div class="form-group">
-                            <label for="bank_name">Bank Name</label>
-                            <input type="text" name="bank_name" id="bank_name" class="form-control"
-                                placeholder="Enter Bank Name" required>
+                            <label for="variable_code">Code</label>
+                            <input type="text" name="variable_code" id="variable_code" class="form-control" required
+                                placeholder="e.g., DATE_FORMAT">
                         </div>
                         <div class="form-group">
-                            <label for="bank_account_name">Bank Account Name</label>
-                            <input type="text" name="bank_account_name" id="bank_account_name" class="form-control"
-                                placeholder="Enter Bank Account Name" required>
+                            <label for="variable_name">Name</label>
+                            <input type="text" name="variable_name" id="variable_name" class="form-control" required
+                                placeholder="e.g., Date Format">
                         </div>
                         <div class="form-group">
-                            <label for="bank_account_number">Bank Account Number</label>
-                            <input type="text" name="bank_account_number" id="bank_account_number" class="form-control"
-                                placeholder="Enter Bank Account Number" required>
+                            <label for="variable_value">Value</label>
+                            <input type="text" name="variable_value" id="variable_value" class="form-control" required
+                                placeholder="e.g., YYYY-MM-DD">
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea name="description" id="description" class="form-control" rows="3"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -173,27 +164,26 @@
             });
 
             const crudManager = new CrudManager({
-                entity: 'master_finance',
+                entity: 'master_variable',
                 routes: {
-                    index: "{{ route('rbac.master-finance') }}",
-                    store: "{{ route('rbac.master-finance.store') }}",
+                    index: "{{ route('rbac.master-variable.index') }}",
+                    store: "{{ route('rbac.master-variable.store') }}",
                 },
                 columns: [
                     { data: 'id', name: 'id' },
-                    { data: 'tenant_name', name: 'tenant_name' },
-                    { data: 'bank_name', name: 'bank_name' },
-                    { data: 'bank_account_name', name: 'bank_account_name' },
-                    { data: 'bank_account_number', name: 'bank_account_number' },
-                    { data: 'created_at', name: 'created_at' },
+                    { data: 'variable_code', name: 'variable_code' },
+                    { data: 'variable_name', name: 'variable_name' },
+                    { data: 'variable_value', name: 'variable_value' },
+                    { data: 'description', name: 'description' },
                     { data: 'updated_at', name: 'updated_at' },
                     { data: 'action', name: 'action', orderable: false, searchable: false },
                 ],
-                modalId: '#masterFinanceModal',
-                formId: '#masterFinanceForm',
-                tableId: '#masterFinanceTable',
+                modalId: '#variableModal',
+                formId: '#variableForm',
+                tableId: '#variableTable',
+                addBtnId: '#addMasterVariableBtn',
                 filterBtnId: '#filterBtn',
                 resetBtnId: '#resetBtn',
-                addBtnId: '#addMasterFinanceBtn',
                 dateFilters: true,
                 options: {
                     layout: {
@@ -204,10 +194,10 @@
                     },
                     buttons: [
                         {
-                            text: '<i class="fas fa-plus"></i> Add Master Finance',
+                            text: '<i class="fas fa-plus"></i> Add Variable',
                             className: 'btn btn-primary',
                             action: function (e, dt, node, config) {
-                                $('#addMasterFinanceBtn').trigger('click');
+                                $('#addMasterVariableBtn').trigger('click');
                             }
                         },
                         {
@@ -227,18 +217,17 @@
                         searchPlaceholder: "Search"
                     }
                 },
-                onEdit: function (data) {
-                    $('#bank_name').val(data.bank_name);
-                    $('#bank_account_name').val(data.bank_account_name);
-                    $('#bank_account_number').val(data.bank_account_number);
-                    if ($('#tenant_id').length) {
-                        $('#tenant_id').val(data.tenant_id);
-                    }
-                },
                 onAdd: function () {
-                    if ($('#tenant_id').length) {
-                        $('#tenant_id').val('');
-                    }
+                    $('#variable_code').val('');
+                    $('#variable_name').val('');
+                    $('#variable_value').val('');
+                    $('#description').val('');
+                },
+                onEdit: function (response) {
+                    $('#variable_code').val(response.variable_code);
+                    $('#variable_name').val(response.variable_name);
+                    $('#variable_value').val(response.variable_value);
+                    $('#description').val(response.description);
                 }
             });
         });

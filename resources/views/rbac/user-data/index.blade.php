@@ -89,7 +89,7 @@
                     <table class="table table-bordered table-striped" id="userDataTable">
                         <thead>
                             <tr>
-                                <th>No</th>
+                                <th>ID</th>
                                 <th>Tenant</th>
                                 <th>Username</th>
                                 <th>Full Name</th>
@@ -600,7 +600,7 @@
                 store: "{{ route('rbac.user-data.store') }}",
             },
             columns: [
-                { data: 'no', name: 'no' },
+                { data: 'id', name: 'id' },
                 { data: 'customer_name', name: 'customer_name' },
                 { data: 'username', name: 'username' },
                 { data: 'full_name', name: 'full_name' },

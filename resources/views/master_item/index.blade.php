@@ -35,7 +35,7 @@
                         <table class="table table-bordered table-striped" id="masterItemTable">
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th>ID</th>
                                     <th>Tenant</th>
                                     <th>Customer Name</th>
                                     <th>Product Status</th>
@@ -219,7 +219,7 @@
                     store: "{{ route('rbac.master-item.store') }}",
                 },
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'tenant_name', name: 'tenant_name' },
                     { data: 'customer_name', name: 'customer_name' },
                     { data: 'product_status', name: 'product_status' },

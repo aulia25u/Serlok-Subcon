@@ -50,7 +50,7 @@
                         <table class="table table-bordered table-striped" id="receivingTable">
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th>ID</th>
                                     <th>Item Name</th>
                                     <th>Doc No Internal</th>
                                     <th>Doc No Customer</th>
@@ -283,7 +283,7 @@
 
                 ,
                 columns: [{
-                    data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false
+                    data: 'id', name: 'id'
                 }
 
                     ,

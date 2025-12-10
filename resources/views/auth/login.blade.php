@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- AdminLTE -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <style>
         body {
@@ -143,6 +145,17 @@
                             </div>
                         @enderror
                     </div>
+
+                    <!-- Turnstile Widget -->
+                    <div class="mb-3 d-flex justify-content-center">
+                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}"
+                            data-theme="auto"></div>
+                    </div>
+                    @error('cf-turnstile-response')
+                        <div class="text-danger text-center mb-3 text-sm">
+                            {{ $message }}
+                        </div>
+                    @enderror
 
                     <div class="row">
                         <div class="col-12">

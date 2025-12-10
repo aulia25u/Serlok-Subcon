@@ -83,7 +83,7 @@
                         <table class="table table-bordered table-striped" id="masterCustomerTable">
                             <thead>
                                 <tr>
-                                    <th>No</th>
+                                    <th>ID</th>
                                     <th>Tenant</th>
                                     <th>Customer Name</th>
                                     <th>Customer Code</th>
@@ -187,7 +187,7 @@
                     store: "{{ route('rbac.master-customer.store') }}",
                 },
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'tenant_name', name: 'tenant_name' },
                     { data: 'customer_name', name: 'customer_name' },
                     { data: 'customer_code', name: 'customer_code' },

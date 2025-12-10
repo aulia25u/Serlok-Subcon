@@ -10,6 +10,8 @@ use App\Http\Controllers\RBAC\MasterMenuController;
 use App\Http\Controllers\RBAC\PlantController;
 use App\Http\Controllers\RBAC\PositionController;
 use App\Http\Controllers\RBAC\RoleController;
+use App\Http\Controllers\RBAC\MasterVariableController;
+use App\Http\Controllers\RBAC\SuratJalanController;
 use App\Http\Controllers\RBAC\ReceivingController;
 use App\Http\Controllers\RBAC\InventoryController;
 use App\Http\Controllers\RBAC\InventoryCaptureController;
@@ -19,6 +21,7 @@ use App\Http\Controllers\RBAC\UserDataController;
 use App\Http\Controllers\RBAC\MasterCustomerController;
 use App\Http\Controllers\RBAC\MasterItemController;
 use App\Http\Controllers\RBAC\MasterFinanceController;
+use App\Http\Controllers\RBAC\EmployeeJobController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -30,9 +33,7 @@ Route::get('/home', function () {
 });
 
 Route::middleware(['auth', 'twofactor'])->group(function () {
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 });
 
 Route::middleware(['auth', 'twofactor'])->group(function () {
@@ -65,6 +66,28 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
 
     // Company (tabs for department/section/position/role/plant)
     Route::get('/company', [CompanyController::class, 'index'])->name('rbac.company');
+
+    // Master Variable
+    Route::resource('master-variable', MasterVariableController::class)
+        ->except(['create', 'show', 'destroy'])
+        ->names([
+            'index' => 'rbac.master-variable.index',
+            'store' => 'rbac.master-variable.store',
+            'edit' => 'rbac.master-variable.edit',
+            'update' => 'rbac.master-variable.update',
+        ]);
+
+    // Surat Jalan
+    Route::resource('surat-jalan', SuratJalanController::class)
+        ->except(['create'])
+        ->names([
+            'index' => 'rbac.surat-jalan.index',
+            'store' => 'rbac.surat-jalan.store',
+            'show' => 'rbac.surat-jalan.show',
+            'edit' => 'rbac.surat-jalan.edit',
+            'update' => 'rbac.surat-jalan.update',
+            'destroy' => 'rbac.surat-jalan.destroy',
+        ]);
 
     // Role
     Route::get('/role', [App\Http\Controllers\RBAC\RoleController::class, 'index'])->name('rbac.role');
@@ -173,6 +196,17 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
             'destroy' => 'rbac.outgoing.destroy',
         ]);
     Route::post('/outgoing/{id}/verify', [OutgoingController::class, 'verify'])->name('rbac.outgoing.verify');
+
+    // Employee Jobs
+    Route::resource('employee-jobs', EmployeeJobController::class)
+        ->except(['create', 'show'])
+        ->names([
+            'index' => 'rbac.employee-jobs.index',
+            'store' => 'rbac.employee-jobs.store',
+            'edit' => 'rbac.employee-jobs.edit',
+            'update' => 'rbac.employee-jobs.update',
+            'destroy' => 'rbac.employee-jobs.destroy',
+        ]);
 
 });
 

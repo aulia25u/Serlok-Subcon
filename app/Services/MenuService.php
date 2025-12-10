@@ -62,12 +62,14 @@ class MenuService
             'History Management',
         ];
         $tenantLabels = ['Tenant List', 'Tenant Owner', 'Customer'];
-        $masterDataLabels = ['Master Customer', 'Master Item', 'Master Finance'];
+        $masterDataLabels = ['Master Customer', 'Master Item', 'Master Finance', 'Master Variable'];
         $warehouseLabels = ['Receiving', 'Inventory', 'Outgoing'];
         $tenantChildren = [];
         $internalChildren = [];
         $masterDataChildren = [];
         $warehouseChildren = [];
+
+        $standaloneChildren = [];
 
         foreach ($internalOrder as $menuName) {
             if (!$menuMap->has($menuName)) {
@@ -110,8 +112,10 @@ class MenuService
                 $tenantChildren[] = $item;
             } elseif (in_array($menu->menu_name, $warehouseLabels, true)) {
                 $warehouseChildren[] = $item;
-            } else {
+            } elseif ($menu->menu_name === 'Dashboard') {
                 $menuItems[] = $item;
+            } else {
+                $standaloneChildren[] = $item;
             }
         }
 
@@ -145,6 +149,12 @@ class MenuService
                 'icon' => 'fas fa-warehouse',
                 'submenu' => $warehouseChildren,
             ];
+        }
+
+        if (!empty($standaloneChildren)) {
+            foreach ($standaloneChildren as $item) {
+                $menuItems[] = $item;
+            }
         }
 
         if ($userMenu = self::getUserMenu()) {
@@ -199,6 +209,9 @@ class MenuService
             'Receiving' => 'rbac/receiving',
             'Inventory' => 'rbac/inventory',
             'Outgoing' => 'rbac/outgoing',
+            'Employee Jobs' => 'rbac/employee-jobs',
+            'Master Variable' => 'rbac/master-variable',
+            'Surat Jalan' => 'rbac/surat-jalan',
         ];
 
         return $urlMap[$menuName] ?? '#';
@@ -221,6 +234,9 @@ class MenuService
             'Receiving' => 'fas fa-fw fa-truck-loading',
             'Inventory' => 'fas fa-fw fa-boxes',
             'Outgoing' => 'fas fa-fw fa-dolly-flatbed',
+            'Employee Jobs' => 'fas fa-fw fa-tasks',
+            'Master Variable' => 'fas fa-fw fa-sliders-h',
+            'Surat Jalan' => 'fas fa-fw fa-file-invoice',
         ];
 
         return $iconMap[$menuName] ?? 'fas fa-fw fa-circle';

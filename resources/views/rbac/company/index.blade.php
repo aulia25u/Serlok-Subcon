@@ -85,7 +85,8 @@
                 <div class="tab-content pt-3" id="companyTabContent">
                     <div class="tab-pane fade show active" id="tab-department" role="tabpanel"
                         aria-labelledby="tab-department-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3 d-none" style="display: none !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-3 d-none"
+                            style="display: none !important;">
                             <h5 class="mb-0">Department</h5>
                             <button type="button" class="btn btn-primary" id="deptAddBtn" data-toggle="modal"
                                 data-target="#deptAddModal">
@@ -114,7 +115,7 @@
                             <table class="table table-bordered table-striped" id="deptTable" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th>No</th>
+                                        <th>ID</th>
                                         <th>Department Name</th>
                                         <th>Tenant</th>
                                         <th>Created At</th>
@@ -126,7 +127,8 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-section" role="tabpanel" aria-labelledby="tab-section-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-3"
+                            style="display: none !important;">
                             <h5 class="mb-0">Section</h5>
                             <button type="button" class="btn btn-primary" id="sectionAddBtn" data-toggle="modal"
                                 data-target="#sectionModal">
@@ -155,7 +157,7 @@
                             <table class="table table-bordered table-striped" id="sectionTable" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th>No</th>
+                                        <th>ID</th>
                                         <th>Section Name</th>
                                         <th>Department</th>
                                         <th>Tenant</th>
@@ -197,7 +199,7 @@
                             <table class="table table-bordered table-striped" id="positionTable" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th>No</th>
+                                        <th>ID</th>
                                         <th>Position Name</th>
                                         <th>Section</th>
                                         <th>Tenant</th>
@@ -210,7 +212,8 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-plant" role="tabpanel" aria-labelledby="tab-plant-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-3"
+                            style="display: none !important;">
                             <h5 class="mb-0">Plant</h5>
                             <button type="button" class="btn btn-primary" id="plantAddBtn" data-toggle="modal"
                                 data-target="#plantModal">
@@ -239,7 +242,7 @@
                             <table class="table table-bordered table-striped" id="plantTable" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th>No</th>
+                                        <th>ID</th>
                                         <th>Plant Name</th>
                                         <th>Tenant</th>
                                         <th>Plant Code</th>
@@ -254,7 +257,8 @@
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-role" role="tabpanel" aria-labelledby="tab-role-link">
-                        <div class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
+                        <div class="d-flex justify-content-between align-items-center mb-3"
+                            style="display: none !important;">
                             <h5 class="mb-0">Role</h5>
                             <button type="button" class="btn btn-primary" id="roleAddBtn" data-toggle="modal"
                                 data-target="#roleModal">
@@ -283,7 +287,7 @@
                             <table class="table table-bordered table-striped" id="roleTable" style="width:100%">
                                 <thead>
                                     <tr>
-                                        <th>No</th>
+                                        <th>ID</th>
                                         <th>Role Name</th>
                                         <th>Tenant</th>
                                         <th>Created At</th>
@@ -633,7 +637,7 @@
                     }
                 },
                 columns: [
-                    { data: 'no', name: 'no', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'dept_name', name: 'dept_name' },
                     { data: 'customer', name: 'customer' },
                     { data: 'created_at', name: 'created_at' },
@@ -777,7 +781,7 @@
                     store: "{{ route('rbac.section.store') }}"
                 },
                 columns: [
-                    { data: 'no', name: 'no', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'section_name', name: 'section_name' },
                     { data: 'dept_name', name: 'dept_name' },
                     { data: 'customer', name: 'customer' },
@@ -831,7 +835,7 @@
                             '#section_dept_id', 'Select Department', 'id', 'dept_name'
                         );
                     @endif
-                                                },
+                                                            },
                 onEdit: function (response) {
                     $('#section_name').val(response.section_name);
                     $('#section_customer_id').val(response.customer_id ?? '');
@@ -865,7 +869,7 @@
                     store: "{{ route('rbac.position.store') }}"
                 },
                 columns: [
-                    { data: 'no', name: 'no', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'position_name', name: 'position_name' },
                     { data: 'section_name', name: 'section_name' },
                     { data: 'customer', name: 'customer' },
@@ -919,7 +923,7 @@
                             '#position_section_id', 'Select Section', 'id', 'section_name'
                         );
                     @endif
-                                                },
+                                                            },
                 onEdit: function (response) {
                     $('#position_name').val(response.position_name);
                     $('#position_customer_id').val(response.customer_id ?? '');
@@ -953,7 +957,7 @@
                     store: "{{ route('rbac.plant.store') }}"
                 },
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'plant_name', name: 'plant_name' },
                     { data: 'customer', name: 'customer' },
                     { data: 'plant_code', name: 'plant_code' },
@@ -1020,7 +1024,7 @@
                     store: "{{ route('rbac.role.store') }}"
                 },
                 columns: [
-                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                    { data: 'id', name: 'id' },
                     { data: 'role_name', name: 'role_name' },
                     { data: 'customer', name: 'customer' },
                     { data: 'created_at', name: 'created_at' },
@@ -1070,7 +1074,7 @@
                     @if(!$isInternal)
                         $('#role_customer_id').val('{{ $currentCustomerId ?? '' }}');
                     @endif
-                                                },
+                                                            },
                 onEdit: function (response) {
                     $('#role_name').val(response.role_name);
                     $('#role_customer_id').val(response.customer_id ?? '');

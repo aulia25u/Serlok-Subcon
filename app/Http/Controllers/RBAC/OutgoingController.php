@@ -26,8 +26,15 @@ class OutgoingController extends Controller
                 });
             }
 
-            if ($request->filled('start_date') && $request->filled('end_date')) {
-                $query->whereBetween('outgoing_date', [$request->start_date, $request->end_date]);
+            if ($request->filled('outgoing_date')) {
+                $dates = explode(' - ', $request->outgoing_date);
+                if (count($dates) == 2) {
+                    $query->whereBetween('outgoing_date', [$dates[0], $dates[1]]);
+                }
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
             }
 
             return DataTables::of($query)
@@ -43,6 +50,9 @@ class OutgoingController extends Controller
                 })
                 ->addColumn('created_by', function ($row) {
                     return $row->creator ? $row->creator->name : 'N/A';
+                })
+                ->editColumn('quantity', function ($row) {
+                    return $row->quantity . ' ' . ($row->masterItem ? $row->masterItem->unit : '');
                 })
                 ->editColumn('outgoing_date', function ($row) {
                     return $row->outgoing_date ? $row->outgoing_date->format('Y-m-d H:i:s') : '';

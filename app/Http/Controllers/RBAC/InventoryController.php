@@ -40,6 +40,9 @@ class InventoryController extends Controller
                         $q->where('item_code', 'like', "%{$keyword}%");
                     });
                 })
+                ->editColumn('quantity', function ($row) {
+                    return $row->quantity . ' ' . ($row->masterItem ? $row->masterItem->unit : '');
+                })
                 ->editColumn('updated_at', function ($row) {
                     return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '';
                 })
