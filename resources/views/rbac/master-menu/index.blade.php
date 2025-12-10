@@ -312,7 +312,7 @@
                     text: '<i class="fas fa-plus"></i> Add New',
                     className: 'btn btn-primary',
                     action: function (e, dt, node, config) {
-                        $('#addBtn').trigger('click');
+                        $('#addModal').modal('show');
                     }
                 },
                 {
@@ -506,7 +506,8 @@
                     $('#editModal').modal('show');
 
                     // Init Select2 for edit modal
-                    setTimeout(() => {
+                    // Init Select2 for edit modal
+                    setTimeout(function () {
                         $('#editModal select').select2({
                             theme: 'bootstrap4',
                             dropdownParent: $('#editModal'),
