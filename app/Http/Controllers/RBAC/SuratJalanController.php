@@ -91,7 +91,18 @@ class SuratJalanController extends Controller
 
         $employeeJobs = $employeeJobs->get();
         $customers = $customers->get();
-        $users = \App\Models\User::all();
+
+        // Scope Users by Tenant for "Known By". 
+        // Logic: Users who belong to this customer (via userDetail) OR are internal?
+        // Usually, for Surat Jalan "Known By", we want employees of the tenant.
+        $usersQuery = \App\Models\User::query();
+        if (!\App\Services\TenantService::isInternal()) {
+            $scopedCustomerId = \App\Services\TenantService::currentCustomerId();
+            $usersQuery->whereHas('userDetail', function ($q) use ($scopedCustomerId) {
+                $q->where('customer_id', $scopedCustomerId);
+            });
+        }
+        $users = $usersQuery->get();
 
         return view('rbac.surat_jalan.index', compact('employeeJobs', 'customers', 'users'));
     }
@@ -196,7 +207,12 @@ class SuratJalanController extends Controller
 
     private function generateDocumentNumber()
     {
-        $formatVar = MasterVariable::where('variable_code', 'DOC_NUM_FORMAT')->first();
+        $query = MasterVariable::query()->where('variable_code', 'DOC_NUM_FORMAT');
+
+        // Scope by Tenant
+        \App\Services\TenantService::scopeQueryByCustomer($query, 'tenant_id');
+
+        $formatVar = $query->first();
         $format = $formatVar ? $formatVar->variable_value : 'SJ/{Y}/{m}/{SEQ}';
 
         $now = now();

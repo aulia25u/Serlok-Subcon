@@ -10,6 +10,7 @@ class MasterVariable extends Model
     use HasFactory;
 
     protected $fillable = [
+        'tenant_id',
         'variable_code',
         'variable_name',
         'variable_value',
