@@ -667,6 +667,13 @@
                             $('#deptAddForm').find('input[name="id"]').val('');
                             $('#deptAddForm').find('input[name="_method"]').val('POST');
                             $('#deptAddModal').modal('show');
+
+                            // Init Select2 for Department Add
+                            $('#deptAddModal').find('select').select2({
+                                theme: 'bootstrap4',
+                                dropdownParent: $('#deptAddModal'),
+                                width: '100%'
+                            });
                         }
                     },
                     {
@@ -715,6 +722,13 @@
                     $('#dept_edit_name').val(response.dept_name);
                     $('#dept_edit_customer_id').val(response.customer_id ?? '');
                     $('#deptEditModal').modal('show');
+
+                    // Init Select2 for Department Edit
+                    $('#deptEditModal').find('select').select2({
+                        theme: 'bootstrap4',
+                        dropdownParent: $('#deptEditModal'),
+                        width: '100%'
+                    });
                 });
             });
 
@@ -835,7 +849,7 @@
                             '#section_dept_id', 'Select Department', 'id', 'dept_name'
                         );
                     @endif
-                                                            },
+                                                                },
                 onEdit: function (response) {
                     $('#section_name').val(response.section_name);
                     $('#section_customer_id').val(response.customer_id ?? '');
@@ -923,7 +937,7 @@
                             '#position_section_id', 'Select Section', 'id', 'section_name'
                         );
                     @endif
-                                                            },
+                                                                },
                 onEdit: function (response) {
                     $('#position_name').val(response.position_name);
                     $('#position_customer_id').val(response.customer_id ?? '');
@@ -1074,7 +1088,7 @@
                     @if(!$isInternal)
                         $('#role_customer_id').val('{{ $currentCustomerId ?? '' }}');
                     @endif
-                                                            },
+                                                                },
                 onEdit: function (response) {
                     $('#role_name').val(response.role_name);
                     $('#role_customer_id').val(response.customer_id ?? '');
