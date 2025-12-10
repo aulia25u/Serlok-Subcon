@@ -132,7 +132,16 @@ class EmployeeJobController extends Controller
 
     public function edit($id)
     {
-        $job = EmployeeJob::findOrFail($id);
+        $job = EmployeeJob::with('outgoing.masterItem.tenantOwner')->findOrFail($id);
+
+        $currentCustomerId = TenantService::currentCustomerId();
+        if ($currentCustomerId) {
+            $jobCustomerId = $job->outgoing->masterItem->tenantOwner->customer_id ?? null;
+            if ($jobCustomerId !== $currentCustomerId) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        }
+
         return response()->json($job);
     }
 
