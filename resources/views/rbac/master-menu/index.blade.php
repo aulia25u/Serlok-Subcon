@@ -433,127 +433,128 @@
                 dropdownParent: $('#addModal'),
                 width: '100%'
             });
+        }
 
-            $('#addMenuRow').click(function () {
-                addMenuRow();
-            });
+        $('#addMenuRow').click(function () {
+            addMenuRow();
+        });
 
-            $(document).on('click', '.remove-row', function () {
-                const id = $(this).data('id');
-                $('#row_' + id).remove();
-            });
+        $(document).on('click', '.remove-row', function () {
+            const id = $(this).data('id');
+            $('#row_' + id).remove();
+        });
 
-            // Initialize with one row
-            $('#addModal').on('show.bs.modal', function () {
-                // Init Select2 for main form selects
-                $('#addModal select:not(.items-select)').each(function () {
-                    // Check if already initialized
-                    if (!$(this).hasClass("select2-hidden-accessible")) {
-                        $(this).select2({
-                            theme: 'bootstrap4',
-                            dropdownParent: $('#addModal'),
-                            width: '100%'
-                        });
-                    }
-                });
-
-                if ($('#menuTableBody').children().length === 0) {
-                    addMenuRow();
+        // Initialize with one row
+        $('#addModal').on('show.bs.modal', function () {
+            // Init Select2 for main form selects
+            $('#addModal select:not(.items-select)').each(function () {
+                // Check if already initialized
+                if (!$(this).hasClass("select2-hidden-accessible")) {
+                    $(this).select2({
+                        theme: 'bootstrap4',
+                        dropdownParent: $('#addModal'),
+                        width: '100%'
+                    });
                 }
             });
 
-            // Add form submission
-            $('#addForm').on('submit', function (e) {
-                e.preventDefault();
-                $.ajax({
-                    url: "{{ route('rbac.master-menu.store') }}",
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    success: function (response) {
-                        $('#addModal').modal('hide');
-                        table.draw();
-                        toastr.success(response.success);
-                        $('#addForm')[0].reset();
-                        $('#menuTableBody').empty();
-                        addMenuRow();
-                    },
-                    error: function (xhr) {
-                        var errors = xhr.responseJSON.errors;
-                        $.each(errors, function (key, value) {
-                            toastr.error(value[0]);
-                        });
-                    }
-                });
-            });
+            if ($('#menuTableBody').children().length === 0) {
+                addMenuRow();
+            }
+        });
 
-            // Edit button click
-            $(document).on('click', '.edit-btn', function () {
-                var id = $(this).data('id');
-                $.ajax({
-                    url: "{{ url('rbac/master-menu') }}/" + id + "/edit",
-                    type: 'GET',
-                    success: function (response) {
-                        $('#edit_id').val(response.id);
-                        $('#edit_menu_id').val(response.menu_id);
-                        $('#edit_is_create').prop('checked', response.is_create);
-                        $('#edit_is_read').prop('checked', response.is_read);
-                        $('#edit_is_update').prop('checked', response.is_update);
-                        $('#edit_is_delete').prop('checked', response.is_delete);
-                        const customerId = response.customer_id ?? $('#edit_customer_id').val();
-                        $('#edit_customer_id').val(customerId);
-                        loadRoles('#edit_role_id', customerId, response.role_id);
-                        $('#editModal').modal('show');
-
-                        // Init Select2 for edit modal
-                        setTimeout(() => {
-                            $('#editModal select').select2({
-                                theme: 'bootstrap4',
-                                dropdownParent: $('#editModal'),
-                                width: '100%'
-                            });
-                        }, 100);
-                    });
-            });
-
-            // Edit form submission
-            $('#editForm').on('submit', function (e) {
-                e.preventDefault();
-                var id = $('#edit_id').val();
-                $.ajax({
-                    url: "{{ url('rbac/master-menu') }}/" + id,
-                    type: 'POST',
-                    data: $(this).serialize(),
-                    success: function (response) {
-                        $('#editModal').modal('hide');
-                        table.draw();
-                        toastr.success(response.success);
-                    },
-                    error: function (xhr) {
-                        var errors = xhr.responseJSON.errors;
-                        $.each(errors, function (key, value) {
-                            toastr.error(value[0]);
-                        });
-                    }
-                });
-            });
-
-            // Delete button click
-            $(document).on('click', '.delete-btn', function () {
-                var id = $(this).data('id');
-                if (confirm('Are you sure you want to delete this item?')) {
-                    $.ajax({
-                        url: "{{ url('rbac/master-menu') }}/" + id,
-                        type: 'POST',
-                        data: {
-                            _method: 'DELETE'
-                        },
-                        success: function (response) {
-                            table.draw();
-                            toastr.success(response.success);
-                        }
+        // Add form submission
+        $('#addForm').on('submit', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: "{{ route('rbac.master-menu.store') }}",
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function (response) {
+                    $('#addModal').modal('hide');
+                    table.draw();
+                    toastr.success(response.success);
+                    $('#addForm')[0].reset();
+                    $('#menuTableBody').empty();
+                    addMenuRow();
+                },
+                error: function (xhr) {
+                    var errors = xhr.responseJSON.errors;
+                    $.each(errors, function (key, value) {
+                        toastr.error(value[0]);
                     });
                 }
             });
         });
+
+        // Edit button click
+        $(document).on('click', '.edit-btn', function () {
+            var id = $(this).data('id');
+            $.ajax({
+                url: "{{ url('rbac/master-menu') }}/" + id + "/edit",
+                type: 'GET',
+                success: function (response) {
+                    $('#edit_id').val(response.id);
+                    $('#edit_menu_id').val(response.menu_id);
+                    $('#edit_is_create').prop('checked', response.is_create);
+                    $('#edit_is_read').prop('checked', response.is_read);
+                    $('#edit_is_update').prop('checked', response.is_update);
+                    $('#edit_is_delete').prop('checked', response.is_delete);
+                    const customerId = response.customer_id ?? $('#edit_customer_id').val();
+                    $('#edit_customer_id').val(customerId);
+                    loadRoles('#edit_role_id', customerId, response.role_id);
+                    $('#editModal').modal('show');
+
+                    // Init Select2 for edit modal
+                    setTimeout(() => {
+                        $('#editModal select').select2({
+                            theme: 'bootstrap4',
+                            dropdownParent: $('#editModal'),
+                            width: '100%'
+                        });
+                    }, 100);
+                });
+        });
+
+        // Edit form submission
+        $('#editForm').on('submit', function (e) {
+            e.preventDefault();
+            var id = $('#edit_id').val();
+            $.ajax({
+                url: "{{ url('rbac/master-menu') }}/" + id,
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function (response) {
+                    $('#editModal').modal('hide');
+                    table.draw();
+                    toastr.success(response.success);
+                },
+                error: function (xhr) {
+                    var errors = xhr.responseJSON.errors;
+                    $.each(errors, function (key, value) {
+                        toastr.error(value[0]);
+                    });
+                }
+            });
+        });
+
+        // Delete button click
+        $(document).on('click', '.delete-btn', function () {
+            var id = $(this).data('id');
+            if (confirm('Are you sure you want to delete this item?')) {
+                $.ajax({
+                    url: "{{ url('rbac/master-menu') }}/" + id,
+                    type: 'POST',
+                    data: {
+                        _method: 'DELETE'
+                    },
+                    success: function (response) {
+                        table.draw();
+                        toastr.success(response.success);
+                    }
+                });
+            }
+        });
+    });
 </script>
 @stop
