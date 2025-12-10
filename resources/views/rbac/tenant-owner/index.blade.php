@@ -60,8 +60,7 @@
                     <div class="card-header">
                         <h3 class="card-title">Tenant Users (Owners)</h3>
                         <div class="card-tools d-none">
-                            <button type="button" class="btn btn-primary" id="addBtn" data-toggle="modal"
-                                data-target="#ownerModal">
+                            <button type="button" class="btn btn-primary" id="addBtn">
                                 <i class="fas fa-plus"></i> Assign Owner
                             </button>
                         </div>
@@ -125,7 +124,8 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label for="owner_user_id">Owner User</label>
-                            <select class="form-control" id="owner_user_id" name="user_id" required>
+                            <select class="form-control select2" id="owner_user_id" name="user_id" style="width: 100%;"
+                                required>
                                 <option value="">Select User</option>
                                 @foreach($users as $user)
                                     <option value="{{ $user->id }}">{{ $user->username }} ({{ $user->email ?? 'no email' }})
@@ -135,7 +135,8 @@
                         </div>
                         <div class="form-group">
                             <label for="owner_customer_id">Tenant</label>
-                            <select class="form-control" id="owner_customer_id" name="customer_id" required>
+                            <select class="form-control select2" id="owner_customer_id" name="customer_id"
+                                style="width: 100%;" required>
                                 <option value="">Select Tenant</option>
                                 @foreach($customers as $customer)
                                     <option value="{{ $customer->id }}">{{ $customer->customer_name }}</option>
@@ -214,7 +215,7 @@
                             text: '<i class="fas fa-plus"></i> Assign Owner',
                             className: 'btn btn-primary',
                             action: function (e, dt, node, config) {
-                                $('#addBtn').trigger('click');
+                                $('#ownerModal').modal('show');
                             }
                         },
                         {
