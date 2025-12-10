@@ -154,6 +154,12 @@
     <script type="text/javascript" src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
     <script>
         $(document).ready(function () {
+            // Initialize Select2 for filters
+            $('#user_filter, #action_filter, #table_filter').select2({
+                theme: 'bootstrap4',
+                width: '100%'
+            });
+
             // Initialize DataTable
             var table = $('#historyTable').DataTable({
                 processing: true,

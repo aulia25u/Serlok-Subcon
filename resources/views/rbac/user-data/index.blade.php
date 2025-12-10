@@ -583,6 +583,13 @@
             row.find('.remove-row').on('click', function () {
                 $(this).closest('tr').remove();
             });
+
+            // Init Select2 for this row's selects
+            row.find('select').select2({
+                theme: 'bootstrap4',
+                dropdownParent: $('#addModal'),
+                width: '100%'
+            });
         }
 
         $('#addAssignmentBtn').on('click', function () {
