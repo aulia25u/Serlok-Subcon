@@ -26,11 +26,16 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'username' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'cf-turnstile-response' => ['required', new \App\Rules\Turnstile],
         ];
+
+        if (config('services.turnstile.enabled')) {
+            $rules['cf-turnstile-response'] = ['required', new \App\Rules\Turnstile];
+        }
+
+        return $rules;
     }
 
     /**

@@ -34,6 +34,9 @@ Route::get('/home', function () {
 
 Route::middleware(['auth', 'twofactor'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/chart-data', [\App\Http\Controllers\DashboardController::class, 'getChartData'])->name('dashboard.chart-data');
+    Route::get('/dashboard/export-performance', [\App\Http\Controllers\DashboardController::class, 'exportEmployeePerformance'])->name('dashboard.export-performance');
+    Route::get('/dashboard/employee-history/{id}', [\App\Http\Controllers\DashboardController::class, 'getEmployeeHistory'])->name('dashboard.employee-history');
 });
 
 Route::middleware(['auth', 'twofactor'])->group(function () {

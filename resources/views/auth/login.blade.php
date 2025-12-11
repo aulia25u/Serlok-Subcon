@@ -155,16 +155,21 @@
                         @enderror
                     </div>
 
-                    <!-- Turnstile Widget -->
-                    <div class="mb-3 d-flex justify-content-center">
-                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}"
-                            data-theme="light"></div>
-                    </div>
-                    @error('cf-turnstile-response')
-                        <div class="text-danger text-center mb-3 text-sm">
-                            {{ $message }}
+
+
+                    {{-- Turnstile Widget --}}
+                    @if(config('services.turnstile.enabled'))
+                        <div class="mb-3 d-flex justify-content-center">
+                            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}"
+                                data-theme="light">
+                            </div>
                         </div>
-                    @enderror
+                        @error('cf-turnstile-response')
+                            <div class="text-danger text-center mb-3 text-sm">
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    @endif
 
                     <div class="row">
                         <div class="col-12">

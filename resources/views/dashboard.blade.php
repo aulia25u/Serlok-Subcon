@@ -397,119 +397,420 @@
         </div>
 
     @elseif($viewType == 'tenant_owner')
-        <!-- Tenant Owner View (Refined) -->
-        <div class="row">
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box shadow-sm">
-                    <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cubes"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Total Items</span>
-                        <span class="info-box-number">{{ $data['total_items'] }}</span>
+            <!-- Tenant Owner View (Refined) -->
+            <div class="row">
+                <!-- Row 1 -->
+                <div class="col-12 col-sm-6 col-md-4">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-success elevation-1"><i class="fas fa-building"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Plants</span>
+                            <span class="info-box-number">{{ $data['total_plants'] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-4">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-purple elevation-1"><i class="fas fa-users"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Employees</span>
+                            <span class="info-box-number">{{ $data['total_employees'] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-4">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-info elevation-1"><i class="fas fa-cubes"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Items</span>
+                            <span class="info-box-number">{{ $data['total_items'] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Row 2 -->
+                <div class="col-12 col-sm-6 col-md-4">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-primary elevation-1"><i class="fas fa-download"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Receiving</span>
+                            <span class="info-box-number">{{ $data['total_receiving'] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-4">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-warehouse"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Outstanding</span>
+                            <span class="info-box-number">{{ $data['total_outstanding'] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-md-4">
+                    <div class="info-box shadow-sm">
+                        <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-upload"></i></span>
+                        <div class="info-box-content">
+                            <span class="info-box-text">Total Outgoing</span>
+                            <span class="info-box-number">{{ $data['total_outgoing'] }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box shadow-sm mb-3">
-                    <span class="info-box-icon bg-success elevation-1"><i class="fas fa-tasks"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Jobs (This Month)</span>
-                        <span class="info-box-number">{{ $data['monthly_jobs'] }}</span>
+
+            <div class="row">
+                <!-- Inventory Chart (Incoming vs Outgoing) -->
+                <div class="col-md-6">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h3 class="card-title">Inventory Flow</h3>
+                            <div class="card-tools d-flex align-items-center">
+                                <select class="form-control form-control-sm mr-2" id="inventoryPeriod" style="width: auto;">
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                        class="fas fa-minus"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="inventoryChart"
+                                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Production Quality Chart -->
+                <div class="col-md-6">
+                    <div class="card card-outline card-primary">
+                        <div class="card-header">
+                            <h3 class="card-title">Production Quality</h3>
+                            <div class="card-tools d-flex align-items-center">
+                                <select class="form-control form-control-sm mr-2" id="productionPeriod" style="width: auto;">
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                        class="fas fa-minus"></i></button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="productionChart"
+                                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box shadow-sm mb-3">
-                    <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-truck-loading"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Pending SJ (Draft)</span>
-                        <span class="info-box-number">{{ $data['pending_surat_jalan'] }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-md-3">
-                <div class="info-box shadow-sm mb-3">
-                    <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-exclamation-triangle"></i></span>
-                    <div class="info-box-content">
-                        <span class="info-box-text">Low Stock Items</span>
-                        <span class="info-box-number">{{ $data['low_stock_count'] }}</span>
-                    </div>
-                </div>
-            </div>
+
         </div>
 
+
+
+        <!-- Top Defects & OK Row -->
         <div class="row">
-            <div class="col-md-12">
-                <div class="card card-outline card-primary">
+            <div class="col-md-6">
+                <div class="card card-outline card-danger">
                     <div class="card-header">
-                        <h3 class="card-title">Production Quality (Last 7 Days)</h3>
+                        <h3 class="card-title">Top 5 Defect Items</h3>
                         <div class="card-tools">
                             <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
                                     class="fas fa-minus"></i></button>
                         </div>
                     </div>
                     <div class="card-body">
-                        <canvas id="productionChart"
+                        <canvas id="topDefectChart"
+                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-outline card-success">
+                    <div class="card-header">
+                        <h3 class="card-title">Top 5 OK Items</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                    class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="topOkChart"
                             style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-    @else
-        <!-- Tenant Staff View (Unchanged) -->
+        <!-- Employee Performance Table -->
         <div class="row">
-            <div class="col-lg-12">
-                <div class="card card-outline card-primary">
+            <div class="col-md-12">
+                <div class="card card-outline card-purple">
                     <div class="card-header">
-                        <h3 class="card-title">Welcome, {{ Auth::user()->name }}!</h3>
+                        <h3 class="card-title">Employee Performance (Assigned Items)</h3>
+                        <div class="card-tools">
+                            <div class="form-inline">
+                                <label class="mr-2">Limit:</label>
+                                <select id="performanceLimit" class="form-control form-control-sm mr-3">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                </select>
+                                <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                        class="fas fa-minus"></i></button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p class="lead">Here is your recent activity.</p>
-
-                        <table class="table table-bordered table-hover table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Item</th>
-                                    <th>Qty OK</th>
-                                    <th>Qty NG</th>
-                                    <th>Inspector</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($data['my_recent_jobs'] as $job)
+                    <div class="card-body p-0">
+                        <div class="p-2 row">
+                            <div class="col-md-4">
+                                <input type="date" id="perfStartDate" class="form-control form-control-sm"
+                                    placeholder="Start Date">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" id="perfEndDate" class="form-control form-control-sm" placeholder="End Date">
+                            </div>
+                            <div class="col-md-2">
+                                <button id="btnFilterPerf" class="btn btn-sm btn-primary btn-block">Filter</button>
+                            </div>
+                            <div class="col-md-2">
+                                <button id="btnExportPerf" class="btn btn-sm btn-success btn-block"><i
+                                        class="fas fa-file-csv"></i> Export</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover m-0">
+                                <thead>
                                     <tr>
-                                        <td>{{ $job->created_datetime->format('Y-m-d') }}</td>
-                                        <td>{{ $job->outgoing->masterItem->item_name ?? '-' }}</td>
-                                        <td>{{ $job->qty_ok }}</td>
-                                        <td>{{ $job->qty_ng }}</td>
-                                        <td>{{ $job->inspector->name ?? '-' }}</td>
+                                        <th>Employee Name</th>
+                                        <th class="text-center">Assigned (Qty)</th>
+                                        <th class="text-center">Executed (Qty)</th>
+                                        <th class="text-center">OK</th>
+                                        <th class="text-center">NG</th>
+                                        <th class="text-center">Completion %</th>
                                     </tr>
-                                @empty
+                                </thead>
+                                <tbody id="employeePerformanceBody">
                                     <tr>
-                                        <td colspan="5" class="text-center">No recent activity found.</td>
+                                        <td colspan="6" class="text-center">Loading data...</td>
                                     </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    @endif
+
+        <!-- User Distribution Charts -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card card-outline card-teal">
+                    <div class="card-header">
+                        <h3 class="card-title">Department</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                    class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="deptChart"
+                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-outline card-indigo">
+                    <div class="card-header">
+                        <h3 class="card-title">Section</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                    class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="sectionChart"
+                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-outline card-olive">
+                    <div class="card-header">
+                        <h3 class="card-title">Position</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                    class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="positionChart"
+                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-outline card-maroon">
+                    <div class="card-header">
+                        <h3 class="card-title">Gender</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                    class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="genderChart"
+                            style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities Row for Tenant Owner -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-outline card-secondary">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Activities</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="maximize"><i
+                                    class="fas fa-expand"></i></button>
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                    class="fas fa-minus"></i></button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table m-0 table-hover table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Target</th>
+                                        <th>IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($data['recent_activities'] as $log)
+                                        <tr>
+                                            <td>{{ $log->created_at->format('Y-m-d H:i:s') }}</td>
+                                            <td>{{ $log->user->name ?? 'System/Guest' }}</td>
+                                            <td>{!! $log->action_badge !!}</td>
+                                            <td>{{ $log->table_name_formatted }} (ID: {{ $log->record_id }})</td>
+                                            <td>{{ $log->ip_address }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center">No recent activities found.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer clearfix">
+                        <a href="/rbac/history" class="btn btn-sm btn-secondary float-right">View All Activities</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    @else
+    <!-- Tenant Staff View (Unchanged) -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card card-outline card-primary">
+                <div class="card-header">
+                    <h3 class="card-title">Welcome, {{ Auth::user()->name }}!</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Here is your recent activity.</p>
+
+                    <table class="table table-bordered table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Qty OK</th>
+                                <th>Qty NG</th>
+                                <th>Inspector</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($data['my_recent_jobs'] as $job)
+                                <tr>
+                                    <td>{{ $job->created_datetime->format('Y-m-d') }}</td>
+                                    <td>{{ $job->outgoing->masterItem->item_name ?? '-' }}</td>
+                                    <td>{{ $job->qty_ok }}</td>
+                                    <td>{{ $job->qty_ng }}</td>
+                                    <td>{{ $job->inspector->name ?? '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">No recent activity found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+<!-- History Modal -->
+<div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="historyModalTitle">Performance History</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Item Name</th>
+                                <th class="text-center">QTY OK</th>
+                                <th class="text-center">QTY NG</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyModalBody">
+                            <!-- Ajax Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 @stop
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script>
+    // Register the plugin globally
+    Chart.register(ChartDataLabels);
+
     $(document).ready(function () {
+        let productionChart = null;
+        let inventoryChart = null;
+
         @if(isset($data['chart_data']))
             // Production Chart
             var ctx = document.getElementById('productionChart').getContext('2d');
             var chartData = @json($data['chart_data']);
 
-            new Chart(ctx, {
+            productionChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: chartData.labels,
@@ -518,13 +819,15 @@
                             label: 'OK Quantity',
                             backgroundColor: 'rgba(40, 167, 69, 0.9)',
                             borderColor: 'rgba(40, 167, 69, 0.8)',
-                            data: chartData.ok
+                            data: chartData.ok,
+                            datalabels: { display: false } // Disable for bar chart if not wanted
                         },
                         {
                             label: 'NG Quantity',
                             backgroundColor: 'rgba(220, 53, 69, 0.9)',
                             borderColor: 'rgba(220, 53, 69, 0.8)',
-                            data: chartData.ng
+                            data: chartData.ng,
+                            datalabels: { display: false } // Disable for bar chart if not wanted
                         }
                     ]
                 },
@@ -535,56 +838,147 @@
                         y: {
                             beginAtZero: true
                         }
+                    },
+                    plugins: {
+                        datalabels: {
+                            display: false // Disable globally for this chart
+                        }
                     }
                 }
             });
         @endif
 
-            @if(isset($data['tenant_growth']))
-                // Tenant Growth Chart
-                var ctxGrowth = document.getElementById('tenantGrowthChart').getContext('2d');
-                var growthData = @json($data['tenant_growth']);
+            @if(isset($data['inventory_chart_data']))
+                // Inventory Flow Chart
+                var ctxInventory = document.getElementById('inventoryChart').getContext('2d');
+                var inventoryData = @json($data['inventory_chart_data']);
 
-                new Chart(ctxGrowth, {
-                    type: 'line',
+                inventoryChart = new Chart(ctxInventory, {
+                    type: 'bar', // or line
                     data: {
-                        labels: growthData.labels,
+                        labels: inventoryData.labels,
                         datasets: [
                             {
-                                label: 'Active',
-                                backgroundColor: 'rgba(40, 167, 69, 0.9)',
-                                borderColor: 'rgba(40, 167, 69, 0.8)',
-                                pointRadius: false,
-                                pointColor: '#3b8bba',
-                                pointStrokeColor: 'rgba(60,141,188,1)',
-                                pointHighlightFill: '#fff',
-                                pointHighlightStroke: 'rgba(60,141,188,1)',
-                                data: growthData.active
+                                label: 'Incoming',
+                                backgroundColor: 'rgba(23, 162, 184, 0.9)',
+                                borderColor: 'rgba(23, 162, 184, 0.8)',
+                                data: inventoryData.incoming,
+                                datalabels: { display: false }
                             },
                             {
-                                label: 'Inactive',
-                                backgroundColor: 'rgba(210, 214, 222, 1)',
-                                borderColor: 'rgba(210, 214, 222, 1)',
-                                pointRadius: false,
-                                pointColor: 'rgba(210, 214, 222, 1)',
-                                pointStrokeColor: '#c1c7d1',
-                                pointHighlightFill: '#fff',
-                                pointHighlightStroke: 'rgba(220,220,220,1)',
-                                data: growthData.inactive
+                                label: 'Outgoing',
+                                backgroundColor: 'rgba(255, 193, 7, 0.9)',
+                                borderColor: 'rgba(255, 193, 7, 0.8)',
+                                data: inventoryData.outgoing,
+                                datalabels: { display: false }
                             }
                         ]
                     },
                     options: {
-                        maintainAspectRatio: false,
                         responsive: true,
+                        maintainAspectRatio: false,
                         scales: {
                             y: {
                                 beginAtZero: true
+                            }
+                        },
+                        plugins: {
+                            datalabels: {
+                                display: false
                             }
                         }
                     }
                 });
             @endif
+
+        // AJAX Chart Updates
+        $('#inventoryPeriod').change(function () {
+            var period = $(this).val();
+            fetchChartData('inventory', period);
+        });
+
+        $('#productionPeriod').change(function () {
+            var period = $(this).val();
+            fetchChartData('production', period);
+        });
+
+        function fetchChartData(type, period) {
+            $.ajax({
+                url: '{{ route("dashboard.chart-data") }}',
+                method: 'GET',
+                data: { type: type, period: period },
+                success: function (response) {
+                    if (type === 'inventory' && inventoryChart) {
+                        inventoryChart.data.labels = response.labels;
+                        inventoryChart.data.datasets[0].data = response.incoming;
+                        inventoryChart.data.datasets[1].data = response.outgoing;
+                        inventoryChart.update();
+                    } else if (type === 'production' && productionChart) {
+                        productionChart.data.labels = response.labels;
+                        productionChart.data.datasets[0].data = response.ok;
+                        productionChart.data.datasets[1].data = response.ng;
+                        productionChart.update();
+                    }
+                },
+                error: function (xhr) {
+                    console.error('Failed to fetch chart data');
+                    // Optional: Show toast error
+                }
+            });
+        }
+
+        @if(isset($data['tenant_growth']))
+            // Tenant Growth Chart
+            var ctxGrowth = document.getElementById('tenantGrowthChart').getContext('2d');
+            var growthData = @json($data['tenant_growth']);
+
+            new Chart(ctxGrowth, {
+                type: 'line',
+                data: {
+                    labels: growthData.labels,
+                    datasets: [
+                        {
+                            label: 'Active',
+                            backgroundColor: 'rgba(40, 167, 69, 0.9)',
+                            borderColor: 'rgba(40, 167, 69, 0.8)',
+                            pointRadius: false,
+                            pointColor: '#3b8bba',
+                            pointStrokeColor: 'rgba(60,141,188,1)',
+                            pointHighlightFill: '#fff',
+                            pointHighlightStroke: 'rgba(60,141,188,1)',
+                            data: growthData.active,
+                            datalabels: { display: false }
+                        },
+                        {
+                            label: 'Inactive',
+                            backgroundColor: 'rgba(210, 214, 222, 1)',
+                            borderColor: 'rgba(210, 214, 222, 1)',
+                            pointRadius: false,
+                            pointColor: 'rgba(210, 214, 222, 1)',
+                            pointStrokeColor: '#c1c7d1',
+                            pointHighlightFill: '#fff',
+                            pointHighlightStroke: 'rgba(220,220,220,1)',
+                            data: growthData.inactive,
+                            datalabels: { display: false }
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        datalabels: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        @endif
 
             @if(isset($data['client_stats']))
                 // Client Stats Chart
@@ -606,37 +1000,326 @@
                         plugins: {
                             legend: {
                                 position: 'right',
+                            },
+                            datalabels: {
+                                display: false
                             }
                         }
                     }
                 });
             @endif
 
-            @if(isset($data['client_browser_stats']))
-                // Client Browser Chart
-                var ctxBrowser = document.getElementById('clientBrowserChart').getContext('2d');
-                var browserData = @json($data['client_browser_stats']);
-
-                new Chart(ctxBrowser, {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(browserData),
-                        datasets: [{
-                            data: Object.values(browserData),
-                            backgroundColor: ['#00c0ef', '#3c8dbc', '#d2d6de', '#f56954', '#00a65a', '#f39c12'],
-                        }]
-                    },
-                    options: {
-                        maintainAspectRatio: false,
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'right',
+            @if(isset($data['user_distribution']))
+                // Helper to create pie chart
+                function createPieChart(ctxId, dataObj, colors) {
+                    var ctx = document.getElementById(ctxId).getContext('2d');
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: Object.keys(dataObj),
+                            datasets: [{
+                                data: Object.values(dataObj),
+                                backgroundColor: colors,
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                },
+                                datalabels: {
+                                    color: '#fff',
+                                    font: {
+                                        weight: 'bold'
+                                    },
+                                    formatter: (value, ctx) => {
+                                        let sum = 0;
+                                        let dataArr = ctx.chart.data.datasets[0].data;
+                                        dataArr.map(data => {
+                                            sum += data;
+                                        });
+                                        let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                        return percentage;
+                                    }
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                }
+
+                // Department
+                if (Object.keys(@json($data['user_distribution']['department'])).length > 0) {
+                    createPieChart('deptChart', @json($data['user_distribution']['department']), ['#f56954', '#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de']);
+                }
+
+                // Section
+                if (Object.keys(@json($data['user_distribution']['section'])).length > 0) {
+                    createPieChart('sectionChart', @json($data['user_distribution']['section']), ['#00c0ef', '#3c8dbc', '#d2d6de', '#f56954', '#00a65a', '#f39c12']);
+                }
+
+                // Position
+                if (Object.keys(@json($data['user_distribution']['position'])).length > 0) {
+                    createPieChart('positionChart', @json($data['user_distribution']['position']), ['#00a65a', '#f39c12', '#00c0ef', '#3c8dbc', '#d2d6de', '#f56954']);
+                }
+
+                // Gender
+                if (Object.keys(@json($data['user_distribution']['gender'])).length > 0) {
+                    createPieChart('genderChart', @json($data['user_distribution']['gender']), ['#3c8dbc', '#f56954']);
+                }
             @endif
+
+        // Employee Performance Logic
+        fetchEmployeePerformance(10); // Initial load
+
+        // Top Defects Logic
+        fetchTopDefects();
+
+        // Top OK Logic
+        fetchTopOkItems();
+
+        // ... handlers ...
+
+        function fetchTopDefects() {
+            var ctx = document.getElementById('topDefectChart').getContext('2d');
+
+            $.ajax({
+                url: '{{ route("dashboard.chart-data") }}',
+                method: 'GET',
+                data: { type: 'top_defects' },
+                success: function (response) {
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: response.labels,
+                            datasets: [{
+                                label: 'NG Quantity',
+                                data: response.data,
+                                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                                borderColor: 'rgba(220, 53, 69, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y', // Horizontal bar
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { beginAtZero: true }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                title: {
+                                    display: true,
+                                    text: 'Top 5 Most Rejected Items'
+                                },
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'end',
+                                    color: '#000',
+                                    formatter: Math.round
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function () {
+                    console.error('Failed to load top defects');
+                }
+            });
+        }
+
+        function fetchTopOkItems() {
+            var ctx = document.getElementById('topOkChart').getContext('2d');
+
+            $.ajax({
+                url: '{{ route("dashboard.chart-data") }}',
+                method: 'GET',
+                data: { type: 'top_ok' },
+                success: function (response) {
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: response.labels,
+                            datasets: [{
+                                label: 'OK Quantity',
+                                data: response.data,
+                                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                                borderColor: 'rgba(40, 167, 69, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y', // Horizontal bar
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { beginAtZero: true }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                title: {
+                                    display: true,
+                                    text: 'Top 5 Highest Production'
+                                },
+                                datalabels: {
+                                    anchor: 'end',
+                                    align: 'end',
+                                    color: '#000',
+                                    formatter: Math.round
+                                }
+                            }
+                        }
+                    });
+                },
+                error: function () {
+                    console.error('Failed to load top OK items');
+                }
+            });
+        }
+
+
+        $('#performanceLimit').change(function () {
+            fetchEmployeePerformance();
+        });
+
+        $('#btnFilterPerf').click(function () {
+            fetchEmployeePerformance();
+        });
+
+        $('#btnExportPerf').click(function () {
+            var startDate = $('#perfStartDate').val();
+            var endDate = $('#perfEndDate').val();
+            // Optional: Limit can be ignored for export or default to high
+            var url = '{{ route("dashboard.export-performance") }}' + '?start_date=' + startDate + '&end_date=' + endDate;
+            window.location.href = url;
+        });
+
+        function fetchEmployeePerformance(limitOverride) {
+            var limit = limitOverride || $('#performanceLimit').val();
+            var startDate = $('#perfStartDate').val();
+            var endDate = $('#perfEndDate').val();
+
+            $.ajax({
+                url: '{{ route("dashboard.chart-data") }}',
+                method: 'GET',
+                data: {
+                    type: 'employee_performance',
+                    limit: limit,
+                    start_date: startDate,
+                    end_date: endDate
+                },
+                success: function (response) {
+                    var tbody = $('#employeePerformanceBody');
+                    tbody.empty();
+
+                    if (response.length === 0) {
+                        tbody.append('<tr><td colspan="6" class="text-center">No data found.</td></tr>');
+                        return;
+                    }
+
+                    $.each(response, function (index, item) {
+                        var completion = (item.assigned > 0) ? ((item.executed / item.assigned) * 100).toFixed(1) : '0.0';
+                        var completionColor = 'bg-danger';
+                        if (completion >= 50 && completion < 80) completionColor = 'bg-warning';
+                        if (completion >= 80) completionColor = 'bg-success';
+                        if (item.executed > item.assigned) completionColor = 'bg-primary'; // Overachiever?
+
+                        var row = `<tr>
+                                <td>
+                                    <a href="#" class="view-history" data-id="${item.user_id}" style="font-weight:bold; text-decoration: underline;">
+                                        ${item.name}
+                                    </a> 
+                                    <br><small class="text-muted">${item.role}</small></td>
+                                <td class="text-center"><span class="badge bg-purple">${item.assigned}</span></td>
+                                <td class="text-center"><span class="badge bg-info">${item.executed}</span></td>
+                                <td class="text-center"><span class="badge bg-success">${item.qty_ok}</span></td>
+                                <td class="text-center"><span class="badge bg-danger">${item.qty_ng}</span></td>
+                                <td class="text-center">
+                                    <div class="progress progress-sm">
+                                        <div class="progress-bar ${completionColor}" style="width: ${completion <= 100 ? completion : 100}%"></div>
+                                    </div>
+                                    <small>${completion}%</small>
+                                </td>
+                            </tr>`;
+                        tbody.append(row);
+                    });
+                },
+                error: function () {
+                    $('#employeePerformanceBody').html('<tr><td colspan="6" class="text-center text-danger">Failed to load data.</td></tr>');
+                }
+            });
+        }
+
+        // History Modal Logic
+        $(document).on('click', '.view-history', function (e) {
+            e.preventDefault();
+            var userId = $(this).data('id');
+            var modal = $('#historyModal');
+
+            $('#historyModalTitle').text('Loading...');
+            $('#historyModalBody').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
+            modal.modal('show');
+
+            $.ajax({
+                url: '/dashboard/employee-history/' + userId,
+                method: 'GET',
+                success: function (response) {
+                    $('#historyModalTitle').text('Performance History: ' + response.user);
+                    var tbody = $('#historyModalBody');
+                    tbody.empty();
+
+                    if (response.history.length === 0) {
+                        tbody.append('<tr><td colspan="4" class="text-center">No recent history found.</td></tr>');
+                    } else {
+                        $.each(response.history, function (i, job) {
+                            tbody.append(`
+                                    <tr>
+                                        <td>${job.date}</td>
+                                        <td>${job.item}</td>
+                                        <td class="text-success text-center">${job.qty_ok}</td>
+                                        <td class="text-danger text-center">${job.qty_ng}</td>
+                                    </tr>
+                                `);
+                        });
+                    }
+                },
+                error: function () {
+                    $('#historyModalTitle').text('Error');
+                    $('#historyModalBody').html('<tr><td colspan="4" class="text-center text-danger">Failed to fetch history</td></tr>');
+                }
+            });
+        });
+
+        @if(isset($data['client_browser_stats']))
+            // Client Browser Chart
+            var ctxBrowser = document.getElementById('clientBrowserChart').getContext('2d');
+            var browserData = @json($data['client_browser_stats']);
+
+            new Chart(ctxBrowser, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(browserData),
+                    datasets: [{
+                        data: Object.values(browserData),
+                        backgroundColor: ['#00c0ef', '#3c8dbc', '#d2d6de', '#f56954', '#00a65a', '#f39c12'],
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        datalabels: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        @endif
         });
 </script>
 @stop

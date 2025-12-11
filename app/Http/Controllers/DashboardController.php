@@ -11,8 +11,11 @@ use App\Models\User;
 use App\Models\Outgoing;
 use App\Models\MasterItem;
 use App\Models\EmployeeJob;
+
 use App\Models\SuratJalan;
 use App\Models\Inventory;
+use App\Models\Plant;
+use App\Models\Receiving;
 
 use App\Models\ActivityLog;
 use Carbon\Carbon;
@@ -82,13 +85,22 @@ class DashboardController extends Controller
 
         } elseif ($currentCustomerId) {
             // Tenant User
-            $isTenantAdmin = $user->userDetail && $user->userDetail->role && $user->userDetail->role->role_name === 'Administrator';
+            // Direct check against tenant_owners table
+            $isTenantOwner = TenantOwner::where('user_id', $user->id)
+                ->where('customer_id', $currentCustomerId)
+                ->where('is_active', true)
+                ->exists();
 
-            if ($isTenantAdmin) {
+            if ($isTenantOwner) {
                 $viewType = 'tenant_owner';
 
                 // Master Items
                 $data['total_items'] = MasterItem::whereHas('tenantOwner', function ($q) use ($currentCustomerId) {
+                    $q->where('customer_id', $currentCustomerId);
+                })->count();
+
+                // Total Employees (Users in this tenant)
+                $data['total_employees'] = User::whereHas('userDetail', function ($q) use ($currentCustomerId) {
                     $q->where('customer_id', $currentCustomerId);
                 })->count();
 
@@ -102,14 +114,45 @@ class DashboardController extends Controller
                     $q->where('customer_id', $currentCustomerId);
                 })->where('status', 'Draft')->count();
 
+                // Total Plants
+                $data['total_plants'] = Plant::where('customer_id', $currentCustomerId)->count();
+
+                // Total Receiving
+                $data['total_receiving'] = Receiving::whereHas('masterItem.tenantOwner', function ($q) use ($currentCustomerId) {
+                    $q->where('customer_id', $currentCustomerId);
+                })->count();
+
+                // Total Outgoing
+                $data['total_outgoing'] = Outgoing::whereHas('masterItem.tenantOwner', function ($q) use ($currentCustomerId) {
+                    $q->where('customer_id', $currentCustomerId);
+                })->count();
+
+                // Total Outstanding (Sum of Inventory Quantity)
+                $data['total_outstanding'] = Inventory::whereHas('masterItem.tenantOwner', function ($q) use ($currentCustomerId) {
+                    $q->where('customer_id', $currentCustomerId);
+                })->sum('quantity');
+
                 // Low Stock Items (Threshold < 10)
-                // Inventory is linked to MasterItem
                 $data['low_stock_count'] = Inventory::whereHas('masterItem.tenantOwner', function ($q) use ($currentCustomerId) {
                     $q->where('customer_id', $currentCustomerId);
                 })->where('quantity', '<', 10)->count();
 
-                // Chart Data
+                // Recent Activities (Scoped to Tenant)
+                // We'll fetch logs where tenant_id matches
+                $data['recent_activities'] = ActivityLog::with('user')
+                    ->where('tenant_id', $currentCustomerId)
+                    ->latest()
+                    ->take(10)
+                    ->get();
+
+                // Chart Data (Production)
                 $data['chart_data'] = $this->getProductionChartData($currentCustomerId);
+
+                // Chart Data (Inventory Flow)
+                $data['inventory_chart_data'] = $this->getInventoryChartData($currentCustomerId);
+
+                // User Distribution Data
+                $data['user_distribution'] = $this->getUserDistributionData($currentCustomerId);
 
             } else {
                 $viewType = 'tenant_staff';
@@ -120,23 +163,355 @@ class DashboardController extends Controller
                     ->latest()
                     ->take(10)
                     ->get();
-
-                // My Pending Jobs (Assigned but not finished?)
-                // Assuming no finished_time means pending, but structure allows nulls? 
-                // Let's assume just recent jobs for now.
             }
         }
 
         return view('dashboard', compact('data', 'viewType'));
     }
 
-    private function getProductionChartData($customerId = null)
+    public function getChartData(Request $request)
     {
-        $startDate = Carbon::now()->subDays(6)->startOfDay();
+        $customerId = TenantService::currentCustomerId();
+        if (!$customerId) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $type = $request->input('type');
+        $period = $request->input('period', 'weekly');
+
+        if ($type === 'inventory') {
+            return response()->json($this->getInventoryChartData($customerId, $period));
+        } elseif ($type === 'production') {
+            return response()->json($this->getProductionChartData($customerId, $period));
+        } elseif ($type === 'employee_performance') {
+            $limit = $request->input('limit', 10);
+            $startDate = $request->input('start_date');
+            $endDate = $request->input('end_date');
+            return response()->json($this->getEmployeePerformanceData($customerId, $limit, $startDate, $endDate));
+        } elseif ($type === 'top_defects') {
+            return response()->json($this->getTopDefectItems($customerId));
+        } elseif ($type === 'top_ok') {
+            return response()->json($this->getTopOkItems($customerId));
+        }
+
+        return response()->json(['error' => 'Invalid type'], 400);
+    }
+
+    private function getTopDefectItems($customerId)
+    {
+        $defects = \App\Models\EmployeeJob::where('qty_ng', '>', 0)
+            ->whereHas('outgoing', function ($q) use ($customerId) {
+                // Ensure correct tenant scoping
+                $q->whereHas('masterItem', function ($qq) use ($customerId) {
+                    $qq->whereHas('tenantOwner', function ($qqq) use ($customerId) {
+                        $qqq->where('customer_id', $customerId);
+                    });
+                });
+            })
+            ->with(['outgoing.masterItem'])
+            ->get();
+
+        // Aggregate by Item Name
+        $aggregated = $defects->groupBy(function ($job) {
+            return $job->outgoing->masterItem->item_name ?? 'Unknown Item';
+        })->map(function ($jobs) {
+            return $jobs->sum('qty_ng');
+        });
+
+        // Sort Descending and Take 5
+        $sorted = $aggregated->sortDesc()->take(5);
+
+        return [
+            'labels' => $sorted->keys()->values()->all(),
+            'data' => $sorted->values()->all(),
+        ];
+    }
+
+    private function getTopOkItems($customerId)
+    {
+        $okItems = \App\Models\EmployeeJob::where('qty_ok', '>', 0)
+            ->whereHas('outgoing', function ($q) use ($customerId) {
+                // Ensure correct tenant scoping
+                $q->whereHas('masterItem', function ($qq) use ($customerId) {
+                    $qq->whereHas('tenantOwner', function ($qqq) use ($customerId) {
+                        $qqq->where('customer_id', $customerId);
+                    });
+                });
+            })
+            ->with(['outgoing.masterItem'])
+            ->get();
+
+        // Aggregate by Item Name
+        $aggregated = $okItems->groupBy(function ($job) {
+            return $job->outgoing->masterItem->item_name ?? 'Unknown Item';
+        })->map(function ($jobs) {
+            return $jobs->sum('qty_ok');
+        });
+
+        // Sort Descending and Take 5
+        $sorted = $aggregated->sortDesc()->take(5);
+
+        return [
+            'labels' => $sorted->keys()->values()->all(),
+            'data' => $sorted->values()->all(),
+        ];
+    }
+
+
+    public function exportEmployeePerformance(Request $request)
+    {
+        $customerId = TenantService::currentCustomerId();
+        if (!$customerId) {
+            return abort(403, 'Unauthorized');
+        }
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        // For export, we might want more data, defaulting to 1000 or unlimited
+        $limit = $request->input('limit', 1000);
+
+        $data = $this->getEmployeePerformanceData($customerId, $limit, $startDate, $endDate);
+
+        $headers = array(
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=employee_performance.csv",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        );
+
+        $callback = function () use ($data) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, array('Employee Name', 'Role', 'Assigned (Qty)', 'Executed (Qty)', 'OK (Qty)', 'NG (Qty)', 'Completion %'));
+
+            foreach ($data as $row) {
+                $completion = ($row['assigned'] > 0) ? round(($row['executed'] / $row['assigned']) * 100, 1) : 0;
+                fputcsv($file, array(
+                    $row['name'],
+                    $row['role'],
+                    $row['assigned'],
+                    $row['executed'],
+                    $row['qty_ok'],
+                    $row['qty_ng'],
+                    $completion . '%'
+                ));
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    private function getEmployeePerformanceData($customerId, $limit = 10, $startDate = null, $endDate = null)
+    {
+        // Get all users for this customer (tenant)
+        // Using userDetail to link employees to customer.
+        // We filter by userDetail.customer_id.
+
+        $users = \App\Models\User::whereHas('userDetail', function ($q) use ($customerId) {
+            $q->where('customer_id', $customerId);
+            // Exclude Administrator role as they are likely the Owner
+            // Also exclude explicit 'Owner' role if it exists
+            $q->whereHas('role', function ($qq) {
+                $qq->whereNotIn('role_name', ['Administrator', 'Super Admin', 'Owner']);
+            });
+        })
+            ->with(['userDetail.position', 'userDetail.role']) // Load needed relations via userDetail
+            ->get();
+
+        // If the above query is too broad or inaccurate (e.g. gets owners too), we can filter in the loop or strict roles.
+        // Let's use UserDetail customer_id as primary link for employees.
+
+        $performanceData = $users->map(function ($user) use ($customerId, $startDate, $endDate) {
+            // Assigned: Sum of Outgoing quantities assigned to this user
+            $assignedQuery = \App\Models\Outgoing::where('user_id', $user->id)
+                // We should ensure these outgoings belong to the tenant
+                ->whereHas('masterItem', function ($q) use ($customerId) {
+                    $q->whereHas('tenantOwner', function ($q2) use ($customerId) {
+                        $q2->where('customer_id', $customerId);
+                    });
+                });
+
+            if ($startDate) {
+                $assignedQuery->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $assignedQuery->whereDate('created_at', '<=', $endDate);
+            }
+
+            $assigned = $assignedQuery->sum('quantity');
+
+            // Executed: Sum from EmployeeJob
+            $jobsQuery = \App\Models\EmployeeJob::where('user_id', $user->id)
+                ->whereHas('outgoing', function ($q) use ($customerId) {
+                    $q->whereHas('masterItem', function ($qq) use ($customerId) {
+                        $qq->whereHas('tenantOwner', function ($qqq) use ($customerId) {
+                            $qqq->where('customer_id', $customerId);
+                        });
+                    });
+                });
+
+            if ($startDate) {
+                $jobsQuery->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $jobsQuery->whereDate('created_at', '<=', $endDate);
+            }
+
+            $jobs = $jobsQuery->get();
+
+            $qtyOk = $jobs->sum('qty_ok');
+            $qtyNg = $jobs->sum('qty_ng');
+            $executed = $qtyOk + $qtyNg;
+
+            // Skip if no assignment (optional, but requested "performance", maybe skip zeros?)
+            // User requested "sorted by most assigned", so 0 assigned might be at bottom. Keep them if useful?
+            // "performance employee (selain owner)" -> maybe exclude owner role?
+            // Assuming owner doesn't get assigned outgoing usually.
+
+            return [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'role' => $user->userDetail->role->role_name ?? 'N/A', // Access role via userDetail
+                'assigned' => (int) $assigned,
+                'executed' => (int) $executed,
+                'qty_ok' => (int) $qtyOk,
+                'qty_ng' => (int) $qtyNg,
+            ];
+        });
+
+        // Filter out those with 0 assigned AND 0 executed to reduce noise? 
+        // User didn't explicitly ask, but "performance" implies activity.
+        // Let's keep non-owners.
+        // Actually, we should filter by specific roles if we knew them.
+
+        $sorted = $performanceData->sortByDesc('assigned')->values();
+
+        return $sorted->take($limit);
+    }
+
+    public function getEmployeeHistory(Request $request, $id)
+    {
+        $customerId = TenantService::currentCustomerId();
+        if (!$customerId) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $jobs = \App\Models\EmployeeJob::where('user_id', $id)
+            ->whereHas('outgoing', function ($q) use ($customerId) {
+                $q->whereHas('masterItem', function ($qq) use ($customerId) {
+                    $qq->whereHas('tenantOwner', function ($qqq) use ($customerId) {
+                        $qqq->where('customer_id', $customerId);
+                    });
+                });
+            })
+            ->with(['outgoing.masterItem'])
+            ->orderBy('created_at', 'desc')
+            ->take(20)
+            ->get();
+
+        $history = $jobs->map(function ($job) {
+            return [
+                'date' => $job->created_at->format('Y-m-d H:i'),
+                'item' => $job->outgoing->masterItem->item_name ?? 'Unknown',
+                'qty_ok' => $job->qty_ok,
+                'qty_ng' => $job->qty_ng,
+            ];
+        });
+
+        return response()->json([
+            'user' => \App\Models\User::find($id)->name,
+            'history' => $history
+        ]);
+    }
+
+
+    private function getInventoryChartData($customerId, $period = 'weekly')
+    {
         $endDate = Carbon::now()->endOfDay();
+        $startDate = match ($period) {
+            'monthly' => Carbon::now()->startOfMonth(),
+            'yearly' => Carbon::now()->startOfYear(),
+            default => Carbon::now()->subDays(6)->startOfDay(), // Weekly
+        };
+
+        $groupByFormat = $period === 'yearly' ? '%Y-%m' : '%Y-%m-%d';
+        $selectFormat = $period === 'yearly' ? "DATE_FORMAT(created_at, '%Y-%m') as date" : "DATE(created_at) as date";
+
+        // Incoming
+        $incomingQuery = Receiving::select(
+            DB::raw($selectFormat),
+            DB::raw('SUM(qty_pack * qty_per_pack) as total_incoming')
+        )
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('masterItem.tenantOwner', function ($q) use ($customerId) {
+                $q->where('customer_id', $customerId);
+            })
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // Outgoing
+        $outgoingQuery = Outgoing::select(
+            DB::raw($selectFormat),
+            DB::raw('SUM(quantity) as total_outgoing')
+        )
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('masterItem.tenantOwner', function ($q) use ($customerId) {
+                $q->where('customer_id', $customerId);
+            })
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+
+        $labels = [];
+        $dataIncoming = [];
+        $dataOutgoing = [];
+
+        $interval = $period === 'yearly' ? 'P1M' : 'P1D';
+        $format = $period === 'yearly' ? 'Y-m' : 'Y-m-d';
+        $labelFormat = $period === 'yearly' ? 'M Y' : 'd M';
+
+        $periodRange = new \DatePeriod(
+            $startDate,
+            new \DateInterval($interval),
+            $endDate->modify($period === 'yearly' ? '+1 month' : '+1 day')
+        );
+
+        foreach ($periodRange as $dt) {
+            $dateStr = $dt->format($format);
+
+            // Adjust label logic if needed (e.g. show day name for weekly)
+            $labels[] = $dt->format($labelFormat);
+
+            $in = $incomingQuery->firstWhere('date', $dateStr);
+            $dataIncoming[] = $in ? $in->total_incoming : 0;
+
+            $out = $outgoingQuery->firstWhere('date', $dateStr);
+            $dataOutgoing[] = $out ? $out->total_outgoing : 0;
+        }
+
+        return [
+            'labels' => $labels,
+            'incoming' => $dataIncoming,
+            'outgoing' => $dataOutgoing
+        ];
+    }
+
+    private function getProductionChartData($customerId = null, $period = 'weekly')
+    {
+        $endDate = Carbon::now()->endOfDay();
+        $startDate = match ($period) {
+            'monthly' => Carbon::now()->startOfMonth(),
+            'yearly' => Carbon::now()->startOfYear(),
+            default => Carbon::now()->subDays(6)->startOfDay(), // Weekly
+        };
+
+        $selectFormat = $period === 'yearly' ? "DATE_FORMAT(created_datetime, '%Y-%m') as date" : "DATE(created_datetime) as date";
 
         $query = EmployeeJob::select(
-            DB::raw('DATE(created_datetime) as date'),
+            DB::raw($selectFormat),
             DB::raw('SUM(qty_ok) as total_ok'),
             DB::raw('SUM(qty_ng) as total_ng')
         )
@@ -150,21 +525,23 @@ class DashboardController extends Controller
 
         $results = $query->groupBy('date')->orderBy('date')->get();
 
-        // Format for Chart.js
         $labels = [];
         $dataOk = [];
         $dataNg = [];
 
-        // Fill in missing days
-        $period = new \DatePeriod(
+        $interval = $period === 'yearly' ? 'P1M' : 'P1D';
+        $format = $period === 'yearly' ? 'Y-m' : 'Y-m-d';
+        $labelFormat = $period === 'yearly' ? 'M Y' : 'd M';
+
+        $periodRange = new \DatePeriod(
             $startDate,
-            new \DateInterval('P1D'),
-            $endDate->modify('+1 day') // Include end date
+            new \DateInterval($interval),
+            $endDate->modify($period === 'yearly' ? '+1 month' : '+1 day')
         );
 
-        foreach ($period as $dt) {
-            $dateStr = $dt->format('Y-m-d');
-            $labels[] = $dt->format('d M');
+        foreach ($periodRange as $dt) {
+            $dateStr = $dt->format($format);
+            $labels[] = $dt->format($labelFormat);
 
             $dayData = $results->firstWhere('date', $dateStr);
             $dataOk[] = $dayData ? $dayData->total_ok : 0;
@@ -175,6 +552,63 @@ class DashboardController extends Controller
             'labels' => $labels,
             'ok' => $dataOk,
             'ng' => $dataNg
+        ];
+    }
+
+    private function getUserDistributionData($customerId)
+    {
+        // Gender Distribution
+        $genderStats = \App\Models\UserDetail::where('customer_id', $customerId)
+            ->whereNotNull('gender')
+            ->select('gender', DB::raw('count(*) as count'))
+            ->groupBy('gender')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                // Normalize gender labels if necessary
+                $label = $item->gender;
+                if (strtoupper($item->gender) == 'L' || strtoupper($item->gender) == 'M')
+                    $label = 'Male';
+                if (strtoupper($item->gender) == 'P' || strtoupper($item->gender) == 'F')
+                    $label = 'Female';
+                return [$label => $item->count];
+            });
+
+        // Position Distribution
+        $positionStats = \App\Models\UserDetail::where('customer_id', $customerId)
+            ->whereNotNull('position_id')
+            ->with('position')
+            ->get()
+            ->groupBy(function ($item) {
+                return $item->position->position_name ?? 'Unknown';
+            })
+            ->map(function ($group) {
+                return $group->count();
+            });
+
+        // Section Distribution
+        // Join Position -> Section
+        $sectionStats = \App\Models\UserDetail::where('user_details.customer_id', $customerId)
+            ->join('positions', 'user_details.position_id', '=', 'positions.id')
+            ->join('sections', 'positions.section_id', '=', 'sections.id')
+            ->select('sections.section_name', DB::raw('count(*) as count'))
+            ->groupBy('sections.section_name')
+            ->pluck('count', 'section_name');
+
+        // Department Distribution
+        // Join Position -> Section -> Dept
+        $deptStats = \App\Models\UserDetail::where('user_details.customer_id', $customerId)
+            ->join('positions', 'user_details.position_id', '=', 'positions.id')
+            ->join('sections', 'positions.section_id', '=', 'sections.id')
+            ->join('depts', 'sections.dept_id', '=', 'depts.id')
+            ->select('depts.dept_name', DB::raw('count(*) as count'))
+            ->groupBy('depts.dept_name')
+            ->pluck('count', 'dept_name');
+
+        return [
+            'gender' => $genderStats,
+            'position' => $positionStats,
+            'section' => $sectionStats,
+            'department' => $deptStats
         ];
     }
 
