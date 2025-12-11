@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\TenantOwner;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -132,7 +133,14 @@ class TenantOwnerController extends Controller
             return response()->json(['error' => 'This owner is already assigned to the selected tenant.'], 422);
         }
 
-        TenantOwner::create([
+        $owner = TenantOwner::create([
+            'user_id' => $request->user_id,
+            'customer_id' => $request->customer_id,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        // Log activity
+        ActivityLogService::logCreate('tenant_owners', $owner->id, [
             'user_id' => $request->user_id,
             'customer_id' => $request->customer_id,
             'is_active' => $request->boolean('is_active', true),
@@ -154,6 +162,7 @@ class TenantOwnerController extends Controller
         $this->ensureInternal();
 
         $owner = TenantOwner::findOrFail($id);
+        $oldValues = $owner->toArray();
 
         $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -176,6 +185,10 @@ class TenantOwnerController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        // Log activity
+        $newValues = $owner->toArray();
+        ActivityLogService::logUpdate('tenant_owners', $owner->id, $oldValues, $newValues);
+
         return response()->json(['success' => 'Tenant owner updated successfully.']);
     }
 
@@ -184,7 +197,11 @@ class TenantOwnerController extends Controller
         $this->ensureInternal();
 
         $owner = TenantOwner::findOrFail($id);
+        $oldValues = $owner->toArray();
         $owner->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('tenant_owners', $id, $oldValues);
 
         return response()->json(['success' => 'Tenant owner removed successfully.']);
     }

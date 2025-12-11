@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Receiving;
 use App\Models\MasterItem;
 use Illuminate\Http\Request;
+use App\Services\ActivityLogService;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
 
@@ -113,7 +114,17 @@ class ReceivingController extends Controller
             $data['ng_operator'] = Auth::id();
         }
 
-        Receiving::create($data);
+        $receiving = Receiving::create($data);
+
+        // Log activity
+        ActivityLogService::logCreate('receivings', $receiving->id, [
+            'master_item_id' => $request->master_item_id,
+            'doc_number_internal' => $request->doc_number_internal,
+            'doc_number_customer' => $request->doc_number_customer,
+            'qty_pack' => $request->qty_pack,
+            'qty_total' => $request->qty_pack * $request->qty_per_pack,
+            'status' => $request->product_status,
+        ]);
 
         return response()->json(['success' => 'Receiving record created successfully.']);
     }
@@ -177,7 +188,12 @@ class ReceivingController extends Controller
             $data['ng_operator'] = null; // Clear if OK
         }
 
+        $oldValues = $receiving->toArray();
         $receiving->update($data);
+
+        // Log activity
+        $newValues = $receiving->toArray();
+        ActivityLogService::logUpdate('receivings', $receiving->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Receiving record updated successfully.']);
     }
@@ -194,7 +210,11 @@ class ReceivingController extends Controller
             }
         }
 
+        $oldValues = $receiving->toArray();
         $receiving->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('receivings', $id, $oldValues);
         return response()->json(['success' => 'Receiving record deleted successfully.']);
     }
 }

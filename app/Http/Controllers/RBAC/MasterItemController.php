@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MasterItem;
 use App\Models\TenantOwner;
 use App\Models\MasterCustomer;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -125,7 +126,14 @@ class MasterItemController extends Controller
             $data['tenant_id'] = $tenantOwner->id;
         }
 
-        MasterItem::create($data);
+        $masterItem = MasterItem::create($data);
+
+        // Log activity
+        ActivityLogService::logCreate('master_items', $masterItem->id, [
+            'item_name' => $request->item_name,
+            'item_code' => $request->item_code,
+            'tenant_id' => $masterItem->tenant_id,
+        ]);
 
         return response()->json(['success' => 'Master Item created successfully.']);
     }
@@ -192,7 +200,12 @@ class MasterItemController extends Controller
             unset($data['tenant_id']);
         }
 
+        $oldValues = $masterItem->toArray();
         $masterItem->update($data);
+
+        // Log activity
+        $newValues = $masterItem->toArray();
+        ActivityLogService::logUpdate('master_items', $masterItem->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Master Item updated successfully.']);
     }
@@ -209,7 +222,11 @@ class MasterItemController extends Controller
             }
         }
 
+        $oldValues = $masterItem->toArray();
         $masterItem->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('master_items', $id, $oldValues);
 
         return response()->json(['success' => 'Master Item deleted successfully.']);
     }

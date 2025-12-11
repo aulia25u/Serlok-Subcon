@@ -4,6 +4,7 @@ namespace App\Http\Controllers\RBAC;
 
 use App\Http\Controllers\Controller;
 use App\Models\MasterCustomer;
+use App\Services\ActivityLogService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -80,7 +81,16 @@ class MasterCustomerController extends Controller
             'npwp' => 'required',
         ]);
 
-        MasterCustomer::create($request->all());
+        $masterCustomer = MasterCustomer::create($request->all());
+
+        // Log activity
+        ActivityLogService::logCreate('master_customers', $masterCustomer->id, [
+            'customer_name' => $request->customer_name,
+            'customer_code' => $request->customer_code,
+            'address' => $request->address,
+            'npwp' => $request->npwp,
+            'customer_id' => $masterCustomer->customer_id,
+        ]);
 
         return response()->json(['success' => 'Master Customer created successfully.']);
     }
@@ -127,7 +137,12 @@ class MasterCustomerController extends Controller
             'npwp' => 'required',
         ]);
 
+        $oldValues = $masterCustomer->toArray();
         $masterCustomer->update($request->all());
+
+        // Log activity
+        $newValues = $masterCustomer->toArray();
+        ActivityLogService::logUpdate('master_customers', $masterCustomer->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Master Customer updated successfully']);
     }
@@ -142,7 +157,7 @@ class MasterCustomerController extends Controller
         $masterCustomer->delete();
 
         // Log activity
-        // ActivityLogService::logDelete('master_customers', $masterCustomer->id, $oldValues);
+        ActivityLogService::logDelete('master_customers', $masterCustomer->id, $oldValues);
 
         return response()->json(['success' => 'Master Customer deleted successfully']);
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\RBAC;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Services\ActivityLogService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -71,7 +72,7 @@ class CustomerController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        Customer::create([
+        $customer = Customer::create([
             'customer_name' => $request->customer_name,
             'customer_code' => $request->customer_code,
             'contact_person' => $request->contact_person,
@@ -79,6 +80,13 @@ class CustomerController extends Controller
             'phone' => $request->phone,
             'address' => $request->address,
             'is_active' => $request->boolean('is_active'),
+        ]);
+
+        // Log activity
+        ActivityLogService::logCreate('customers', $customer->id, [
+            'customer_name' => $request->customer_name,
+            'customer_code' => $request->customer_code,
+            'is_active' => $request->boolean('is_active')
         ]);
 
         return response()->json(['success' => 'Customer created successfully.']);
@@ -97,6 +105,7 @@ class CustomerController extends Controller
         $this->ensureInternal();
 
         $customer = Customer::findOrFail($id);
+        $oldValues = $customer->toArray();
 
         $request->validate([
             'customer_name' => 'required|string|max:255',
@@ -123,6 +132,10 @@ class CustomerController extends Controller
             'is_active' => $request->boolean('is_active'),
         ]);
 
+        // Log activity
+        $newValues = $customer->toArray();
+        ActivityLogService::logUpdate('customers', $customer->id, $oldValues, $newValues);
+
         return response()->json(['success' => 'Customer updated successfully.']);
     }
 
@@ -131,7 +144,11 @@ class CustomerController extends Controller
         $this->ensureInternal();
 
         $customer = Customer::findOrFail($id);
+        $oldValues = $customer->toArray();
         $customer->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('customers', $id, $oldValues);
 
         return response()->json(['success' => 'Customer deleted successfully.']);
     }

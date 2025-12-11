@@ -5,6 +5,7 @@ namespace App\Http\Controllers\RBAC;
 use App\Http\Controllers\Controller;
 use App\Models\MasterFinance;
 use App\Models\TenantOwner;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -93,7 +94,15 @@ class MasterFinanceController extends Controller
             $data['tenant_id'] = $tenantOwner->id;
         }
 
-        MasterFinance::create($data);
+        $masterFinance = MasterFinance::create($data);
+
+        // Log activity
+        ActivityLogService::logCreate('master_finances', $masterFinance->id, [
+            'bank_name' => $request->bank_name,
+            'bank_account_name' => $request->bank_account_name,
+            'bank_account_number' => $request->bank_account_number,
+            'tenant_id' => $masterFinance->tenant_id,
+        ]);
 
         return response()->json(['success' => 'Master Finance created successfully.']);
     }
@@ -149,7 +158,12 @@ class MasterFinanceController extends Controller
             unset($data['tenant_id']);
         }
 
+        $oldValues = $masterFinance->toArray();
         $masterFinance->update($data);
+
+        // Log activity
+        $newValues = $masterFinance->toArray();
+        ActivityLogService::logUpdate('master_finances', $masterFinance->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Master Finance updated successfully.']);
     }
@@ -166,7 +180,11 @@ class MasterFinanceController extends Controller
             }
         }
 
+        $oldValues = $masterFinance->toArray();
         $masterFinance->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('master_finances', $id, $oldValues);
 
         return response()->json(['success' => 'Master Finance deleted successfully.']);
     }

@@ -9,6 +9,7 @@ use App\Models\MasterVariable;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\ActivityLogService;
 
 class SuratJalanController extends Controller
 {
@@ -120,7 +121,7 @@ class SuratJalanController extends Controller
         try {
             $documentNumber = $this->generateDocumentNumber();
 
-            SuratJalan::create([
+            $suratJalan = SuratJalan::create([
                 'document_number' => $documentNumber,
                 'surat_jalan_date' => now(),
                 'status' => $request->status ?? 'Draft',
@@ -128,6 +129,13 @@ class SuratJalanController extends Controller
                 'customer_id' => $request->customer_id,
                 'tenant_id' => \App\Services\TenantService::resolveCustomerId(),
                 'known_by' => $request->known_by,
+            ]);
+
+            // Log activity
+            ActivityLogService::logCreate('surat_jalans', $suratJalan->id, [
+                'document_number' => $suratJalan->document_number,
+                'customer_id' => $suratJalan->customer_id,
+                'status' => $suratJalan->status,
             ]);
 
             DB::commit();
@@ -162,12 +170,17 @@ class SuratJalanController extends Controller
         // Tenant Access Assertion
         \App\Services\TenantService::assertAccess($suratJalan->tenant_id);
 
+        $oldValues = $suratJalan->toArray();
         $suratJalan->update([
             'status' => $request->status,
             'employee_job_id' => $request->employee_job_id,
             'customer_id' => $request->customer_id,
             'known_by' => $request->known_by,
         ]);
+
+        // Log activity
+        $newValues = $suratJalan->toArray();
+        ActivityLogService::logUpdate('surat_jalans', $suratJalan->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Surat Jalan updated successfully.']);
     }
@@ -201,7 +214,11 @@ class SuratJalanController extends Controller
         // Tenant Access Assertion
         \App\Services\TenantService::assertAccess($suratJalan->tenant_id);
 
+        $oldValues = $suratJalan->toArray();
         $suratJalan->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('surat_jalans', $id, $oldValues);
         return response()->json(['success' => 'Surat Jalan deleted successfully.']);
     }
 

@@ -9,6 +9,7 @@ use App\Models\Outgoing;
 use App\Models\MasterItem;
 use App\Models\Inventory;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
 
@@ -138,7 +139,16 @@ class OutgoingController extends Controller
         $data['created_by'] = Auth::id();
         $data['status'] = 'un-verified';
 
-        Outgoing::create($data);
+        $outgoing = Outgoing::create($data);
+
+        // Log activity
+        ActivityLogService::logCreate('outgoings', $outgoing->id, [
+            'master_item_id' => $request->master_item_id,
+            'user_id' => $request->user_id,
+            'quantity' => $request->quantity,
+            'outgoing_date' => $request->outgoing_date,
+            'notes' => $request->notes,
+        ]);
 
         return response()->json(['success' => 'Outgoing record created successfully.']);
     }
@@ -159,7 +169,11 @@ class OutgoingController extends Controller
             return response()->json(['error' => 'Cannot delete verified record.'], 403);
         }
 
+        $oldValues = $outgoing->toArray();
         $outgoing->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('outgoings', $id, $oldValues);
         return response()->json(['success' => 'Outgoing record deleted successfully.']);
     }
 
@@ -179,7 +193,12 @@ class OutgoingController extends Controller
             return response()->json(['error' => 'Record already verified.'], 400);
         }
 
+        $oldValues = $outgoing->toArray();
         $outgoing->update(['status' => 'verified']);
+
+        // Log activity
+        $newValues = $outgoing->toArray();
+        ActivityLogService::logUpdate('outgoings', $outgoing->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Outgoing record verified successfully.']);
     }

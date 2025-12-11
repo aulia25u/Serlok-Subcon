@@ -7,6 +7,7 @@ use App\Models\RoleToMenu;
 use App\Models\Role;
 use App\Models\Menu;
 use App\Models\Customer;
+use App\Services\ActivityLogService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -116,7 +117,7 @@ class MasterMenuController extends Controller
                 continue; // Skip if already exists, or we could update it. Let's skip for now.
             }
 
-            RoleToMenu::create([
+            $roleToMenu = RoleToMenu::create([
                 'role_id' => $roleId,
                 'menu_id' => $menuId,
                 'customer_id' => $customerId,
@@ -124,6 +125,19 @@ class MasterMenuController extends Controller
                 'is_read' => isset($item['is_read']),
                 'is_update' => isset($item['is_update']),
                 'is_delete' => isset($item['is_delete']),
+            ]);
+
+            // Log activity
+            ActivityLogService::logCreate('role_to_menus', $roleToMenu->id, [
+                'role_id' => $roleToMenu->role_id,
+                'menu_id' => $roleToMenu->menu_id,
+                'customer_id' => $roleToMenu->customer_id,
+                'permissions' => [
+                    'create' => $roleToMenu->is_create,
+                    'read' => $roleToMenu->is_read,
+                    'update' => $roleToMenu->is_update,
+                    'delete' => $roleToMenu->is_delete,
+                ]
             ]);
         }
 
@@ -144,6 +158,7 @@ class MasterMenuController extends Controller
         ]);
 
         $roleToMenu = RoleToMenu::findOrFail($id);
+        $oldValues = $roleToMenu->toArray();
 
         $customerId = TenantService::resolveCustomerId($request->customer_id);
 
@@ -167,13 +182,21 @@ class MasterMenuController extends Controller
             'is_delete' => $request->has('is_delete'),
         ]);
 
+        // Log activity
+        $newValues = $roleToMenu->fresh()->toArray(); // fresh to get updated booleans correctly if needed
+        ActivityLogService::logUpdate('role_to_menus', $roleToMenu->id, $oldValues, $newValues);
+
         return response()->json(['success' => 'Master menu updated successfully']);
     }
 
     public function destroy($id)
     {
         $roleToMenu = RoleToMenu::findOrFail($id);
+        $oldValues = $roleToMenu->toArray();
         $roleToMenu->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('role_to_menus', $id, $oldValues);
 
         return response()->json(['success' => 'Master menu deleted successfully']);
     }

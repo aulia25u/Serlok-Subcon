@@ -5,6 +5,7 @@ namespace App\Http\Controllers\RBAC;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\MasterVariable;
+use App\Services\ActivityLogService;
 use Yajra\DataTables\Facades\DataTables;
 
 class MasterVariableController extends Controller
@@ -54,12 +55,20 @@ class MasterVariableController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        MasterVariable::create([
+        $variable = MasterVariable::create([
             'tenant_id' => $tenantId,
             'variable_code' => $request->variable_code,
             'variable_name' => $request->variable_name,
             'variable_value' => $request->variable_value,
             'description' => $request->description,
+        ]);
+
+        // Log activity
+        ActivityLogService::logCreate('master_variables', $variable->id, [
+            'variable_code' => $request->variable_code,
+            'variable_name' => $request->variable_name,
+            'variable_value' => $request->variable_value,
+            'tenant_id' => $variable->tenant_id,
         ]);
 
         return response()->json(['success' => 'Master Variable created successfully.']);
@@ -96,7 +105,12 @@ class MasterVariableController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        $oldValues = $variable->toArray();
         $variable->update($request->all());
+
+        // Log activity
+        $newValues = $variable->toArray();
+        ActivityLogService::logUpdate('master_variables', $variable->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Master Variable updated successfully.']);
     }

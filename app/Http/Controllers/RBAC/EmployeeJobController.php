@@ -10,6 +10,7 @@ use App\Models\User;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
 use App\Services\TenantService;
+use App\Services\ActivityLogService;
 
 class EmployeeJobController extends Controller
 {
@@ -114,7 +115,7 @@ class EmployeeJobController extends Controller
             }
         }
 
-        EmployeeJob::create([
+        $job = EmployeeJob::create([
             'outgoing_id' => $request->outgoing_id,
             'user_id' => $outgoing->user_id, // Taken from Outgoing Assign To
             'created_datetime' => $outgoing->outgoing_date, // Taken from Outgoing Date
@@ -125,6 +126,13 @@ class EmployeeJobController extends Controller
             'qty_ng_customer' => $request->qty_ng_customer,
             'inspector_id' => $request->inspector_id,
             'surat_jalan_status' => $request->surat_jalan_status,
+        ]);
+
+        // Log activity
+        ActivityLogService::logCreate('employee_jobs', $job->id, [
+            'outgoing_id' => $request->outgoing_id,
+            'start_datetime' => $request->start_datetime,
+            'qty_ok' => $request->qty_ok,
         ]);
 
         return response()->json(['success' => 'Employee Job created successfully.']);
@@ -181,6 +189,7 @@ class EmployeeJobController extends Controller
             }
         }
 
+        $oldValues = $job->toArray();
         $job->update([
             'outgoing_id' => $request->outgoing_id,
             'user_id' => $outgoing->user_id,
@@ -193,6 +202,10 @@ class EmployeeJobController extends Controller
             'inspector_id' => $request->inspector_id,
             'surat_jalan_status' => $request->surat_jalan_status,
         ]);
+
+        // Log activity
+        $newValues = $job->toArray();
+        ActivityLogService::logUpdate('employee_jobs', $job->id, $oldValues, $newValues);
 
         return response()->json(['success' => 'Employee Job updated successfully.']);
     }
@@ -209,7 +222,11 @@ class EmployeeJobController extends Controller
             }
         }
 
+        $oldValues = $job->toArray();
         $job->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('employee_jobs', $id, $oldValues);
 
         return response()->json(['success' => 'Employee Job deleted successfully.']);
     }

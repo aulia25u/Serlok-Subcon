@@ -5,6 +5,7 @@ namespace App\Http\Controllers\RBAC;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Plant;
+use App\Services\ActivityLogService;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -93,12 +94,21 @@ class PlantController extends Controller
             'customer_id' => 'nullable|exists:customers,id',
         ]);
 
-        Plant::create([
+        $plant = Plant::create([
             'plant_name' => $request->plant_name,
             'plant_code' => $request->plant_code,
             'location' => $request->location,
             'description' => $request->description,
             'customer_id' => $customerId,
+        ]);
+
+        // Log activity
+        ActivityLogService::logCreate('plants', $plant->id, [
+            'plant_name' => $request->plant_name,
+            'plant_code' => $request->plant_code,
+            'location' => $request->location,
+            'description' => $request->description,
+            'customer_id' => $plant->customer_id,
         ]);
 
         return response()->json(['success' => 'Plant created successfully']);
@@ -136,6 +146,8 @@ class PlantController extends Controller
             'customer_id' => 'nullable|exists:customers,id',
         ]);
 
+        $oldValues = $plant->toArray();
+
         $plant->update([
             'plant_name' => $request->plant_name,
             'plant_code' => $request->plant_code,
@@ -144,6 +156,10 @@ class PlantController extends Controller
             'customer_id' => $customerId,
         ]);
 
+        // Log activity
+        $newValues = $plant->toArray();
+        ActivityLogService::logUpdate('plants', $plant->id, $oldValues, $newValues);
+
         return response()->json(['success' => 'Plant updated successfully']);
     }
 
@@ -151,7 +167,11 @@ class PlantController extends Controller
     {
         $plant = Plant::findOrFail($id);
         TenantService::assertAccess($plant->customer_id);
+        $oldValues = $plant->toArray();
         $plant->delete();
+
+        // Log activity
+        ActivityLogService::logDelete('plants', $id, $oldValues);
         return response()->json(['success' => 'Plant deleted successfully']);
     }
 }
