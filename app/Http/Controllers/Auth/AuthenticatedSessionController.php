@@ -24,7 +24,45 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        try {
+            $request->authenticate();
+
+            // Log successful login
+            $user = Auth::user();
+            $tenantId = null;
+            if ($user->userDetail && $user->userDetail->customer_id) {
+                $tenantId = $user->userDetail->customer_id;
+            }
+
+            \App\Models\ActivityLog::create([
+                'user_id' => $user->id,
+                'tenant_id' => $tenantId,
+                'action' => 'login',
+                'table_name' => 'users',
+                'record_id' => $user->id,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'new_values' => ['username' => $request->username, 'status' => 'success']
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Log failed login
+            // Try to find if user exists to log user_id (optional, but good for tracking)
+            $user = \App\Models\User::where('username', $request->username)->first();
+
+            \App\Models\ActivityLog::create([
+                'user_id' => $user ? $user->id : null,
+                'tenant_id' => null, // Cannot reliably determine tenant if login fails
+                'action' => 'login_failed',
+                'table_name' => 'users',
+                'record_id' => null,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'new_values' => ['username' => $request->username, 'status' => 'failed']
+            ]);
+
+            throw $e;
+        }
 
         $request->session()->regenerate();
 

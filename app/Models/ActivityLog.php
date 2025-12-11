@@ -41,6 +41,7 @@ class ActivityLog extends Model
             'update' => '<span class="badge badge-warning">Update</span>',
             'delete' => '<span class="badge badge-danger">Delete</span>',
             'login' => '<span class="badge badge-info">Login</span>',
+            'login_failed' => '<span class="badge badge-danger">Login Failed</span>',
             'logout' => '<span class="badge badge-secondary">Logout</span>',
         ];
 
