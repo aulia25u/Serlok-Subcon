@@ -773,10 +773,13 @@
                     <table class="table table-bordered table-striped">
                         <thead>
                             <tr>
-                                <th>Date</th>
+                                <th>Date Assign</th>
                                 <th>Item Name</th>
+                                <th class="text-center">Assign QTY</th>
                                 <th class="text-center">QTY OK</th>
                                 <th class="text-center">QTY NG</th>
+                                <th class="text-center">Completion %</th>
+                                <th class="text-center">Duration</th>
                             </tr>
                         </thead>
                         <tbody id="historyModalBody">
@@ -1265,7 +1268,7 @@
             var modal = $('#historyModal');
 
             $('#historyModalTitle').text('Loading...');
-            $('#historyModalBody').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
+            $('#historyModalBody').html('<tr><td colspan="7" class="text-center">Loading...</td></tr>');
             modal.modal('show');
 
             $.ajax({
@@ -1277,15 +1280,18 @@
                     tbody.empty();
 
                     if (response.history.length === 0) {
-                        tbody.append('<tr><td colspan="4" class="text-center">No recent history found.</td></tr>');
+                        tbody.append('<tr><td colspan="7" class="text-center">No recent history found.</td></tr>');
                     } else {
                         $.each(response.history, function (i, job) {
                             tbody.append(`
                                     <tr>
-                                        <td>${job.date}</td>
+                                        <td>${job.date_assign}</td>
                                         <td>${job.item}</td>
+                                        <td class="text-center"><span class="badge bg-purple">${job.assign_qty}</span></td>
                                         <td class="text-success text-center">${job.qty_ok}</td>
                                         <td class="text-danger text-center">${job.qty_ng}</td>
+                                        <td class="text-center">${job.completion}</td>
+                                        <td class="text-center">${job.duration}</td>
                                     </tr>
                                 `);
                         });
@@ -1293,7 +1299,7 @@
                 },
                 error: function () {
                     $('#historyModalTitle').text('Error');
-                    $('#historyModalBody').html('<tr><td colspan="4" class="text-center text-danger">Failed to fetch history</td></tr>');
+                    $('#historyModalBody').html('<tr><td colspan="7" class="text-center text-danger">Failed to fetch history</td></tr>');
                 }
             });
         });

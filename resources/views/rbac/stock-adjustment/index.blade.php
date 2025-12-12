@@ -40,17 +40,14 @@
 
                 <table id="adjustmentTable" class="table table-bordered table-striped">
                     <thead>
-                        <th>Item Code</th>
-                        <th>Item Name</th>
-                        <th>Date Capture</th>
-                        <th>Date SO</th>
-                        <th>Processed By</th>
-                        <th>System Qty</th>
-                        <th>Actual Qty</th>
-                        <th>Variance</th>
-                        <th>Notes</th>
-                        <th>History</th>
-                        <th>Action</th>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Item Name</th>
+                            <th>Date Capture</th>
+                            <th>Processed By</th>
+                            <th>Notes</th>
+                            <th>Variance</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -60,33 +57,6 @@
     </div>
 </div>
 @stop
-
-<div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="historyModalLabel">Update History</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-bordered table-sm" id="historyTable">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>User</th>
-                            <th>Changes</th>
-                        </tr>
-                    </thead>
-                    <tbody id="historyTableBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
 
 @section('css')
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css" />
@@ -153,13 +123,9 @@
                 { data: 'item_code', name: 'masterItem.item_code' },
                 { data: 'item_name', name: 'masterItem.item_name' },
                 { data: 'captured_at', name: 'captured_at' },
-                { data: 'date_so', name: 'date_so', searchable: false },
                 { data: 'processed_by', name: 'processed_by', orderable: false, searchable: false },
-                { data: 'system_qty', name: 'quantity' },
-                { data: 'physical_qty', name: 'physical_quantity', orderable: false, searchable: false },
-                { data: 'variance', name: 'variance', orderable: false, searchable: false },
                 { data: 'notes', name: 'notes', orderable: false },
-                { data: 'history', name: 'history', orderable: false, searchable: false },
+                { data: 'variance', name: 'variance', orderable: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false },
             ],
             layout: {
@@ -218,50 +184,6 @@
                 },
                 error: function (xhr) {
                     toastr.error('Error: ' + xhr.responseJSON.error);
-                }
-            });
-        });
-
-        // History Modal handling
-        $('#adjustmentTable').on('click', '.btn-history', function () {
-            var btn = $(this);
-            var id = btn.data('id');
-            var modal = $('#historyModal');
-            var tbody = $('#historyTableBody');
-
-            tbody.html('<tr><td colspan="3" class="text-center">Loading...</td></tr>');
-            modal.modal('show');
-
-            $.ajax({
-                url: "/rbac/stock-opname/history/" + id,
-                type: "GET",
-                success: function (logs) {
-                    tbody.empty();
-                    if (logs.length === 0) {
-                        tbody.html('<tr><td colspan="3" class="text-center">No history found.</td></tr>');
-                        return;
-                    }
-
-                    logs.forEach(function (log) {
-                        var changeText = '';
-                        for (var key in log.changes) {
-                            if (log.changes.hasOwnProperty(key)) {
-                                var oldVal = log.old[key] !== undefined ? log.old[key] : '-';
-                                var newVal = log.changes[key];
-                                changeText += '<strong>' + key + ':</strong> ' + oldVal + ' -> ' + newVal + '<br>';
-                            }
-                        }
-
-                        var row = '<tr>' +
-                            '<td>' + log.date + '</td>' +
-                            '<td>' + log.user + '</td>' +
-                            '<td>' + changeText + '</td>' +
-                            '</tr>';
-                        tbody.append(row);
-                    });
-                },
-                error: function () {
-                    tbody.html('<tr><td colspan="3" class="text-center text-danger">Failed to load history.</td></tr>');
                 }
             });
         });

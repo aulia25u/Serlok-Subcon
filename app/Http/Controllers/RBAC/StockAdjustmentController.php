@@ -18,6 +18,7 @@ class StockAdjustmentController extends Controller
         if ($request->ajax()) {
             $query = InventoryCapture::with(['masterItem', 'processor'])
                 ->select('inventory_captures.*')
+                ->where('is_adjusted', false)
                 ->whereNotNull('physical_quantity')
                 ->whereRaw('physical_quantity != quantity');
 
@@ -55,15 +56,6 @@ class StockAdjustmentController extends Controller
                 ->editColumn('captured_at', function ($row) {
                     return $row->captured_at ? $row->captured_at->format('Y-m-d H:i:s') : '';
                 })
-                ->addColumn('date_so', function ($row) {
-                    return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '-';
-                })
-                ->addColumn('system_qty', function ($row) {
-                    return $row->quantity;
-                })
-                ->addColumn('physical_qty', function ($row) {
-                    return $row->physical_quantity;
-                })
                 ->addColumn('processed_by', function ($row) {
                     return $row->processor ? $row->processor->name : '-';
                 })
@@ -74,16 +66,10 @@ class StockAdjustmentController extends Controller
                     $diff = $row->physical_quantity - $row->quantity;
                     return '<span class="text-danger font-weight-bold">' . $diff . '</span>';
                 })
-                ->addColumn('history', function ($row) {
-                    return '<button class="btn btn-sm btn-info btn-history" data-id="' . $row->id . '"><i class="fas fa-history"></i></button>';
-                })
                 ->addColumn('action', function ($row) {
-                    if ($row->is_adjusted) {
-                        return '<span class="badge badge-success">Approved</span> <span class="text-muted text-xs">(' . ($row->adjusted_at ? $row->adjusted_at->format('Y-m-d H:i') : '') . ')</span>';
-                    }
                     return '<button class="btn btn-sm btn-primary btn-approve" data-id="' . $row->id . '">Approve Adjustment</button>';
                 })
-                ->rawColumns(['variance', 'action', 'history'])
+                ->rawColumns(['variance', 'action'])
                 ->make(true);
         }
 
@@ -117,22 +103,13 @@ class StockAdjustmentController extends Controller
                 $capture->adjusted_at = now();
                 $capture->save();
 
-                // Log Inventory Change
+                // Log
                 ActivityLogService::log(
                     'update',
                     'inventories',
                     $inventory->id,
                     ['quantity' => $oldQty],
                     ['quantity' => $newQty, 'reason' => 'Stock Opname Adjustment']
-                );
-
-                // Log Approval Action on Capture
-                ActivityLogService::log(
-                    'approve',
-                    'inventory_captures',
-                    $capture->id,
-                    ['is_adjusted' => false],
-                    ['is_adjusted' => true, 'adjusted_at' => now()]
                 );
             });
 

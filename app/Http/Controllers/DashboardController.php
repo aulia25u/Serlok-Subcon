@@ -411,11 +411,23 @@ class DashboardController extends Controller
             ->get();
 
         $history = $jobs->map(function ($job) {
+            $assignedQty = $job->outgoing->quantity ?? 0;
+            $executedQty = $job->qty_ok + $job->qty_ng;
+            $completion = ($assignedQty > 0) ? round(($executedQty / $assignedQty) * 100, 1) : 0;
+
+            $duration = '-';
+            if ($job->finished_datetime && $job->created_datetime) {
+                $duration = $job->finished_datetime->diff($job->created_datetime)->format('%H:%I:%S');
+            }
+
             return [
-                'date' => $job->created_at->format('Y-m-d H:i'),
+                'date_assign' => $job->created_datetime ? $job->created_datetime->format('Y-m-d H:i') : '-',
                 'item' => $job->outgoing->masterItem->item_name ?? 'Unknown',
+                'assign_qty' => $assignedQty,
                 'qty_ok' => $job->qty_ok,
                 'qty_ng' => $job->qty_ng,
+                'completion' => $completion . '%',
+                'duration' => $duration
             ];
         });
 
@@ -503,19 +515,29 @@ class DashboardController extends Controller
     {
         $endDate = Carbon::now()->endOfDay();
         $startDate = match ($period) {
-            'monthly' => Carbon::now()->startOfMonth(),
-            'yearly' => Carbon::now()->startOfYear(),
-            default => Carbon::now()->subDays(6)->startOfDay(), // Weekly
+            'day' => Carbon::now()->subDays(6)->startOfDay(), // Last 7 days
+            'monthly' => Carbon::now()->subMonths(11)->startOfMonth(), // Last 12 months
+            'yearly' => Carbon::now()->subYears(4)->startOfYear(), // Last 5 years
+            default => Carbon::now()->startOfWeek(), // Current Week
         };
 
-        $selectFormat = $period === 'yearly' ? "DATE_FORMAT(created_datetime, '%Y-%m') as date" : "DATE(created_datetime) as date";
+        if ($period == 'weekly') {
+            $endDate = Carbon::now()->endOfWeek();
+        }
+
+        $selectFormat = match ($period) {
+            'yearly' => "DATE_FORMAT(finished_datetime, '%Y') as date",
+            'monthly' => "DATE_FORMAT(finished_datetime, '%Y-%m') as date",
+            default => "DATE(finished_datetime) as date",
+        };
 
         $query = EmployeeJob::select(
             DB::raw($selectFormat),
             DB::raw('SUM(qty_ok) as total_ok'),
             DB::raw('SUM(qty_ng) as total_ng')
         )
-            ->whereBetween('created_datetime', [$startDate, $endDate]);
+            ->whereBetween('finished_datetime', [$startDate, $endDate])
+            ->whereNotNull('finished_datetime');
 
         if ($customerId) {
             $query->whereHas('outgoing.masterItem.tenantOwner', function ($q) use ($customerId) {

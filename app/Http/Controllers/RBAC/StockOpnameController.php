@@ -58,8 +58,7 @@ class StockOpnameController extends Controller
                 })
                 ->addColumn('physical_qty', function ($row) {
                     // Input field for physical quantity
-                    $disabled = $row->is_adjusted ? 'disabled' : '';
-                    return '<input type="number" class="form-control quantity-input" data-id="' . $row->id . '" value="' . ($row->physical_quantity ?? $row->quantity) . '" ' . $disabled . '>';
+                    return '<input type="number" class="form-control quantity-input" data-id="' . $row->id . '" value="' . ($row->physical_quantity ?? $row->quantity) . '">';
                 })
                 ->addColumn('variance', function ($row) {
                     $phy = $row->physical_quantity ?? $row->quantity;
@@ -68,8 +67,7 @@ class StockOpnameController extends Controller
                     return '<span class="' . $color . ' font-weight-bold">' . $diff . '</span>';
                 })
                 ->editColumn('notes', function ($row) {
-                    $disabled = $row->is_adjusted ? 'disabled' : '';
-                    return '<input type="text" class="form-control notes-input" data-id="' . $row->id . '" value="' . ($row->notes ?? '') . '" ' . $disabled . '>';
+                    return '<input type="text" class="form-control notes-input" data-id="' . $row->id . '" value="' . ($row->notes ?? '') . '">';
                 })
                 ->addColumn('status', function ($row) {
                     return $row->is_adjusted ? '<span class="badge badge-success">Adjusted</span>' : '<span class="badge badge-warning">Pending</span>';
