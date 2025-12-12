@@ -474,8 +474,10 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <canvas id="inventoryChart"
-                                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            <div class="chart" style="position: relative; height: 250px;">
+                                <canvas id="inventoryChart"
+                                    style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -496,8 +498,10 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <canvas id="productionChart"
-                                style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            <div class="chart" style="position: relative; height: 250px;">
+                                <canvas id="productionChart"
+                                    style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
