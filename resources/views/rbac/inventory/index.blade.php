@@ -19,10 +19,42 @@
                                     <th>Item Code</th>
                                     <th>Quantity</th>
                                     <th>Updated At</th>
+                                    <th>History</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="historyModalLabel">Inventory History</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered table-sm" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>User</th>
+                                <th>Change Reason</th>
+                                <th>Old Qty</th>
+                                <th>New Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -89,6 +121,7 @@
                     { data: 'item_code', name: 'item_code' },
                     { data: 'quantity', name: 'quantity' },
                     { data: 'updated_at', name: 'updated_at' },
+                    { data: 'history', name: 'history', orderable: false, searchable: false },
                 ],
                 layout: {
                     topStart: 'search',
@@ -121,6 +154,45 @@
                     searchPlaceholder: "Search"
                 }
             });
+
+            // History Modal handling
+            $('#inventoryTable').on('click', '.btn-history', function () {
+                var btn = $(this);
+                var id = btn.data('id');
+                var modal = $('#historyModal');
+                var tbody = $('#historyTableBody');
+
+                tbody.html('<tr><td colspan="5" class="text-center">Loading...</td></tr>');
+                modal.modal('show');
+
+                $.ajax({
+                    url: "/rbac/inventory/history/" + id,
+                    type: "GET",
+                    success: function (logs) {
+                        tbody.empty();
+                        if (logs.length === 0) {
+                            tbody.html('<tr><td colspan="5" class="text-center">No history found.</td></tr>');
+                            return;
+                        }
+
+                        logs.forEach(function (log) {
+                            var row = '<tr>' +
+                                '<td>' + log.date + '</td>' +
+                                '<td>' + log.user + '</td>' +
+                                '<td>' + log.reason + '</td>' +
+                                '<td>' + log.old_qty + '</td>' +
+                                '<td>' + log.new_qty + '</td>' +
+                                '</tr>';
+                            tbody.append(row);
+                        });
+                    },
+                    error: function () {
+                        tbody.html('<tr><td colspan="5" class="text-center text-danger">Failed to load history.</td></tr>');
+                    }
+                });
+            });
         });
+
+
     </script>
 @endpush

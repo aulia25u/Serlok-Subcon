@@ -46,9 +46,35 @@ class InventoryController extends Controller
                 ->editColumn('updated_at', function ($row) {
                     return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '';
                 })
+                ->addColumn('history', function ($row) {
+                    return '<button class="btn btn-sm btn-info btn-history" data-id="' . $row->id . '"><i class="fas fa-history"></i></button>';
+                })
+                ->rawColumns(['history'])
                 ->make(true);
         }
 
         return view('rbac.inventory.index');
+    }
+
+    public function history($id)
+    {
+        $logs = \App\Models\ActivityLog::where('table_name', 'inventories')
+            ->where('record_id', $id)
+            ->with('user')
+            ->orderBy('created_at', 'desc')
+            ->take(20)
+            ->get()
+            ->map(function ($log) {
+                $reason = $log->new_values['reason'] ?? '-';
+                return [
+                    'date' => $log->created_at->format('Y-m-d H:i:s'),
+                    'user' => $log->user ? $log->user->name : 'System',
+                    'reason' => $reason,
+                    'old_qty' => $log->old_values['quantity'] ?? 0,
+                    'new_qty' => $log->new_values['quantity'] ?? 0
+                ];
+            });
+
+        return response()->json($logs);
     }
 }

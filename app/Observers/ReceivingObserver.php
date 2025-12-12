@@ -63,7 +63,16 @@ class ReceivingObserver
             ['quantity' => 0]
         );
 
+        $oldQty = $inventory->quantity;
         $inventory->quantity += $qtyDiff;
         $inventory->save();
+
+        \App\Services\ActivityLogService::log(
+            'update',
+            'inventories',
+            $inventory->id,
+            ['quantity' => $oldQty],
+            ['quantity' => $inventory->quantity, 'reason' => 'Receiving Transaction']
+        );
     }
 }

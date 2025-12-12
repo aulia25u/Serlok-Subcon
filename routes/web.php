@@ -192,6 +192,7 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
 
     // Inventory
     Route::get('/inventory', [InventoryController::class, 'index'])->name('rbac.inventory');
+    Route::get('/inventory/history/{id}', [InventoryController::class, 'history'])->name('rbac.inventory.history');
     Route::get('/inventory/capture', [InventoryCaptureController::class, 'index'])->name('rbac.inventory.capture');
     Route::post('/inventory/capture', [InventoryCaptureController::class, 'store'])->name('rbac.inventory.capture.store');
     Route::resource('outgoing', OutgoingController::class)
