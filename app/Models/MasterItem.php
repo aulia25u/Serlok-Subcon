@@ -18,6 +18,7 @@ class MasterItem extends Model
         'model',
         'unit',
         'description',
+        'min_stock',
     ];
 
     public function tenantOwner()

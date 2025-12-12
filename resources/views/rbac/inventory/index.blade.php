@@ -122,7 +122,17 @@
                     { data: 'quantity', name: 'quantity' },
                     { data: 'updated_at', name: 'updated_at' },
                     { data: 'history', name: 'history', orderable: false, searchable: false },
+                    { data: 'min_stock', name: 'masterItem.min_stock', visible: false, searchable: false },
                 ],
+                createdRow: function (row, data, dataIndex) {
+                    var qty = parseFloat(data.quantity); // Extract number if format is "10 PCS"
+                    var minStock = parseFloat(data.min_stock) || 0;
+
+                    if (minStock > 0 && qty <= minStock) {
+                        $(row).addClass('table-danger');
+                        $(row).find('td:eq(3)').append(' <span class="badge badge-danger">Low Stock</span>');
+                    }
+                },
                 layout: {
                     topStart: 'search',
                     topEnd: 'buttons',

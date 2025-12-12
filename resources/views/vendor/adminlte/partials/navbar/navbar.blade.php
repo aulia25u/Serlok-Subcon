@@ -15,6 +15,25 @@
         {{-- Fullscreen Widget --}}
         @include('adminlte::partials.navbar.menu-item-fullscreen-widget')
 
+        {{-- Notification Dropdown --}}
+        <li class="nav-item dropdown" id="notificationDropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#">
+                <i class="far fa-bell"></i>
+                <span class="badge badge-warning navbar-badge" id="notificationCount"></span>
+            </a>
+            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
+                <span class="dropdown-item dropdown-header" id="notificationHeader">Notifications</span>
+                <div class="dropdown-divider"></div>
+                <div id="notificationList">
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Loading...
+                    </a>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="{{ route('notifications.index') }}" class="dropdown-item dropdown-footer">View All Notifications</a>
+            </div>
+        </li>
+
         {{-- User Menu Dropdown --}}
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">
@@ -45,6 +64,58 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                // Fetch Notifications from Dedicated Table
+                fetch("{{ route('notifications.fetch') }}")
+                    .then(response => response.json())
+                    .then(data => {
+                        const countSpan = document.getElementById('notificationCount');
+                        const listDiv = document.getElementById('notificationList');
+                        const headerSpan = document.getElementById('notificationHeader');
+
+                        let unreadCount = data.count; // From server
+
+                        if (unreadCount > 0) {
+                            countSpan.innerText = unreadCount;
+                            countSpan.style.display = 'inline-block';
+                            headerSpan.innerText = unreadCount + ' New Notifications';
+
+                            let html = '';
+                            data.logs.forEach(log => {
+                                html += `<div class="dropdown-divider"></div>`;
+                                html += `<a href="${log.link || '#'}" class="dropdown-item">
+                                            <i class="${log.icon} mr-2"></i> 
+                                            <span class="text-truncate font-weight-bold" style="max-width: 150px; display: inline-block; vertical-align: middle;">${log.message}</span>
+                                            <span class="d-block text-muted text-xs text-truncate">${log.details}</span>
+                                            <span class="float-right text-muted text-xs">${log.time}</span>
+                                         </a>`;
+                            });
+                            listDiv.innerHTML = html;
+
+                            // Handle Click to Mark as Read (API)
+                            let marked = false;
+                            document.getElementById('notificationDropdown').addEventListener('show.bs.dropdown', function () {
+                                if (unreadCount > 0 && !marked) {
+                                    fetch("{{ route('notifications.mark-read') }}", {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        }
+                                    }).then(() => {
+                                        countSpan.style.display = 'none';
+                                        headerSpan.innerText = 'Notifications';
+                                        marked = true;
+                                    });
+                                }
+                            });
+
+                        } else {
+                            countSpan.style.display = 'none';
+                            listDiv.innerHTML = '<a href="#" class="dropdown-item text-center text-muted">No new notifications</a>';
+                        }
+                    })
+                    .catch(err => console.error('Error loading notifications:', err));
+
                 fetch('https://ipwho.is/')
                     .then(response => response.json())
                     .then(data => {

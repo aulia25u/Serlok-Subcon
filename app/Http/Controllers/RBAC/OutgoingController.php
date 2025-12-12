@@ -10,6 +10,7 @@ use App\Models\MasterItem;
 use App\Models\Inventory;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Models\Notification;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
 
@@ -148,7 +149,18 @@ class OutgoingController extends Controller
             'quantity' => $request->quantity,
             'outgoing_date' => $request->outgoing_date,
             'notes' => $request->notes,
-        ]);
+        ], $request->user_id);
+
+        // Send Notification to Assigned User
+        if ($request->user_id !== Auth::id()) {
+            Notification::create([
+                'user_id' => $request->user_id,
+                'title' => 'New Job Assignment',
+                'message' => 'You have been assigned <strong>' . $outgoing->quantity . ' ' . ($outgoing->masterItem->unit ?? 'PCS') . '</strong> of <strong>' . $outgoing->masterItem->item_name . '</strong>.',
+                'type' => 'info',
+                'link' => route('rbac.employee-jobs.index'), // Link them to where they report it
+            ]);
+        }
 
         return response()->json(['success' => 'Outgoing record created successfully.']);
     }
@@ -198,7 +210,18 @@ class OutgoingController extends Controller
 
         // Log activity
         $newValues = $outgoing->toArray();
-        ActivityLogService::logUpdate('outgoings', $outgoing->id, $oldValues, $newValues);
+        ActivityLogService::logUpdate('outgoings', $outgoing->id, $oldValues, $newValues, $outgoing->user_id);
+
+        // Send Notification to Assigned User (Verified Assignment)
+        if ($outgoing->user_id !== Auth::id()) {
+            Notification::create([
+                'user_id' => $outgoing->user_id,
+                'title' => 'Job Assignment Verified',
+                'message' => 'Your assignment for <strong>' . $outgoing->quantity . ' ' . ($outgoing->masterItem->unit ?? 'PCS') . '</strong> of <strong>' . $outgoing->masterItem->item_name . '</strong> has been verified.',
+                'type' => 'success',
+                'link' => route('rbac.employee-jobs.index'),
+            ]);
+        }
 
         return response()->json(['success' => 'Outgoing record verified successfully.']);
     }

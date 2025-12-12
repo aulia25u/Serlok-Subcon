@@ -56,6 +56,9 @@ class MasterItemController extends Controller
                 ->addColumn('customer_name', function (MasterItem $masterItem) {
                     return $masterItem->masterCustomer ? $masterItem->masterCustomer->customer_name : 'N/A';
                 })
+                ->addColumn('min_stock', function (MasterItem $masterItem) {
+                    return $masterItem->min_stock ?? 0;
+                })
                 ->editColumn('created_at', function ($row) {
                     return $row->created_at ? $row->created_at->format('d-m-Y H:i:s') : '';
                 })
@@ -104,6 +107,7 @@ class MasterItemController extends Controller
             'model' => 'nullable|string|max:255',
             'unit' => 'nullable|string|in:PCS,KG,ROLL',
             'description' => 'nullable|string',
+            'min_stock' => 'nullable|integer|min:0',
         ];
 
         if (!$isTenant) {
@@ -184,6 +188,7 @@ class MasterItemController extends Controller
             'model' => 'nullable|string|max:255',
             'unit' => 'nullable|string|in:PCS,KG,ROLL',
             'description' => 'nullable|string',
+            'min_stock' => 'nullable|integer|min:0',
         ];
 
         $isTenant = $user->userDetail && $user->userDetail->customer_id;

@@ -65,8 +65,9 @@ class SuratJalanController extends Controller
                     return $row->customer ? $row->customer->customer_name : 'N/A'; // Assuming logic for now
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<button data-id="' . $row->id . '" class="btn btn-info btn-sm surat-jalan-detail-btn mr-1"><i class="fas fa-eye"></i></button>';
-                    $btn .= '<button data-id="' . $row->id . '" class="btn btn-primary btn-sm surat-jalan-edit-btn mr-1"><i class="fas fa-edit"></i></button>';
+                    $btn = '<button data-id="' . $row->id . '" class="btn btn-info btn-sm surat-jalan-detail-btn mr-1" title="Detail"><i class="fas fa-eye"></i></button>';
+                    $btn .= '<button data-id="' . $row->id . '" class="btn btn-primary btn-sm surat-jalan-edit-btn mr-1" title="Edit"><i class="fas fa-edit"></i></button>';
+                    $btn .= '<a href="' . route('rbac.surat-jalan.print', $row->id) . '" target="_blank" class="btn btn-secondary btn-sm mr-1" title="Print"><i class="fas fa-print"></i></a>';
                     //$btn .= '<button data-id="' . $row->id . '" class="btn btn-danger btn-sm surat-jalan-delete-btn"><i class="fas fa-trash"></i></button>';
                     return $btn;
                 })
@@ -278,5 +279,17 @@ class SuratJalanController extends Controller
         $paddedSeq = str_pad($sequence, 4, '0', STR_PAD_LEFT);
 
         return str_replace('{SEQ}', $paddedSeq, $prefix);
+    }
+    public function print($id)
+    {
+        $suratJalan = SuratJalan::with([
+            'customer',
+            'employeeJob.outgoing.masterItem.tenantOwner.customer',
+            'employeeJob.user'
+        ])->findOrFail($id);
+
+        \App\Services\TenantService::assertAccess($suratJalan->tenant_id);
+
+        return view('rbac.surat_jalan.print', compact('suratJalan'));
     }
 }

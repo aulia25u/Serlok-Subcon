@@ -44,6 +44,7 @@
                                     <th>Part Name</th>
                                     <th>Model</th>
                                     <th>Unit</th>
+                                    <th>Min Stock</th>
                                     <th>Note</th>
                                     <th>Created At</th>
                                     <th>Updated At</th>
@@ -129,6 +130,11 @@
                                 <option value="KG">KG</option>
                                 <option value="ROLL">ROLL</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="min_stock">Minimum Stock</label>
+                            <input type="number" name="min_stock" id="min_stock" class="form-control"
+                                placeholder="Enter Minimum Stock" min="0" value="0">
                         </div>
                         <div class="form-group">
                             <label for="description">Note</label>
@@ -228,6 +234,7 @@
                     { data: 'item_name', name: 'item_name' },
                     { data: 'model', name: 'model' },
                     { data: 'unit', name: 'unit' },
+                    { data: 'min_stock', name: 'min_stock' },
                     { data: 'description', name: 'description' },
                     { data: 'created_at', name: 'created_at' },
                     { data: 'updated_at', name: 'updated_at' },
@@ -281,6 +288,7 @@
                     $('#part_number').val(data.part_number);
                     $('#model').val(data.model);
                     $('#unit').val(data.unit);
+                    $('#min_stock').val(data.min_stock);
                     if ($('#tenant_id').length) {
                         $('#tenant_id').val(data.tenant_id);
                     }
@@ -293,6 +301,7 @@
                     $('#master_customer_id').val('');
                     $('#product_status').val('');
                     $('#unit').val('');
+                    $('#min_stock').val('0');
                 }
             });
         });

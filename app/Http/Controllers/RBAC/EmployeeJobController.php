@@ -11,6 +11,7 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
 use App\Services\TenantService;
 use App\Services\ActivityLogService;
+use App\Models\Notification;
 
 class EmployeeJobController extends Controller
 {
@@ -78,7 +79,11 @@ class EmployeeJobController extends Controller
                 $q->where('customer_id', $currentCustomerId);
             });
         }
-        $outgoings = $outgoingsQuery->orderBy('created_at', 'desc')->get();
+
+        // Only show Outgoings that haven't been reported (don't have an EmployeeJob record)
+        $outgoings = $outgoingsQuery->doesntHave('employeeJob')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         // Get Users for Inspector dropdown
         if ($currentCustomerId) {
@@ -133,7 +138,28 @@ class EmployeeJobController extends Controller
             'outgoing_id' => $request->outgoing_id,
             'start_datetime' => $request->start_datetime,
             'qty_ok' => $request->qty_ok,
-        ]);
+        ], $job->user_id);
+
+        // Send Notification (Confirmation or Alert)
+        if ($job->user_id !== Auth::id()) {
+            // If Admin/Inspector input it
+            Notification::create([
+                'user_id' => $job->user_id,
+                'title' => 'Job Report Added',
+                'message' => 'A job report has been submitted for your assignment on: ' . $outgoing->masterItem->item_name,
+                'type' => 'info',
+                'link' => route('rbac.employee-jobs.index'),
+            ]);
+        } else {
+            // Self-reporting confirmation
+            Notification::create([
+                'user_id' => Auth::id(),
+                'title' => 'Submission Received',
+                'message' => 'Your job report for ' . $outgoing->masterItem->item_name . ' has been successfully submitted.',
+                'type' => 'success',
+                'link' => route('rbac.employee-jobs.index'),
+            ]);
+        }
 
         return response()->json(['success' => 'Employee Job created successfully.']);
     }
@@ -205,7 +231,19 @@ class EmployeeJobController extends Controller
 
         // Log activity
         $newValues = $job->toArray();
-        ActivityLogService::logUpdate('employee_jobs', $job->id, $oldValues, $newValues);
+        ActivityLogService::logUpdate('employee_jobs', $job->id, $oldValues, $newValues, $job->user_id);
+
+        // Send Notification if user changed or just notify update
+        // Only notify if the target user is not the one making the change
+        if ($job->user_id !== Auth::id()) {
+            Notification::create([
+                'user_id' => $job->user_id,
+                'title' => 'Job Updated',
+                'message' => 'Your job assignment for ' . $job->outgoing->masterItem->item_name . ' has been updated.',
+                'type' => 'warning',
+                'link' => route('rbac.employee-jobs.index'),
+            ]);
+        }
 
         return response()->json(['success' => 'Employee Job updated successfully.']);
     }

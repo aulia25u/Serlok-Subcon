@@ -18,6 +18,7 @@ use App\Models\Plant;
 use App\Models\Receiving;
 
 use App\Models\ActivityLog;
+use App\Models\Notification;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -257,7 +258,62 @@ class DashboardController extends Controller
         ];
     }
 
+    public function getNotifications()
+    {
+        $user = Auth::user();
 
+        // 1. Fetch Real Notifications (Targeted)
+        $notifs = Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        // 2. Fetch Recent System Activity (General - optional, can keep if desired but user wanted separation)
+        // User said: "separate the table because /rbac/history is restricted"
+        // So we should PRIMARILY return the Notifications table now.
+        
+        $data = $notifs->map(function ($n) {
+            $icon = 'fas fa-info-circle text-info';
+            if ($n->type == 'warning') $icon = 'fas fa-exclamation-circle text-warning';
+            if ($n->type == 'success') $icon = 'fas fa-check-circle text-success';
+            if ($n->type == 'error') $icon = 'fas fa-times-circle text-danger';
+
+            return [
+                'id' => $n->id,
+                'message' => $n->title,
+                'time' => $n->created_at->diffForHumans(),
+                'icon' => $icon,
+                'details' => $n->message,
+                'link' => $n->link
+            ];
+        });
+
+        return response()->json([
+            'count' => $notifs->count(),
+            'logs' => $data
+        ]);
+    }
+
+    public function markNotificationsRead(Request $request)
+    {
+        Notification::where('user_id', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json(['success' => true]);
+    }
+
+    private function getActionIcon($action)
+    {
+        return match ($action) {
+            'CREATE' => 'fas fa-plus-circle text-success',
+            'UPDATE' => 'fas fa-edit text-warning',
+            'DELETE' => 'fas fa-trash text-danger',
+            'LOGIN' => 'fas fa-sign-in-alt text-info',
+            default => 'fas fa-info-circle text-secondary',
+        };
+    }
     public function exportEmployeePerformance(Request $request)
     {
         $customerId = TenantService::currentCustomerId();

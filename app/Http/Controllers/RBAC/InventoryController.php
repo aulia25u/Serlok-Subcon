@@ -43,6 +43,9 @@ class InventoryController extends Controller
                 ->editColumn('quantity', function ($row) {
                     return $row->quantity . ' ' . ($row->masterItem ? $row->masterItem->unit : '');
                 })
+                ->addColumn('min_stock', function ($row) {
+                    return $row->masterItem ? $row->masterItem->min_stock : 0;
+                })
                 ->editColumn('updated_at', function ($row) {
                     return $row->updated_at ? $row->updated_at->format('Y-m-d H:i:s') : '';
                 })
