@@ -64,6 +64,6 @@ Route::middleware('auth')->group(function () {
     Route::post('two-factor', [TwoFactorController::class, 'verify'])
         ->name('two-factor.verify');
 
-    Route::post('two-factor/skip', [TwoFactorController::class, 'skip'])
+    Route::match(['get', 'post'], 'two-factor/skip', [TwoFactorController::class, 'skip'])
         ->name('two-factor.skip');
 });
