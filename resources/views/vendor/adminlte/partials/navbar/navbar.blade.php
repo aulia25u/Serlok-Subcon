@@ -76,7 +76,7 @@
                     ->with('customer')
                     ->get();
 
-                $currentTenantId = session('current_tenant_id');
+                $currentTenantId = \App\Services\TenantService::currentCustomerId();
                 $currentTenant = $tenants->firstWhere('customer_id', $currentTenantId);
                 $currentTenantName = $currentTenant ? $currentTenant->customer->customer_name : 'Select Tenant';
             @endphp
