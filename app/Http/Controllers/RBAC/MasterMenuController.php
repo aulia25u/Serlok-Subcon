@@ -90,6 +90,27 @@ class MasterMenuController extends Controller
             ->make(true);
     }
 
+    public function getAvailableMenus(Request $request)
+    {
+        $roleId = $request->input('role_id');
+        $customerId = TenantService::resolveCustomerId($request->input('customer_id'));
+
+        // If no role selected, return empty or all? Better to return empty until role is selected.
+        if (!$roleId) {
+            return response()->json([]);
+        }
+
+        // Get menus already assigned to this role (and customer)
+        $assignedMenuIds = RoleToMenu::where('role_id', $roleId)
+            ->where('customer_id', $customerId)
+            ->pluck('menu_id');
+
+        // Fetch menus NOT in the assigned list
+        $menus = Menu::whereNotIn('id', $assignedMenuIds)->get();
+
+        return response()->json($menus);
+    }
+
     // The rest of your methods are correct and remain the same
     public function store(Request $request)
     {

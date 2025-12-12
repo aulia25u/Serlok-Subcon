@@ -1082,7 +1082,10 @@
         // ... handlers ...
 
         function fetchTopDefects() {
-            var ctx = document.getElementById('topDefectChart').getContext('2d');
+            var canvas = document.getElementById('topDefectChart');
+            if (!canvas) return;
+
+            var ctx = canvas.getContext('2d');
 
             $.ajax({
                 url: '{{ route("dashboard.chart-data") }}',
@@ -1131,7 +1134,10 @@
         }
 
         function fetchTopOkItems() {
-            var ctx = document.getElementById('topOkChart').getContext('2d');
+            var canvas = document.getElementById('topOkChart');
+            if (!canvas) return;
+
+            var ctx = canvas.getContext('2d');
 
             $.ajax({
                 url: '{{ route("dashboard.chart-data") }}',

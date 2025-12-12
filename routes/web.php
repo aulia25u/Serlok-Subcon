@@ -13,6 +13,8 @@ use App\Http\Controllers\RBAC\RoleController;
 use App\Http\Controllers\RBAC\MasterVariableController;
 use App\Http\Controllers\RBAC\SuratJalanController;
 use App\Http\Controllers\RBAC\ReceivingController;
+use App\Http\Controllers\RBAC\StockOpnameController;
+use App\Http\Controllers\RBAC\StockAdjustmentController;
 use App\Http\Controllers\RBAC\InventoryController;
 use App\Http\Controllers\RBAC\InventoryCaptureController;
 use App\Http\Controllers\RBAC\OutgoingController;
@@ -55,6 +57,7 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
     // Master Menu
     Route::get('/master-menu', [MasterMenuController::class, 'show'])->name('rbac.master-menu');
     Route::get('/master-menu/data', [MasterMenuController::class, 'data'])->name('rbac.master-menu.data');
+    Route::get('/master-menu/available-menus', [MasterMenuController::class, 'getAvailableMenus'])->name('rbac.master-menu.available-menus');
     Route::post('/master-menu', [MasterMenuController::class, 'store'])->name('rbac.master-menu.store');
     Route::get('/master-menu/{id}/edit', [MasterMenuController::class, 'edit'])->name('rbac.master-menu.edit');
     Route::put('/master-menu/{id}', [MasterMenuController::class, 'update'])->name('rbac.master-menu.update');
@@ -199,6 +202,13 @@ Route::prefix('rbac')->middleware(['auth', 'twofactor', 'verified', 'permission.
             'destroy' => 'rbac.outgoing.destroy',
         ]);
     Route::post('/outgoing/{id}/verify', [OutgoingController::class, 'verify'])->name('rbac.outgoing.verify');
+
+    // Stock Opname
+    Route::get('/stock-opname', [StockOpnameController::class, 'index'])->name('rbac.stock-opname');
+    Route::post('/stock-opname/update', [StockOpnameController::class, 'update'])->name('rbac.stock-opname.update');
+    Route::get('/stock-opname/history/{id}', [StockOpnameController::class, 'history'])->name('rbac.stock-opname.history');
+    Route::get('/stock-adjustment', [StockAdjustmentController::class, 'index'])->name('rbac.stock-adjustment');
+    Route::post('/stock-adjustment/approve', [StockAdjustmentController::class, 'store'])->name('rbac.stock-adjustment.approve');
 
     // Employee Jobs
     Route::resource('employee-jobs', EmployeeJobController::class)

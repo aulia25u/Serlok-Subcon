@@ -7,7 +7,8 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css">
 <style>
     /* Force side-by-side display for bottom start section */
     .dt-layout-cell.dt-start {
@@ -382,14 +383,43 @@
 
         // Dynamic Menu Rows
         let rowCount = 0;
-        const menus = @json($menus);
+        let availableMenus = []; // Changed from const menus to let availableMenus
+        const allMenus = @json($menus); // Keep all menus for reference if needed, though maybe not
         const restrictedMenus = @json($restrictedMenus);
         const isInternal = @json($isInternal);
+
+        function loadAvailableMenus(roleId, customerId) {
+            if (!roleId) return;
+            const resolvedCustomer = (customerId === '' || customerId === null) ? '' : customerId;
+
+            $.ajax({
+                url: '{{ route("rbac.master-menu.available-menus") }}',
+                type: 'GET',
+                data: { role_id: roleId, customer_id: resolvedCustomer },
+                success: function (response) {
+                    availableMenus = response;
+                    $('#menuTableBody').empty(); // Clear existing rows as they might be invalid or duplicates
+                    if (availableMenus.length > 0) {
+                        addMenuRow(); // Add one row to start
+                    } else {
+                        $('#menuTableBody').html('<tr><td colspan="3" class="text-center text-muted">All menus are assigned to this role (or no menus available).</td></tr>');
+                    }
+                }
+            });
+        }
+
+        $('#role_id').change(function () {
+            var roleId = $(this).val();
+            var customerId = $('#customer_id').val();
+            loadAvailableMenus(roleId, customerId);
+        });
 
         function addMenuRow() {
             rowCount++;
             let menuOptions = '<option value="">Select Menu</option>';
-            menus.forEach(function (menu) {
+
+            // Use availableMenus instead of static list
+            availableMenus.forEach(function (menu) {
                 if (!isInternal && restrictedMenus.includes(menu.menu_name)) {
                     return;
                 }

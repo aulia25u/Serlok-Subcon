@@ -64,10 +64,12 @@ class MenuService
         $tenantLabels = ['Tenant List', 'Tenant Owner', 'Customer'];
         $masterDataLabels = ['Master Customer', 'Master Item', 'Master Finance', 'Master Variable'];
         $warehouseLabels = ['Receiving', 'Inventory', 'Outgoing'];
+        $stockOpnameLabels = ['Inventory Capture', 'SO Process', 'SO Adjustment']; // Group key
         $tenantChildren = [];
         $internalChildren = [];
         $masterDataChildren = [];
         $warehouseChildren = [];
+        $stockOpnameChildren = [];
 
         $standaloneChildren = [];
 
@@ -112,6 +114,8 @@ class MenuService
                 $tenantChildren[] = $item;
             } elseif (in_array($menu->menu_name, $warehouseLabels, true)) {
                 $warehouseChildren[] = $item;
+            } elseif (in_array($menu->menu_name, $stockOpnameLabels, true)) {
+                $stockOpnameChildren[] = $item;
             } elseif ($menu->menu_name === 'Dashboard') {
                 $menuItems[] = $item;
             } else {
@@ -148,6 +152,21 @@ class MenuService
                 'text' => 'Warehouse',
                 'icon' => 'fas fa-warehouse',
                 'submenu' => $warehouseChildren,
+            ];
+        }
+
+        if (!empty($stockOpnameChildren)) {
+            // Sort children based on the order in $stockOpnameLabels
+            usort($stockOpnameChildren, function ($a, $b) use ($stockOpnameLabels) {
+                $posA = array_search($a['text'], $stockOpnameLabels);
+                $posB = array_search($b['text'], $stockOpnameLabels);
+                return $posA - $posB;
+            });
+
+            $menuItems[] = [
+                'text' => 'Stock Opname',
+                'icon' => 'fas fa-clipboard-check',
+                'submenu' => $stockOpnameChildren,
             ];
         }
 
@@ -209,6 +228,9 @@ class MenuService
             'Receiving' => 'rbac/receiving',
             'Inventory' => 'rbac/inventory',
             'Outgoing' => 'rbac/outgoing',
+            'Inventory Capture' => 'rbac/inventory/capture',
+            'SO Process' => 'rbac/stock-opname',
+            'SO Adjustment' => 'rbac/stock-adjustment',
             'Employee Jobs' => 'rbac/employee-jobs',
             'Master Variable' => 'rbac/master-variable',
             'Surat Jalan' => 'rbac/surat-jalan',
@@ -234,6 +256,9 @@ class MenuService
             'Receiving' => 'fas fa-fw fa-truck-loading',
             'Inventory' => 'fas fa-fw fa-boxes',
             'Outgoing' => 'fas fa-fw fa-dolly-flatbed',
+            'Inventory Capture' => 'fas fa-fw fa-camera',
+            'SO Process' => 'fas fa-fw fa-clipboard-list',
+            'SO Adjustment' => 'fas fa-fw fa-sliders-h',
             'Employee Jobs' => 'fas fa-fw fa-tasks',
             'Master Variable' => 'fas fa-fw fa-sliders-h',
             'Surat Jalan' => 'fas fa-fw fa-file-invoice',
