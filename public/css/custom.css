@@ -6,26 +6,23 @@ html {
 }
 
 body {
-    zoom: 90%;
-    min-height: 111.2vh;
-    /* Compensate for 90% zoom */
+    /* zoom: 90%; - Removed to fix Select2 positioning */
+    min-height: 100vh;
     background-color: #f4f6f9;
 }
 
 .wrapper,
 .content-wrapper {
-    min-height: 111.2vh !important;
-    /* Ensure wrapper also fills the height */
+    min-height: 100vh !important;
 }
 
 .modal-backdrop {
-    min-height: 111.2vh !important;
-    width: 111.2vw !important;
-    /* Ensure backdrop fills height and width */
+    min-height: 100vh !important;
+    width: 100vw !important;
 }
 
 .preloader {
-    height: 111.2vh;
+    height: 100vh;
     /* No !important so JS can hide it */
 }
 
@@ -50,4 +47,18 @@ body.sidebar-collapse .main-sidebar:hover .nav-sidebar .nav-treeview>.nav-item>.
 /* Reset ul padding to avoid double indentation */
 .nav-sidebar .nav-treeview {
     padding-left: 0 !important;
+}
+
+/* Fix Select2 alignment in Chrome with zoom */
+.select2-container {
+    width: 100% !important;
+}
+
+.select2-container .select2-selection--single {
+    height: calc(2.25rem + 2px) !important;
+}
+
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5 !important;
+    padding-left: 0.75rem !important;
 }

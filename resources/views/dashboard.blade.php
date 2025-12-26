@@ -369,6 +369,7 @@
                                         <th>Action</th>
                                         <th>Target</th>
                                         <th>IP Address</th>
+                                        <th>Option</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -379,6 +380,11 @@
                                             <td>{!! $log->action_badge !!}</td>
                                             <td>{{ $log->table_name_formatted }} (ID: {{ $log->record_id }})</td>
                                             <td>{{ $log->ip_address }}</td>
+                                            <td>
+                                                <button class="btn btn-xs btn-info view-log-details" data-id="{{ $log->id }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
@@ -692,6 +698,7 @@
                                         <th>Action</th>
                                         <th>Target</th>
                                         <th>IP Address</th>
+                                        <th>Option</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -702,6 +709,11 @@
                                             <td>{!! $log->action_badge !!}</td>
                                             <td>{{ $log->table_name_formatted }} (ID: {{ $log->record_id }})</td>
                                             <td>{{ $log->ip_address }}</td>
+                                            <td>
+                                                <button class="btn btn-xs btn-info view-log-details" data-id="{{ $log->id }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
@@ -720,17 +732,112 @@
         </div>
 
     @else
-    <!-- Tenant Staff View (Unchanged) -->
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card card-outline card-primary">
+    <!-- Tenant Staff View -->
+    <div class="row mb-3">
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-warning elevation-1"><i class="fas fa-clipboard-list"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Pending Tasks</span>
+                    <span class="info-box-number">{{ $data['pending_tasks'] }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-success elevation-1"><i class="fas fa-check-double"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Jobs Done</span>
+                    <span class="info-box-number">{{ $data['total_jobs_done'] }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-info elevation-1"><i class="fas fa-percentage"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Quality Score</span>
+                    <span class="info-box-number">{{ $data['quality_score'] }}%</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+            <div class="info-box shadow-sm">
+                <span class="info-box-icon bg-primary elevation-1"><i class="fas fa-thumbs-up"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Total OK Qty</span>
+                    <span class="info-box-number">{{ $data['total_qty_ok'] }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart & Notifications Row -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <div class="card card-outline card-primary h-100">
                 <div class="card-header">
-                    <h3 class="card-title">Welcome, {{ Auth::user()->name }}!</h3>
+                    <h3 class="card-title">My Production Trend (Last 7 Days)</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse"><i
+                                class="fas fa-minus"></i></button>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <p class="lead">Here is your recent activity.</p>
+                    <div class="chart" style="position: relative; height: 300px;">
+                        <canvas id="personalTrendChart"
+                            style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-outline card-warning h-100">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Notifications</h3>
+                </div>
+                <div class="card-body p-0 d-flex flex-column">
+                    <ul class="products-list product-list-in-card pl-2 pr-2 flex-grow-1">
+                        @forelse($data['recent_notifications'] as $notif)
+                            <li class="item d-flex align-items-center">
+                                <div class="product-img mr-3 ml-2">
+                                    <i
+                                        class="{{ $notif->type == 'warning' ? 'fas fa-exclamation-circle text-warning' : ($notif->type == 'success' ? 'fas fa-check-circle text-success' : 'fas fa-info-circle text-info') }} fa-2x"></i>
+                                </div>
+                                <div class="product-info flex-grow-1 ml-0">
+                                    <a href="{{ $notif->link ?? '#' }}" class="product-title">{{ $notif->title }}
+                                        <span
+                                            class="badge badge-light float-right">{{ $notif->created_at->diffForHumans() }}</span>
+                                    </a>
+                                    <span class="product-description">
+                                        {!! Str::limit(strip_tags($notif->message), 50) !!}
+                                    </span>
+                                </div>
+                            </li>
+                        @empty
+                            <li class="item text-center">
+                                <div class="product-info ml-2">
+                                    <span class="product-description">No new notifications.</span>
+                                </div>
+                            </li>
+                        @endforelse
+                    </ul>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="/notifications" class="uppercase">View All Notifications</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                    <table class="table table-bordered table-hover table-striped">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card card-outline card-secondary">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Activity Log</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered table-hover table-striped text-sm">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -798,6 +905,72 @@
         </div>
     </div>
 </div>
+<!-- Activity Log Detail Modal -->
+<div class="modal fade" id="activityLogModal" tabindex="-1" role="dialog" aria-labelledby="activityLogModalTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="activityLogModalTitle">Activity Log Detail</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th>Time:</th>
+                                <td id="logDate">-</td>
+                            </tr>
+                            <tr>
+                                <th>User:</th>
+                                <td id="logUser">-</td>
+                            </tr>
+                            <tr>
+                                <th>IP Address:</th>
+                                <td id="logIp">-</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th>Action:</th>
+                                <td id="logAction">-</td>
+                            </tr>
+                            <tr>
+                                <th>Target:</th>
+                                <td id="logTarget">-</td>
+                            </tr>
+                            <tr>
+                                <th>User Agent:</th>
+                                <td id="logUserAgent" style="word-break: break-all; font-size: 0.8em;">-</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Old Values</h6>
+                        <pre id="logOldValues" class="bg-light p-2"
+                            style="max-height: 300px; overflow-y: auto; font-size: 0.8em;">-</pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>New Values</h6>
+                        <pre id="logNewValues" class="bg-light p-2"
+                            style="max-height: 300px; overflow-y: auto; font-size: 0.8em;">-</pre>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 @stop
 
@@ -839,6 +1012,10 @@
                     ]
                 },
                 options: {
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
@@ -882,6 +1059,10 @@
                         ]
                     },
                     options: {
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
@@ -1113,6 +1294,11 @@
                         },
                         options: {
                             indexAxis: 'y', // Horizontal bar
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                                axis: 'y'
+                            },
                             responsive: true,
                             maintainAspectRatio: false,
                             scales: {
@@ -1165,6 +1351,11 @@
                         },
                         options: {
                             indexAxis: 'y', // Horizontal bar
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                                axis: 'y'
+                            },
                             responsive: true,
                             maintainAspectRatio: false,
                             scales: {
@@ -1336,6 +1527,108 @@
                 }
             });
         @endif
+        // Activity Log Detail Logic
+        $(document).on('click', '.view-log-details', function (e) {
+            e.preventDefault();
+            var logId = $(this).data('id');
+            var modal = $('#activityLogModal');
+
+            // Reset/Loading state
+            $('#logDate').text('Loading...');
+            $('#logUser').text('Loading...');
+            $('#logAction').text('-');
+            $('#logTarget').text('-');
+            $('#logIp').text('-');
+            $('#logUserAgent').text('-');
+            $('#logOldValues').text('-');
+            $('#logNewValues').text('-');
+            modal.modal('show');
+
+            $.ajax({
+                url: '/dashboard/activity-log/' + logId,
+                method: 'GET',
+                success: function (response) {
+                    $('#logDate').text(response.created_at);
+                    $('#logUser').text(response.user);
+                    $('#logAction').text(response.action);
+                    $('#logTarget').text(response.target);
+                    $('#logIp').text(response.ip_address);
+                    $('#logUserAgent').text(response.user_agent || '-');
+                    
+                    $('#logOldValues').text(JSON.stringify(response.old_values, null, 2));
+                    $('#logNewValues').text(JSON.stringify(response.new_values, null, 2));
+                },
+                error: function () {
+                    $('#logDate').text('Error fetching data');
+                }
+            });
+        });
         });
 </script>
+@if($viewType == 'tenant_staff')
+    <script>
+        $(function () {
+            // Personal Trend Chart
+            var trendChartCanvas = $('#personalTrendChart').get(0).getContext('2d');
+            var trendChartData = {
+                labels: {!! json_encode($data['personal_chart']['labels']) !!},
+                datasets: [
+                    {
+                        label: 'OK',
+                        backgroundColor: 'rgba(40, 167, 69, 0.9)',
+                        borderColor: 'rgba(40, 167, 69, 0.8)',
+                        pointRadius: false,
+                        pointColor: '#28a745',
+                        pointStrokeColor: 'rgba(40, 167, 69, 1)',
+                        pointHighlightFill: '#fff',
+                        pointHighlightStroke: 'rgba(40, 167, 69, 1)',
+                        data: {!! json_encode($data['personal_chart']['ok']) !!}
+                    },
+                    {
+                        label: 'NG',
+                        backgroundColor: 'rgba(220, 53, 69, 0.9)',
+                        borderColor: 'rgba(220, 53, 69, 0.8)',
+                        pointRadius: false,
+                        pointColor: '#dc3545',
+                        pointStrokeColor: 'rgba(220, 53, 69, 1)',
+                        pointHighlightFill: '#fff',
+                        pointHighlightStroke: 'rgba(220, 53, 69, 1)',
+                        data: {!! json_encode($data['personal_chart']['ng']) !!}
+                    },
+                ]
+            };
+
+            var trendChartOptions = {
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                maintainAspectRatio: false,
+                responsive: true,
+                legend: {
+                    display: true
+                },
+                scales: {
+                    xAxes: [{
+                        gridLines: {
+                            display: false,
+                        }
+                    }],
+                    yAxes: [{
+                        gridLines: {
+                            display: false,
+                        }
+                    }]
+                }
+            }
+
+            new Chart(trendChartCanvas, {
+                type: 'bar', // or 'line'
+                data: trendChartData,
+                options: trendChartOptions
+            });
+        });
+
+    </script>
+@endif
 @stop

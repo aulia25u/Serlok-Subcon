@@ -11,11 +11,11 @@ use Illuminate\View\View;
 
 class TwoFactorController extends Controller
 {
-    public function show(Request $request): View
+    public function show(Request $request): View|RedirectResponse
     {
         $user = $request->user();
 
-        if (! $user) {
+        if (!$user) {
             return Redirect::route('login');
         }
 
@@ -38,11 +38,11 @@ class TwoFactorController extends Controller
 
         $user = $request->user();
 
-        if (! $user || ! $user->two_factor_enabled || ! $user->two_factor_secret) {
+        if (!$user || !$user->two_factor_enabled || !$user->two_factor_secret) {
             return Redirect::route('two-factor.challenge');
         }
 
-        if (! $google2FA->verify($user->two_factor_secret, $request->input('two_factor_code'))) {
+        if (!$google2FA->verify($user->two_factor_secret, $request->input('two_factor_code'))) {
             return Redirect::route('two-factor.challenge')
                 ->withErrors(['two_factor_code' => 'The two-factor authentication code is invalid.']);
         }
@@ -57,7 +57,7 @@ class TwoFactorController extends Controller
     {
         $user = $request->user();
 
-        if (! $user || $user->two_factor_enabled) {
+        if (!$user || $user->two_factor_enabled) {
             return Redirect::route('two-factor.challenge');
         }
 

@@ -85,15 +85,30 @@ class DashboardController extends Controller
             $data['tenant_logins'] = $this->getMostLoginsTenant();
 
         } elseif ($currentCustomerId) {
-            // Tenant User
-            // Direct check against tenant_owners table
-            $isTenantOwner = TenantOwner::where('user_id', $user->id)
+            // Tenant User Logic
+            // Priority: Check Role Name -> Then Check TenantOwner table
+
+            $userRole = $user->userDetail->role->role_name ?? null;
+
+            // default to staff
+            $viewType = 'tenant_staff';
+
+            // Only show Owner Dashboard if Role is Owner OR (Role is NOT Staff AND is in TenantOwner)
+            // This prevents "Staff" who might be accidentally in tenant_owners from seeing Owner view.
+
+            $isOwnerRole = in_array($userRole, ['Owner', 'Administrator', 'Super Admin']);
+            $isStaffRole = in_array($userRole, ['Staff', 'Operator']);
+
+            $isInTenantOwners = TenantOwner::where('user_id', $user->id)
                 ->where('customer_id', $currentCustomerId)
                 ->where('is_active', true)
                 ->exists();
 
-            if ($isTenantOwner) {
+            if ($isOwnerRole || ($isInTenantOwners && !$isStaffRole)) {
                 $viewType = 'tenant_owner';
+            }
+
+            if ($viewType == 'tenant_owner') {
 
                 // Master Items
                 $data['total_items'] = MasterItem::whereHas('tenantOwner', function ($q) use ($currentCustomerId) {
@@ -158,11 +173,50 @@ class DashboardController extends Controller
             } else {
                 $viewType = 'tenant_staff';
 
+                // My Performance Metrics
+                $myJobs = EmployeeJob::where('user_id', $user->id)->get();
+                $data['total_jobs_done'] = $myJobs->count();
+                $data['total_qty_ok'] = $myJobs->sum('qty_ok');
+                $data['total_qty_ng'] = $myJobs->sum('qty_ng');
+
+                // Assignments
+                $myAssignments = Outgoing::where('user_id', $user->id)->whereHas('masterItem.tenantOwner', function ($q) use ($currentCustomerId) {
+                    $q->where('customer_id', $currentCustomerId);
+                })->get();
+
+                $data['total_assigned_qty'] = $myAssignments->sum('quantity');
+                // Calculate completion rate based on Total OK+NG vs Assigned Qty? 
+                // Or just show totals. User said "capaian".
+                $data['total_executed_qty'] = $data['total_qty_ok'] + $data['total_qty_ng'];
+
+                // Quality Score
+                $data['quality_score'] = 0;
+                if ($data['total_executed_qty'] > 0) {
+                    $data['quality_score'] = round(($data['total_qty_ok'] / $data['total_executed_qty']) * 100, 1);
+                }
+
+                // Pending Tasks (Assigned but not yet reported)
+                $data['pending_tasks'] = Outgoing::where('user_id', $user->id)
+                    ->whereHas('masterItem.tenantOwner', function ($q) use ($currentCustomerId) {
+                        $q->where('customer_id', $currentCustomerId);
+                    })
+                    ->doesntHave('employeeJob')
+                    ->count();
+
                 // My Recent Jobs
                 $data['my_recent_jobs'] = EmployeeJob::with('outgoing.masterItem')
                     ->where('user_id', $user->id)
                     ->latest()
                     ->take(10)
+                    ->get();
+
+                // Personal Chart Data (Last 7 Days)
+                $data['personal_chart'] = $this->getPersonalProductionChart($user->id);
+
+                // Recent Notifications
+                $data['recent_notifications'] = Notification::where('user_id', $user->id)
+                    ->latest()
+                    ->take(5)
                     ->get();
             }
         }
@@ -272,12 +326,15 @@ class DashboardController extends Controller
         // 2. Fetch Recent System Activity (General - optional, can keep if desired but user wanted separation)
         // User said: "separate the table because /rbac/history is restricted"
         // So we should PRIMARILY return the Notifications table now.
-        
+
         $data = $notifs->map(function ($n) {
             $icon = 'fas fa-info-circle text-info';
-            if ($n->type == 'warning') $icon = 'fas fa-exclamation-circle text-warning';
-            if ($n->type == 'success') $icon = 'fas fa-check-circle text-success';
-            if ($n->type == 'error') $icon = 'fas fa-times-circle text-danger';
+            if ($n->type == 'warning')
+                $icon = 'fas fa-exclamation-circle text-warning';
+            if ($n->type == 'success')
+                $icon = 'fas fa-check-circle text-success';
+            if ($n->type == 'error')
+                $icon = 'fas fa-times-circle text-danger';
 
             return [
                 'id' => $n->id,
@@ -493,6 +550,37 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function getActivityLog($id)
+    {
+        $log = ActivityLog::with('user')->find($id);
+
+        if (!$log) {
+            return response()->json(['error' => 'Log not found'], 404);
+        }
+
+        // Optional: Authorization check (e.g., if tenant owner, check tenant_id)
+        $user = Auth::user();
+        $currentCustomerId = TenantService::currentCustomerId();
+
+        if ($currentCustomerId && $log->tenant_id != $currentCustomerId) {
+            // If user is tenant scoped, they can only see their own tenant logs
+            // Allow if internal admin (currentCustomerId is null usually)
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        return response()->json([
+            'id' => $log->id,
+            'created_at' => $log->created_at->format('Y-m-d H:i:s'),
+            'user' => $log->user->name ?? 'System/Guest',
+            'action' => $log->action,
+            'target' => $log->table_name_formatted . ' (ID: ' . $log->record_id . ')',
+            'ip_address' => $log->ip_address,
+            'user_agent' => $log->user_agent,
+            'old_values' => $log->old_values,
+            'new_values' => $log->new_values,
+        ]);
+    }
+
 
     private function getInventoryChartData($customerId, $period = 'weekly')
     {
@@ -564,6 +652,49 @@ class DashboardController extends Controller
             'labels' => $labels,
             'incoming' => $dataIncoming,
             'outgoing' => $dataOutgoing
+        ];
+    }
+
+    private function getPersonalProductionChart($userId)
+    {
+        $endDate = Carbon::now()->endOfDay();
+        $startDate = Carbon::now()->subDays(6)->startOfDay();
+
+        $query = EmployeeJob::select(
+            DB::raw("DATE(finished_datetime) as date"),
+            DB::raw('SUM(qty_ok) as total_ok'),
+            DB::raw('SUM(qty_ng) as total_ng')
+        )
+            ->where('user_id', $userId)
+            ->whereBetween('finished_datetime', [$startDate, $endDate])
+            ->whereNotNull('finished_datetime')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        $labels = [];
+        $dataOk = [];
+        $dataNg = [];
+
+        $periodRange = new \DatePeriod(
+            $startDate,
+            new \DateInterval('P1D'),
+            $endDate->modify('+1 day')
+        );
+
+        foreach ($periodRange as $dt) {
+            $dateStr = $dt->format('Y-m-d');
+            $labels[] = $dt->format('d M');
+
+            $dayData = $query->firstWhere('date', $dateStr);
+            $dataOk[] = $dayData ? $dayData->total_ok : 0;
+            $dataNg[] = $dayData ? $dayData->total_ng : 0;
+        }
+
+        return [
+            'labels' => $labels,
+            'ok' => $dataOk,
+            'ng' => $dataNg
         ];
     }
 

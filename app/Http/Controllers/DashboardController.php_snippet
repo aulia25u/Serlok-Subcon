@@ -1,0 +1,42 @@
+    private function getPersonalProductionChart($userId)
+    {
+        $endDate = Carbon::now()->endOfDay();
+        $startDate = Carbon::now()->subDays(6)->startOfDay();
+
+        $query = EmployeeJob::select(
+            DB::raw("DATE(finished_datetime) as date"),
+            DB::raw('SUM(qty_ok) as total_ok'),
+            DB::raw('SUM(qty_ng) as total_ng')
+        )
+            ->where('user_id', $userId)
+            ->whereBetween('finished_datetime', [$startDate, $endDate])
+            ->whereNotNull('finished_datetime')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        $labels = [];
+        $dataOk = [];
+        $dataNg = [];
+
+        $periodRange = new \DatePeriod(
+            $startDate,
+            new \DateInterval('P1D'),
+            $endDate->modify('+1 day')
+        );
+
+        foreach ($periodRange as $dt) {
+            $dateStr = $dt->format('Y-m-d');
+            $labels[] = $dt->format('d M');
+
+            $dayData = $query->firstWhere('date', $dateStr);
+            $dataOk[] = $dayData ? $dayData->total_ok : 0;
+            $dataNg[] = $dayData ? $dayData->total_ng : 0;
+        }
+
+        return [
+            'labels' => $labels,
+            'ok' => $dataOk,
+            'ng' => $dataNg
+        ];
+    }
